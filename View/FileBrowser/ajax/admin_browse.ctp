@@ -1,0 +1,1 @@
+<?php echo $this->element('FileBrowser/directory/view',compact('fileBrowser'),array('plugin'=>'Media'));?>
