@@ -1,6 +1,6 @@
 <?php
 #ini_set('memory_limit', '128M');
-App::import('Vendor','FileManager.phpthumb', true , array(), 'phpThumb_1.7.11'.DS.'phpthumb.class.php');
+App::import('Vendor','FileManager.phpthumb', true , array(), 'phpThumb-1.7.11'.DS.'phpthumb.class.php');
 
 class LibPhpThumb {
 
