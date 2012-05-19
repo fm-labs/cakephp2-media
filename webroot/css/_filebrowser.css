@@ -1,0 +1,64 @@
+@CHARSET "ISO-8859-1";
+
+div.file_browser div.frame {
+	border: 1px solid #DDD;
+	padding: 10px;
+	margin-bottom: 15px;
+	min-height: 500px;
+}
+
+ul.folder {
+}
+
+ul.files li,
+ul.folder li {
+	padding-left: 25px;
+	background-image: url(jquery.file_tree/images/directory.png);
+	background-repeat: no-repeat;
+	background-position: center left;
+}
+
+ul.files li {
+	background-image: url(jquery.file_tree/images/file.png);
+}
+
+ul.files li:nth-child(odd),
+ul.folder li:nth-child(even) {
+	background-color: #F7F7F7;
+}
+
+ul.files li:HOVER,
+ul.folder li:HOVER {
+	background-color: #EEE;
+}
+
+ul.files li > span,
+ul.folder li > span {
+	display: inline-block;
+	padding: 5px;
+}
+
+ul.files span.file_name,
+ul.folder span.dir_parent,
+ul.folder span.dir_name {
+	width: 70%;
+}
+
+/* Folder Advanced */
+div.folder_advanced dl {
+	width: 100%;
+}
+
+/* Gallery */
+ul.gallery li {
+	display: inline-block;
+	padding: 2px;
+	margin: 2px;
+	border: 1px solid #EEE;
+}
+
+ul.gallery li span {
+	display: block;
+	text-align: center;
+	padding: 2px;
+}

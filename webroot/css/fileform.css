@@ -1,0 +1,33 @@
+@CHARSET "UTF-8";
+
+.file-select {
+	background: #CCC;
+	color: #333;
+	width: 400px;
+}
+
+.file-select > div {
+	padding: 0;
+	margin: 0;
+	clear: none;
+}
+
+.file-select .image-input-preview {
+	float: left;	
+	width: 120px;
+}
+
+.file-select .image-input-info {
+	float: left;	
+	width: 100px;
+}
+
+.file-select .image-input-actions {
+	float: right;	
+	width: 80px;
+}
+
+.file-select .image-input-actions a{
+	display: inline-block;
+	clear: both;
+}

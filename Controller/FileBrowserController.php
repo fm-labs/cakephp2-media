@@ -7,7 +7,8 @@ class FileBrowserController extends AppController {
 	
 	public function admin_index($dir = null) {
 		
-		$this->FileBrowser->basePath = DH_IMAGES;
+		#$this->FileBrowser->basePath = DH_IMAGES;
+		#$this->FileBrowser->baseURL = IMAGES.DH_IMAGES;
 		$this->FileBrowser->read();
 		
 	}

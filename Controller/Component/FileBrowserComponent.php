@@ -1,115 +1,74 @@
 <?php
-App::uses('LibFileBrowser','Media.FileBrowser');
+App::uses('Component','Controller/Component');
 
 class FileBrowserComponent extends Component {
-	
+
 /**
  * Controller instance
  * @var Controller
  */
 	protected $Controller;
 
-/**
- * @var LibFileBrowser
- */	
-	public $Browser;
 	
-	protected $_basePath = TMP;
+	public $basePath = IMAGES;
+	public $baseUrl = IMAGES_URL;
 	
-	protected $_dirPath = '/';
-	
-	protected $_filePath = null;
-	
-	protected $_cmd = "index";
-	
-	protected $_renderFile = "";
-	
-	public $components = array('Media.FileTreeConnector');
+	private $__filebrowser = array();
 	
 	public function initialize(&$controller) {
 		$this->Controller =& $controller;
-			
-		
-		if (isset($controller->passedArgs['dir']))
-			$this->dirPath(base64_decode($controller->passedArgs['dir']));
-			
-		if (isset($controller->passedArgs['file'])) {
-			$this->filePath(base64_decode($controller->passedArgs['file']));
-		}		
-		
-		if (isset($controller->passedArgs['cmd'])) {
-			$this->cmd($controller->passedArgs['cmd']);
-		}		
-		
-		if ($this->Controller->request->is('ajax')) {
-			$this->Controller->layout = "empty";
-			$this->Controller->viewPath = $this->Controller->viewPath.DS."ajax";
-		}
-		
 	}	
 	
 	public function startup(&$controller) {
+		#$this->layout = 'Media.file_browser';
 	}
 
-	public function beforeRender(&$controller) {
-		$controller->set('fileBrowser',$this->Browser);
-	}	
-	
-	public function &start() {
-		
-		$this->Browser = new LibFileBrowser($this->_basePath, $this->_dirPath, $this->_filePath);
-		
-		return $this->Browser;
-	}
+	private function __resolveDir($dir = null) {
+		if ($dir)
+			return $dir;
 
-/**
- * Full Path to Base. No slash term 
- * @param string $path
- */	
-	public function basePath($path) {
-		$this->_basePath = $path;
-	}
-
-/**
- * Relative path to Base. Prefix and Suffix Slash term
- * @param string $path
- */	
-	public function dirPath($path) {
-		$this->_dirPath = $path;
-	}
-	
-/**
- * Relative path to Base. Prefix and Suffix Slash term
- * @param string $path
- */	
-	public function filePath($path) {
-		$this->_filePath = $path;
-	}
-	
-	public function cmd($cmd = null) {
-		if ($cmd === null)
-			return $this->_cmd;
-			
-		$this->_cmd = $cmd;
-
-		switch($cmd) {
-			case "connect": 
-				if ($this->Controller->request->is('post')) {
-					$dirPath = $this->Controller->request->data['dir'];
-					$this->dirPath($dirPath);
-				}
-				break;
-				
-			default:
-				break;
+		if (isset($this->Controller->passedArgs['dir'])) {
+			$dir = base64_decode($this->Controller->passedArgs['dir']);
 		}
 		
-		return $this;
+		if($dir == '.' || $dir == '..')
+			$dir = null;
+			
+		return $dir;
 	}
 	
-	public function toArray() {
+	public function read($dir = null) {
+		
+		$BaseFolder = new Folder($this->basePath,false);
+		$Folder = $BaseFolder; //clone
+		
+		$dir = $this->__resolveDir();
+		if ($dir) {
+			if (!$Folder->cd($dir)) {
+				throw new CakeException(__("Directory %s not found",strval($dir)));
+			}
+			if (!$Folder->inPath($BaseFolder->pwd())) {
+				throw new CakeException(__("Directory %s not accessable",strval($dir)));
+			}
+		}
+		
+		$contents = $Folder->read(true,array('.','empty'));
+		
+		$this->__fileBrowser = array(
+			'dir' => $dir,
+			'baseUrl' => $this->baseUrl,
+			'directory_list' => $contents[0],
+			'file_list' => $contents[1],
+		);
+		
+		return $this->__fileBrowser;
+		
 	}
 	
-	public function directory() {}
+	
+	public function beforeRender(&$controller) {
+		$this->Controller->set('fileBrowser',$this->__fileBrowser);
+	}
+	
 }
 ?>
