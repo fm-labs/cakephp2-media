@@ -1,7 +1,7 @@
 <?php
 App::uses('Folder','Utility');
 
-class FileBrowserController extends AppController {
+class FileBrowserController extends MediaAppController {
 	
 	public $components = array('Media.FileBrowser' => array());
 	
@@ -11,8 +11,8 @@ class FileBrowserController extends AppController {
 	
 	public function admin_images() {
 		
-		$this->FileBrowser->basePath(DH_IMAGES);
-		$this->FileBrowser->baseUrl('/'.IMAGES_URL.DH_IMAGES_URL);
+		$this->FileBrowser->basePath(IMAGES);
+		$this->FileBrowser->baseUrl('/'.IMAGES_URL);
 		$this->FileBrowser->read();
 		$this->render('admin_index');
 	}

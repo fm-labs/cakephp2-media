@@ -1,5 +1,6 @@
 <?php
 App::uses('Component','Controller/Component');
+App::uses('Folder','Utility');
 
 class FileBrowserComponent extends Component {
 
@@ -26,14 +27,14 @@ class FileBrowserComponent extends Component {
 	}
 
 	public function basePath($path = null) {
-		if (!$path)
+		if (is_null($path))
 			return $this->_basePath;
 			
 		$this->_basePath = $path;
 	}
 	
 	public function baseUrl($url = null) {
-		if (!$url)
+		if (is_null($url))
 			return $this->_baseUrl;
 			
 		$this->_baseUrl = Router::url($url);
@@ -83,6 +84,7 @@ class FileBrowserComponent extends Component {
 	
 	
 	public function beforeRender(&$controller) {
+		#$this->Controller->helpers['Js'] = 'Jquery.JqueryExt';
 		$this->Controller->set('fileBrowser',$this->__fileBrowser);
 	}
 	
