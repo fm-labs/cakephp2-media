@@ -1,22 +1,43 @@
 @CHARSET "UTF-8";
 
+.file-browser {
+	width: 98%;
+	margin: 10px 1%;
+}
+
+.file-browser-col1 {
+	width: 60%;
+	float: left;
+}
+
+.file-browser-col2 {
+	width: 35%;
+	float: right;
+}
+
+ul.filebrowser-list ul
+ul.filebrowser-list ul li {
+	margin: 0;
+}
 
 ul.file-browser-list li {
 	padding: 5px 25px;
 	background-repeat: no-repeat;
 	background-position: center left;
 }
-ul.file-browser-folders li {
+ul.file-browser-list li.dir {
 	background-image: url(../img/filebrowser/directory.png);
 }
 
-ul.file-browser-files li {
+ul.file-browser-list li.file {
 	background-image: url(../img/filebrowser/file.png);
 }
 
-ul.file-browser-list li:nth-child(odd),
-ul.file-browser-list li:nth-child(even) {
+ul.file-browser-list li:nth-child(odd) {
 	background-color: #F7F7F7;
+}
+ul.file-browser-list li:nth-child(even) {
+	background-color: #FFF;
 }
 
 ul.file-browser-list li:HOVER {
@@ -34,7 +55,7 @@ ul.file-browser-list span.dir-name {
 	width: 70%;
 }
 
-#file-browser-preview img {
-	width: 200px;
+.file-browser-preview img {
+	width: 250px;
 }
 

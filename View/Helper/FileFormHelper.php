@@ -30,7 +30,7 @@ class FileFormHelper extends AppHelper {
 			$params = array('href' => $params);
 		} else {
 			$params = array_merge(array(
-				'href'=>array('controller'=>'image_browser','action'=>'select')
+				'href'=>array('controller'=>'file_browser','action'=>'index','plugin'=>'media')
 			),$params);
 		}
 		
@@ -38,22 +38,26 @@ class FileFormHelper extends AppHelper {
 		
 		//input field
 		$inputParams = array_merge(array(
-			'type'=>'hidden',
+			//'type'=>'hidden',
+			'type'=>'text',
 			'id'=>uniqid(),
-			'value' => $__value,
+			'value' => $__value
 		),$inputParams);
-		$out .= $this->Form->input($field,$inputParams);
 		
 		//set ids
 		$__id = $inputParams['id'];
 		$__openerId = md5($__id);
+		$__previewId = $__id . '-preview';
+		
+		$inputParams['data-preview'] = $__previewId;
+		$out .= $this->Form->input($field,$inputParams);
 		
 		//preview
 		$_preview = $this->Html->image(
 			DH_IMAGES_URL . $__value,
 			array('height'=>'50px','id'=>'image-input-preview')
 		);
-		$out .= $this->Html->div('image-input-preview',$_preview);
+		$out .= $this->Html->div('image-input-preview',$_preview,array('id'=>$__previewId));
 		unset($_preview);
 		
 		//info
@@ -74,7 +78,7 @@ class FileFormHelper extends AppHelper {
 			'innerHeight' => '80%',
 			'iframe' => true
 		),$scriptParams);
-		$_script = $this->Js->get($__openerId)->colorbox($scriptParams);
+		$_script = $this->Js->get('#'.$__openerId)->colorbox($scriptParams);
 		$out .= $this->Html->scriptBlock($this->Js->domReady($_script));
 		
 		//clearfix

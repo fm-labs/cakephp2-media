@@ -30,7 +30,6 @@
 
 		echo $this->Html->css('/admin_panel/css/reset');
 		echo $this->Html->css('/admin_panel/css/cake');
-		echo $this->Html->css('/admin_panel/css/layout/default/layout');
 		echo $this->Html->css('/admin_panel/css/layout/default/style');
 
 		echo $this->Html->script('/jquery/js/core/jquery-1.7.1.min.js');
