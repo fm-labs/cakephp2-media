@@ -1,15 +1,14 @@
 <?php
 
-class Upload extends MediaAppModel {
+class FileBrowserUpload extends MediaAppModel {
 	
+	/*
 	public $actsAs = array('Media.MeioUpload' => array(
-		'file1' => array(
+		'upload_file' => array(
 			'useTable' => false,
-			//'uploadName' => 'filename',
-			'dir' => 'test',
-			'maxSize' => 200,
  		)
 	));
+	*/
 	
 	public $useTable = false;
 	

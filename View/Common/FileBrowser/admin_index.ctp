@@ -57,8 +57,27 @@ $_id = uniqid('file-browser-tabs');
 
 
 	<div id="file-browser-tabs-2">
-		<h1><?php echo __("Upload to %s", strval($fileBrowser['dir']));?></h1>
-		<button><?php echo __("Upload")?></button>
+		<div>
+			<h1><?php echo __("Upload to %s", strval($fileBrowser['dir']));?></h1>
+			<?php
+				debug($this->Form->validationErrors);
+			
+			    echo $this->Form->create('FileBrowserUpload', array('type' => 'file','url'=>array(
+			    	'controller'=>$this->params->controller, 
+			    	'action'=>$this->params->action, 
+			    	'cmd'=>'upload', 
+			    	'dir'=>$fileBrowser['dir_encoded'])
+			    ));
+			    //html5 multiple file upload - not supported by meio upload yet
+			    //echo $this->Form->input('upload_file.', array('type' => 'file', 'multiple'=>'multiple'));
+			    echo $this->Form->input('upload_file', array('type' => 'file', 'multiple'=>'multiple'));
+			    #echo $this->Form->input('filename', array('type' => 'text','default'=>'test'));
+			    #echo $this->Form->input('dir', array('type' => 'text'));
+			    #echo $this->Form->input('mimetype', array('type' => 'text'));
+			    #echo $this->Form->input('filesize', array('type' => 'text'));
+			    echo $this->Form->end('Upload');
+			?>
+		</div>
 	</div>
 
 </div>

@@ -6,7 +6,8 @@ class FileBrowserController extends MediaAppController {
 	public $components = array('Media.FileBrowser' => array());
 	
 	public function admin_index() {
-		$this->FileBrowser->read();
+		
+		$this->FileBrowser->dispatch();
 	}
 	
 	public function admin_images() {
@@ -22,6 +23,25 @@ class FileBrowserController extends MediaAppController {
 		$this->FileBrowser->baseUrl('/');
 		$this->FileBrowser->read();
 		$this->render('admin_index');
+	}
+	
+	public function admin_upload() {
+		
+		$this->loadModel('Media.Upload');
+		
+		if ($this->request->data) {
+			debug($this->request->data);
+			$upload = $this->Upload->save($this->request->data);
+			debug($upload);
+			if ($upload) {
+				$this->Session->setFlash(__("Upload successful"));
+				debug($this->Upload->data);
+			} else {
+				$this->Session->setFlash(__("Upload failed"));
+			}
+		} else {
+			$this->Session->setFlash(__("No upload started"));
+		}
 	}
 }
 ?>
