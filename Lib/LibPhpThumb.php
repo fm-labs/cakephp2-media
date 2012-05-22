@@ -83,6 +83,8 @@ class LibPhpThumb {
 	
 	static public function getThumbnailUrl($source, $params = array()) {
 		$thumbnail = self::getThumbnail($source, $params);
+		if (!$thumbnail)
+			return false;
 		
 		return MEDIA_PHPTHUMB_WWW_DIR . basename($thumbnail);
 	}
