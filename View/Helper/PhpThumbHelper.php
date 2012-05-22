@@ -37,6 +37,9 @@ class PhpThumbHelper extends AppHelper {
 		}
 				
 		$thumbUrl = $this->imageUrl($path, $thumbParams);
+		#if (!$thumbUrl)
+		#	return false;
+			
 		return $this->Html->image($thumbUrl, $options);
 	}
 	
