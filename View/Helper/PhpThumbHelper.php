@@ -40,6 +40,16 @@ class PhpThumbHelper extends AppHelper {
 		#if (!$thumbUrl)
 		#	return false;
 			
+		
+		if (isset($options['url'])) {
+			if($options['url'] == '{source}') {
+				$options['url'] = Router::url('/',true).IMAGES_URL.$path;
+			} 
+			elseif($options['url'] == '{thumb}') {
+				$options['url'] = Router::url('/',true).IMAGES_URL.$thumbUrl;
+			}
+		}
+		
 		return $this->Html->image($thumbUrl, $options);
 	}
 	
