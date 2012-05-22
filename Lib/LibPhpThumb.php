@@ -22,17 +22,23 @@ class LibPhpThumb {
 	        'config_output_format'				=> 'jpg', //config_output_format
 			//'config_imagemagick_path'			=> null,
 			//'config_prefer_imagemagick'		=> false,
-			'config_error_die_on_error'			=> true,
+			'config_error_die_on_error'			=> false,
 			'config_document_root'				=> ROOT,
 			'config_allow_src_above_docroot'	=> true, //IMPORTANT!
-			'config_cache_disable_warning'		=> !Configure::read('debug'),
-			'config_disable_debug'				=> !Configure::read('debug'),
+			#'config_cache_disable_warning'		=> !Configure::read('debug'),
+			'config_cache_disable_warning'		=> true,
+			#'config_disable_debug'				=> !Configure::read('debug'),
+			'config_disable_debug'				=> true,
 			'config_cache_prefix'				=> 'cache_'	,
 			//'config_cache_maxage'               => null,
 			//'config_cache_maxsize'              => null,
 			//'config_cache_maxfiles'             => null,
 			'sia'								=> "thumbnail"		
 		),$params);		
+		
+		
+		if (!file_exists($source))
+			throw new NotFoundException(__("File %s not found",$source));
 		
 		// Configuring thumbnail settings
 		$phpThumb = new phpthumb;
@@ -90,8 +96,14 @@ class LibPhpThumb {
  */	
 	static public function getThumbnail($source, $params = array()) {
 		$target = self::target($source,$params);
-		if (!file_exists($target))
-			self::createThumbnail($source,$target,$params);
+		if (!file_exists($target)) {
+			try {
+				self::createThumbnail($source,$target,$params);
+			} catch(Exception $e) {
+				CakeLog::write('phpthumb',$e->getMessage());
+				return false;
+			}
+		}
 			
 		return $target;
 	}
