@@ -48,28 +48,32 @@ class FileFormHelper extends AppHelper {
 		$__id = $inputParams['id'];
 		$__openerId = md5($__id);
 		$__previewId = $__id . '-preview';
+		$__previewImgId = $__previewId . '-img';
 		
 		$inputParams['data-preview'] = $__previewId;
-		$out .= $this->Form->input($field,$inputParams);
+		$inputParams['data-preview-img'] = $__previewImgId;
 		
 		//preview
 		$_preview = $this->Html->image(
 			DH_IMAGES_URL . $__value,
-			array('height'=>'50px','id'=>'image-input-preview')
+			array('class'=>'image-preview', 'id'=>$__previewImgId)
 		);
 		$out .= $this->Html->div('image-input-preview',$_preview,array('id'=>$__previewId));
 		unset($_preview);
 		
-		//info
-		$_info = $this->Html->tag('span', $__value);
-		$out .= $this->Html->div('image-input-info',$_info);
-		unset($_info);
+		//input
+		$_input = "";
+		#$_input .= $this->Html->tag('span', $__value);
+		$_input .= $this->Form->input($field,$inputParams);
 		
-		//actions
-		$_actions = $this->Html->link(__("Change"),'#',array('id'=>$__openerId,'data-target'=>$__id));
-		$_actions .= $this->Html->link(__("Remove"),'#');
-		$out .= $this->Html->div('image-input-actions',$_actions);
+		$_actions = "";
+		$_actions .= $this->Html->link(__("Change"),'#',array('class'=>'image-input-action', 'id'=>$__openerId,'data-target'=>$__id));
+		$_actions .= $this->Html->link(__("Remove"),'#',array('class'=>'image-input-action'));
+		$_input .= $this->Html->div('image-input-actions',$_actions);
 		unset($_actions);
+		
+		$out .= $this->Html->div('image-input',$_input);
+		unset($_input);
 		
 		//script
 		$scriptParams = array_merge(array(
