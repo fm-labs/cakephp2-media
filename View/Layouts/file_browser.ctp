@@ -28,12 +28,12 @@
 	<?php
 		echo $this->Html->meta('icon');
 
-		echo $this->Html->css('/admin_panel/css/reset');
-		echo $this->Html->css('/admin_panel/css/cake');
-		echo $this->Html->css('/admin_panel/css/layout/default/style');
+		echo $this->Html->css('/media/css/reset');
+		echo $this->Html->css('/admin_panel/css/style');
+		echo $this->Html->css('/media/css/layout/filebrowser');
 
-		echo $this->Html->script('/jquery/js/core/jquery-1.7.1.min.js');
-		//echo $this->Html->css('/jquery/css/ui/smoothness/jquery-ui-1.8.14.custom');
+		$this->Js->loadJquery();
+		echo $this->Html->css('/jquery/css/ui/smoothness/jquery-ui-1.8.14.custom');
 	
 		echo $this->fetch('script');
 		echo $this->fetch('css');

@@ -5,6 +5,16 @@ class FileBrowserController extends MediaAppController {
 	
 	public $components = array('Media.FileBrowser' => array());
 	
+	public function beforeFilter() {
+		
+		debug($this->passedArgs);
+		
+		if ($this->request->is('ajax') || (isset($this->passedArgs['iframe']) && $this->passedArgs['iframe'])) {
+			$this->layout = "ajax";
+			debug("hello");
+		}
+	}
+	
 	public function admin_index() {
 		
 		$this->FileBrowser->dispatch();
@@ -15,6 +25,7 @@ class FileBrowserController extends MediaAppController {
 		$this->FileBrowser->basePath(IMAGES);
 		$this->FileBrowser->baseUrl('/'.IMAGES_URL);
 		$this->FileBrowser->read();
+		
 		$this->render('admin_index');
 	}
 	

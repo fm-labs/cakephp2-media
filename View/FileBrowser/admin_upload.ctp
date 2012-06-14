@@ -1,6 +1,7 @@
 <?php $this->extend('AdminPanel.Common/tabs'); ?>
 <div>
-	<h1><?php echo __("Upload to %s", strval($fileBrowser['dir']));?></h1>
+	<?php $uploadDir = ($fileBrowser['dir']) ? $fileBrowser['dir'] : '/'; ?>
+	<h1><?php echo __("Upload file to %s", h($uploadDir));?></h1>
 	<?php
 		debug($this->Form->validationErrors);
 	

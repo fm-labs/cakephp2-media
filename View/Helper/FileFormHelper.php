@@ -30,7 +30,7 @@ class FileFormHelper extends AppHelper {
 			$params = array('href' => $params);
 		} else {
 			$params = array_merge(array(
-				'href'=>array('controller'=>'file_browser','action'=>'index','plugin'=>'media')
+				'href'=>array('controller'=>'file_browser','action'=>'index','plugin'=>'media','iframe'=>true)
 			),$params);
 		}
 		
@@ -86,7 +86,7 @@ class FileFormHelper extends AppHelper {
 		$out .= $this->Html->scriptBlock($this->Js->domReady($_script));
 		
 		//clearfix
-		$out .= $this->Html->div('clearfix','');
+		$out .= $this->Html->div('ym-clearfix clearfix','');
 		
 		return $this->Html->div('input file-select',$out);
 	}

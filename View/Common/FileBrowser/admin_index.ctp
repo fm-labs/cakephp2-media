@@ -58,10 +58,9 @@ $_id = uniqid('file-browser-tabs');
 
 	<div id="file-browser-tabs-2">
 		<div>
-			<h1><?php echo __("Upload to %s", strval($fileBrowser['dir']));?></h1>
+			<?php $uploadDir = ($fileBrowser['dir']) ? $fileBrowser['dir'] : '/'; ?>
+			<h1><?php echo __("Upload to %s", h($uploadDir));?></h1>
 			<?php
-				debug($this->Form->validationErrors);
-			
 			    echo $this->Form->create('FileBrowserUpload', array('type' => 'file','url'=>array(
 			    	'controller'=>$this->params->controller, 
 			    	'action'=>$this->params->action, 
@@ -79,6 +78,7 @@ $_id = uniqid('file-browser-tabs');
 			?>
 		</div>
 	</div>
+	<div style="clear:both;"></div>
 
 </div>
 <?php
