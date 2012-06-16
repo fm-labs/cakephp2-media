@@ -3,16 +3,59 @@
 .file-browser {
 	width: 98%;
 	margin: 10px 1%;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 12px;
+}
+
+.file-browser a {
+	color: #333;
+}
+
+.file-browser h1 {
+	font-size: 160%;
+	margin: 2px 0 10px;
+}
+
+.file-browser h2 {
+	margin: 2px 0 7px;
+	font-size: 140%;
+}
+
+.file-browser h3 {
+	margin: 2px 0 4px;
+	font-size: 120%;
+}
+
+.file-browser-column {
+	display: block;
+    overflow: hidden;
+    padding-right: 315px;
+    width: auto;
 }
 
 .file-browser-col1 {
-	width: 60%;
+	width: 100%;
 	float: left;
+	position: relative;
 }
 
 .file-browser-col2 {
-	width: 35%;
-	float: right;
+	width: 300px;
+	float: left;
+	margin: 0 -300px 0 0;
+	position: relative;
+}
+
+.file-browser-preview,
+.file-browser-upload {
+	border: 1px solid #CCC;
+	padding: 10px;
+	margin-bottom: 20px;
+}
+
+#file-browser-preview-image,
+.file-browser-preview-image {
+	max-width: 255px;	
 }
 
 ul.filebrowser-list ul
@@ -47,15 +90,14 @@ ul.file-browser-list li:HOVER {
 ul.file-browser-list li > span {
 	display: inline-block;
 	padding: 0 5px; 
+	vertical-align: middle;
 }
 
 ul.file-browser-list span.file-name,
 ul.file-browser-list span.dir-parent,
 ul.file-browser-list span.dir-name {
-	width: 70%;
+	width: 500px;
 }
 
-.file-browser-preview img {
-	width: 250px;
-}
-
+/* Files */
+.file-thumb { width: 60px; }
