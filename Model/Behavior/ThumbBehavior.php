@@ -11,9 +11,9 @@ class ThumbBehavior extends ModelBehavior {
 		if (!isset($this->settings[$model->alias])) {
 			//config
 			$default = array(
-				'basePath' => IMAGES, //absolute base path to images
+				'baseDir' => '', //relative path to IMAGES
 				'entity' => 'Thumb', //entity for adding to data
-				'defaultImage' => null, //relative location of default image from basePath
+				'defaultImage' => null, //relative location of default image from baseDir
 				//default settings
 				//unknown setting keys will be passed to phpThumb
 			);
@@ -54,7 +54,7 @@ class ThumbBehavior extends ModelBehavior {
 		$validated = true;
 		foreach($_fields as $_field) {
 			$_image = $model->data[$model->alias][$_field];
-			$_imagePath = $s['basePath'] . $_image;
+			$_imagePath = $s['baseDir'] . $_image;
 			if (!file_exists($_imagePath)) {
 				$model->invalidate($_field, __("The file '%s' does not exist", $_image));
 				$validated = false;
@@ -138,23 +138,25 @@ class ThumbBehavior extends ModelBehavior {
 		//render thumbs and return paths
 		$_thumbData = array();
 		foreach($thumbs as $name => $config) {
-			$source = $error = $path = $url = $url_full = null;
+			$source = $source_url = $error = $thumb = $url = $url_full = null;
 			try {
 				//image source
-				$source = $s['basePath'] . $data[$model->alias][$field];
-				if (!file_exists($source)) {
+				$file = $data[$model->alias][$field];
+				if (!file_exists(IMAGES . $s['baseDir'].$file)) {
 					if ($s['defaultImage']) //use default image if source not found
-						$source = $s['basePath'] . $s['defaultImage'];
+						$file = $s['defaultImage'];
 					else
 						throw new CakeException(__("Source file '%s' does not exist", $source));
 				}
+				$source = IMAGES.$s['baseDir'].$file;
+				$source_url = Router::url('/',true) . IMAGES_URL . $s['baseDir'] . $file;
 					
 				//thumb-path
-				$path = LibPhpThumb::getThumbnail($source, $config);
+				$thumb = LibPhpThumb::getThumbnail($source, $config);
 				
 				//thumb-url
-				$url = LibPhpThumb::getThumbnailUrlFromPath($path, false);
-				$url_full = LibPhpThumb::getThumbnailUrlFromPath($path, true);
+				$url = LibPhpThumb::getThumbnailUrlFromPath($thumb, false);
+				$url_full = LibPhpThumb::getThumbnailUrlFromPath($thumb, true);
 					
 			} catch(Exception $e) {
 				debug($e->getMessage());
@@ -162,7 +164,7 @@ class ThumbBehavior extends ModelBehavior {
 				$error = $e->getMessage();
 			}
 			
-			$_thumbData[$name] = compact('source','path','url','url_full','error');
+			$_thumbData[$name] = compact('source','source_url','thumb','url','url_full','error');
 		}
 		$data[$s['entity']][$field] = $_thumbData;
 	}
