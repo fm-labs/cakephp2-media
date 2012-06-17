@@ -54,7 +54,7 @@ class ThumbBehavior extends ModelBehavior {
 		$validated = true;
 		foreach($_fields as $_field) {
 			$_image = $model->data[$model->alias][$_field];
-			$_imagePath = $s['baseDir'] . $_image;
+			$_imagePath = IMAGES . $s['baseDir'] . $_image;
 			if (!file_exists($_imagePath)) {
 				$model->invalidate($_field, __("The file '%s' does not exist", $_image));
 				$validated = false;
