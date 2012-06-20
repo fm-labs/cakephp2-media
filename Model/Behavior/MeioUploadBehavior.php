@@ -396,6 +396,8 @@ class MeioUploadBehavior extends ModelBehavior {
 				return false;
 			} else {
 				$this->data = $result['data'];
+				//nmx
+				$model->data = $result['data'];
 				return true;
 			}
 		} else {
@@ -783,7 +785,6 @@ class MeioUploadBehavior extends ModelBehavior {
 				//@todo overwrite support
 				$saveAs = $options['dir'] . DS . $saveName;
 
-				debug($saveAs);
 				// Attempt to move uploaded file
 				$copyResults = $this->_copyFileFromTemp($data[$model->alias][$fieldName]['tmp_name'], $saveAs, $options['filePermission']);
 				if ($copyResults !== true) {
@@ -800,6 +801,10 @@ class MeioUploadBehavior extends ModelBehavior {
 				}
 
 				$data = $this->_unsetDataFields($model->alias, $fieldName, $model->data, $options);
+				//nmx add on
+				$data[$model->alias]['name'] = $saveName;
+				$data[$model->alias]['path'] = $options['dir'];
+				
 				$result = array('return' => true, 'data' => $data);
 				continue;
 			} else {

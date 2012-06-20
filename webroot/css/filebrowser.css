@@ -1,5 +1,6 @@
 @CHARSET "UTF-8";
 
+/* Style */
 .file-browser {
 	width: 98%;
 	margin: 10px 1%;
@@ -26,30 +27,30 @@
 	font-size: 120%;
 }
 
+/* Layout */
 .file-browser-column {
 	display: block;
     overflow: hidden;
     padding-right: 315px;
     width: auto;
+    min-height: 600px;
 }
 
 .file-browser-col1 {
 	width: 100%;
-	float: left;
-	position: relative;
 }
 
 .file-browser-col2 {
 	width: 300px;
-	float: left;
-	margin: 0 -300px 0 0;
-	position: relative;
+	position: fixed;
+	top: 10px;
+	right: 10px;
 }
 
 .file-browser-preview,
 .file-browser-upload {
-	border: 1px solid #CCC;
-	padding: 10px;
+	border-bottom: 1px solid #CCC;
+	padding-bottom: 10px;
 	margin-bottom: 20px;
 }
 
@@ -63,17 +64,12 @@ ul.filebrowser-list ul li {
 	margin: 0;
 }
 
+
+/* Listing */
 ul.file-browser-list li {
 	padding: 5px 25px;
 	background-repeat: no-repeat;
 	background-position: center left;
-}
-ul.file-browser-list li.dir {
-	background-image: url(../img/filebrowser/directory.png);
-}
-
-ul.file-browser-list li.file {
-	background-image: url(../img/filebrowser/file.png);
 }
 
 ul.file-browser-list li:nth-child(odd) {
@@ -87,6 +83,12 @@ ul.file-browser-list li:HOVER {
 	background-color: #EEE;
 }
 
+ul.file-browser-list li.file-highlight,
+ul.file-browser-list li.file-highlight:HOVER {
+	background-color: #7EB51B;
+}
+
+
 ul.file-browser-list li > span {
 	display: inline-block;
 	padding: 0 5px; 
@@ -96,8 +98,12 @@ ul.file-browser-list li > span {
 ul.file-browser-list span.file-name,
 ul.file-browser-list span.dir-parent,
 ul.file-browser-list span.dir-name {
-	width: 500px;
+	min-width: 350px;
 }
 
-/* Files */
-.file-thumb { width: 60px; }
+/* Directory */
+.file-browser-list .dir { background-image: url(../img/filebrowser/directory.png); }
+
+/* File */
+.file-browser-list .file {	background-image: url(../img/filebrowser/file.png); }
+.file-browser-list .file-thumb { width: 60px; }

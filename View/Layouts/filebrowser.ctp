@@ -37,6 +37,7 @@
 		echo $this->Html->css('/jquery/css/ui/smoothness/jquery-ui-1.8.14.custom');
 	
 		echo $this->fetch('script');
+		echo $this->Html->script('/media/js/jquery.scrollTo/jquery.scrollTo-min');
 		echo $this->fetch('css');
 		
 	?>
@@ -47,12 +48,12 @@
 		
 		<div id="contentwrap">
 			<div id="contentcontainer" class="container_16">
-				<div id="flash" class="grid_16">
+				<div id="flash">
 					<?php echo $this->Session->flash(); ?>
 					<?php echo $this->Session->flash('auth'); ?>
 				</div>
 				<div class="clearfix"></div>
-				<div id="content" class="grid_16">
+				<div id="content">
 					<?php echo $this->fetch('content'); ?>
 					<div class="clearfix"></div>
 				</div>

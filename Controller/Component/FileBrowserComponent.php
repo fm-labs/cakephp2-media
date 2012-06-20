@@ -20,6 +20,7 @@ class FileBrowserComponent extends Component {
 	private $__cmd;
 	private $__file;
 	private $__dir;
+	private $__error;
 	
 	public $components = array('Session');
 	
@@ -28,9 +29,7 @@ class FileBrowserComponent extends Component {
 		$this->basePath($this->basePath());
 		$this->baseUrl($this->baseUrl());
 		
-		$this->__resolveCmd();
-		$this->__resolveDir();
-		$this->__resolveFile();
+		$this->_initRequest();
 	}	
 	
 	public function startup(&$controller) {
@@ -41,21 +40,85 @@ class FileBrowserComponent extends Component {
 		#$this->Controller->helpers['Js'] = 'Jquery.JqueryExt';
 		$this->Controller->set('fileBrowser',$this->__fileBrowser);
 	}	
+	
+	protected function _initRequest() {
+		$dir = $file = $cmd = null;
+		
+		//dir
+		if (isset($this->Controller->passedArgs['dir'])) {
+			$dir = base64_decode($this->Controller->passedArgs['dir']);
+		}
+		if(!$dir || $dir == '.' || $dir == '..')
+			$dir = '';
+			
+		$this->__dir = $dir;
+		
+		//file
+		if (isset($this->Controller->passedArgs['file'])) {
+			$file = base64_decode($this->Controller->passedArgs['file']);
+		}
+		$this->__file = $file;
+	
+		//cmd
+		if (isset($this->Controller->passedArgs['cmd'])) {
+			$cmd = $this->Controller->passedArgs['cmd'];
+		}
+		$this->__cmd = $cmd;
+	}
+	
+	public function dispatch() {
+		$dispatch = true;
+		
+		$exception = null;
+		if ($this->__cmd) {
+			$cmdMethod = "_cmd".Inflector::camelize($this->__cmd);
+			if (!method_exists($this, $cmdMethod))
+				throw new CakeException(__("Unknown FileBrowser Command '%s'",strval($this->__cmd)));
 
-
-	public function read($params = array()) {
+			try {
+				$dispatch = call_user_method($cmdMethod,$this);
+				if (!is_null($dispatch))
+					return $dispatch;
+					
+			} catch(Exception $e) {
+				$exception = $e;
+				CakeLog::write('error', 'FileBrowserComponent::dispatch() '.$exception->getMessage());
+				$this->__error = $exception->getMessage();
+			}
+		}
 		
-		$this->__fileBrowser = $this->buildFileBrowser(
-			$this->basePath(), 
-			$this->baseUrl(), 
-			$this->__dir,
-			$this->__cmd, 
-			$params
-		);
+		$this->__fileBrowser = $this->_buildFileBrowser();
 		
-		return $this->__fileBrowser;
+		if ($exception)
+			throw new CakeException($exception->getMessage());
 		
+		return $dispatch;
 	}	
+	
+	
+	public function getFileBrowser() {
+		return $this->__fileBrowser;
+	}
+	
+	public function _cmdOpen() {
+		
+		$__file = null;
+		return null;
+	}
+	
+	public function _cmdParentDir() {
+		
+		$dir = $this->__dir;
+		if (!$dir || $dir == '/' || $dir == DS)
+			return null;
+			
+		$_dir = explode('/', substr($dir, 0,-1));
+		array_pop($_dir);
+		$dir = join('/',$_dir);
+		$this->__dir = $dir;
+		$this->__file = null;
+		return null;
+	}
 	
 	public function _cmdFileDelete() {
 		
@@ -67,11 +130,13 @@ class FileBrowserComponent extends Component {
 		$_fileName = $File->name().".".$File->ext();
 		if ($File->delete()) {
 			$this->Controller->Session->setFlash(__("File '%s' deleted", $_fileName));
-			return null;
-		} else {
-			$this->Controller->Session->setFlash(__("Failed to delete file '%s'", $_fileName));
-		}
-		return false;
+		} else
+			throw new CakeException(__("Failed to delete file '%s'", $_fileName));
+
+
+		$this->__file = null;	
+			
+		return null;
 	}
 
 /**
@@ -84,7 +149,13 @@ class FileBrowserComponent extends Component {
 		if (!$file)
 			$file = $this->__file;
 			
+		if (!$file)
+			return false;	
+			
 		$filePath = $this->basePath().$this->__dir.$file;
+		if (!file_exists($filePath))
+			return false;
+			
 		return new File($filePath, false);
 	}
 	
@@ -96,53 +167,52 @@ class FileBrowserComponent extends Component {
 			'upload_file' => array(
 				'useTable' => false,
 				'createDirectory' => false,
-				'dir' => $this->__fileBrowser['cwd'],
+				'dir' => $this->basePath().$this->__dir,
 	 		)
 		));
 		$upload = $Model->save($this->Controller->request->data);
 		if ($upload) {
-			$this->Session->setFlash(__("Upload successful"));
-			return null;
+			$_data = $Model->data[$Model->alias];
+			$this->Controller->Session->setFlash(__("Successfully uploaded as '%s'",$_data['name']));
+			$this->__file = $_data['name'];
 		} else {
-			$this->Session->setFlash(__("Upload failed"));
+			throw new CakeException(__("Upload failed"));
 		}
-		return false;
+		
+		return null;
 	}	
 	
-	private function __resolveFile() {
-		$file = null;
+	public function _cmdFileRename() {
 		
-		if (isset($this->Controller->passedArgs['file'])) {
-			$file = base64_decode($this->Controller->passedArgs['file']);
-		}
-		
-		$this->__file = $file;
-	}
-	
-	private function __resolveDir() {
-		$dir = null;
-		
-		if (isset($this->Controller->passedArgs['dir'])) {
-			$dir = base64_decode($this->Controller->passedArgs['dir']);
-		}
-		
-		if(!$dir || $dir == '.' || $dir == '..')
-			$dir = '';
+		if ($this->Controller->request->is('post') || $this->Controller->request->is('put')) {
+			$_data = &$this->Controller->request->data;
 			
-		$this->__dir = $dir;
-	}
-	
-	private function __resolveCmd() {
+			$filePath1 = $_data['FileBrowser']['dir'].$_data['FileBrowser']['file'];
+			$filePath2 = $_data['FileBrowser']['dir'].$_data['FileBrowser']['file_new'];
+			
+			if ($filePath1 == $filePath2)
+				throw new CakeException(__("File '%s' not renamed", $filePath1));
+			
+			
+			if (!file_exists($this->basePath().$filePath1))
+				throw new CakeException(__("File '%s' not found", $filePath1));
+				
+			if (file_exists($this->basePath().$filePath2))
+				throw new CakeException(__("File '%s' already exists", $filePath2));
 
-		$cmd = null;
-		
-		if (isset($this->Controller->passedArgs['cmd'])) {
-			$cmd = $this->Controller->passedArgs['cmd'];
+			if (!rename($this->basePath().$filePath1, $this->basePath().$filePath2))
+				throw new CakeException(__("Failed to rename '%s' to '%s'",$filePath1, $filePath2));
+				
+			$this->__file = $_data['FileBrowser']['file_new'];
+			$this->__cmd = null;
+				
+			//$this->Controller->autoRender = false;
+			//$this->Controller->render('Media.FileBrowser/admin_file_rename','Media.filebrowser');
 		}
 		
-		$this->__cmd = $cmd;
+		return null;
 	}
-
+	
 
 	public function basePath($path = null) {
 		if (is_null($path))
@@ -155,69 +225,46 @@ class FileBrowserComponent extends Component {
 		if (is_null($url))
 			return $this->_baseUrl;
 			
-		$this->_baseUrl = Router::url($url);
+		$this->_baseUrl = Router::url('/'.$url);
 	}	
 	
-	public function buildFileBrowser($basePath = WWW_ROOT, $baseUrl = '/', $dir = '', $cmd = 'index', $params = array()) {
+	protected function _buildFileBrowser($fileBrowser = array(),$params = array()) {
 		
-		$BaseFolder = new Folder($basePath,false);
+		$_fileBrowser = array_merge(array(
+			'basePath' => $this->basePath(),
+			'baseUrl' => $this->baseUrl(),
+			//'cwd' => null,
+			'cmd' => $this->__cmd,
+			'dir' => $this->__dir,
+			//'dir_encoded' => null,
+			'file' => $this->__file,
+			//'file_encoded' => null,
+			'error' => $this->__error,
+		),$fileBrowser);
+		
+		$BaseFolder = new Folder($_fileBrowser['basePath'],false);
 		$Folder = clone($BaseFolder); //clone
 		
-		if ($dir) {
-			if (!$Folder->cd($dir)) {
-				throw new CakeException(__("Directory %s not found",strval($dir)));
+		if ($_fileBrowser['dir']) {
+			if (!$Folder->cd($_fileBrowser['dir'])) {
+				throw new CakeException(__("Directory %s not found",strval($_fileBrowser['dir'])));
 			}
 			if (!$Folder->inPath($BaseFolder->pwd())) {
-				throw new CakeException(__("Directory %s not accessable",strval($dir)));
+				throw new CakeException(__("Directory %s not accessable",strval($_fileBrowser['dir'])));
 			}
 		}
 		
 		$contents = $Folder->read(true,array('.','empty'));
 		
 		$fileBrowser = array(
-			'basePath' => $basePath,
-			'baseUrl' => $baseUrl,
-			'cwd' => $Folder->pwd(),
-			'dir' => $dir,
-			'dir_encoded' => base64_encode($dir),
-			'cmd' => $cmd,
-			'baseUrl' => $baseUrl,
-			'folders' => $contents[0],
-			'files' => $contents[1],
+			'FileBrowser' => $_fileBrowser,
+			'Folder' => $contents[0],
+			'File' => $contents[1]
 		);
 		
 		return $fileBrowser;
 	}
-	
-	public function dispatch() {
-		$dispatch = true;
-		
-		$this->read();
-		
-		if ($this->__cmd) {
-			$cmdMethod = "_cmd".Inflector::camelize($this->__cmd);
-			if (!method_exists($this, $cmdMethod))
-				throw new CakeException(__("Unknown FileBrowser Command '%s'",strval($this->__cmd)));
 
-			try {
-				$dispatch = call_user_method($cmdMethod,$this);
-				if (!is_null($dispatch))
-					return $dispatch;
-					
-			} catch(Exception $e) {
-				$this->__fileBrowser['error'] = $e->getMessage();
-				throw new CakeException($e->getMessage());
-			}
-		}
-		
-		$this->read();
-		
-		return $dispatch;
-	}
-	
-	public function fileBrowser() {
-		return $this->__fileBrowser;
-	}
 
 	
 }

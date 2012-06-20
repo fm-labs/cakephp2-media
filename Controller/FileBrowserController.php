@@ -7,8 +7,6 @@ class FileBrowserController extends MediaAppController {
 	
 	public function beforeFilter() {
 		
-		debug($this->passedArgs);
-		
 		if ($this->request->is('ajax') || (isset($this->passedArgs['iframe']) && $this->passedArgs['iframe'])) {
 			$this->layout = "ajax";
 			debug("hello");
