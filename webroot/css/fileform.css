@@ -25,7 +25,8 @@
 }
 
 .file-select .image-input {
-	float: left;	
+	float: left;
+	width: 100%;
 }
 
 .file-select .image-input-actions {
