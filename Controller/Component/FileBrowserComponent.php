@@ -114,7 +114,7 @@ class FileBrowserComponent extends Component {
 			
 		$_dir = explode('/', substr($dir, 0,-1));
 		array_pop($_dir);
-		$dir = join('/',$_dir);
+		$dir = join('/',$_dir) . '/';
 		$this->__dir = $dir;
 		$this->__file = null;
 		return null;
