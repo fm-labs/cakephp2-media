@@ -29,6 +29,7 @@ class FileBrowserHelper extends AppHelper {
 			'plugin' => $this->request->params['plugin'],
 			'controller' => $this->request->params['controller'],
 			'action' => $this->request->params['action'],
+			$this->fileBrowser['FileBrowser']['config'],
 			'cmd' => $this->fileBrowser['FileBrowser']['cmd'],
 			'dir' => $this->fileBrowser['FileBrowser']['dir'],
 			'file' => $this->fileBrowser['FileBrowser']['file'],

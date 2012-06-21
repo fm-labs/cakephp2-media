@@ -1,5 +1,21 @@
 @CHARSET "UTF-8";
 
+#flash {
+	position: fixed;
+	top: 0;
+	left: 33%;
+	margin: 0;
+	opacity: 0.8;
+}
+
+#flash:HOVER {
+	cursor: pointer;
+}
+
+#contentcontainer {
+	margin-top:30px;
+}
+
 /* Style */
 .file-browser {
 	width: 98%;
@@ -56,49 +72,66 @@
 
 #file-browser-preview-image,
 .file-browser-preview-image {
-	max-width: 255px;	
+	max-width: 255px;
+	max-height: 255px;
 }
 
-ul.filebrowser-list ul
-ul.filebrowser-list ul li {
+.filebrowser-list ul
+.filebrowser-list ul li {
 	margin: 0;
+}
+
+/* Actions */
+.file-browser-cmd {
+	padding:20px;
+	margin: 10px;
+	background: #f8f8f8;
+}
+
+.file-browser-cmd form {
+	max-width: 500px;
+}
+
+.file-browser-cmd input[readonly="readonly"] {
+	color: #333;
+	background-color: #f8f8f8;
 }
 
 
 /* Listing */
-ul.file-browser-list li {
+.file-browser-list .list-item {
 	padding: 5px 25px;
 	background-repeat: no-repeat;
 	background-position: center left;
 }
 
-ul.file-browser-list li:nth-child(odd) {
+.file-browser-list .list-item:nth-child(odd) {
 	background-color: #F7F7F7;
 }
-ul.file-browser-list li:nth-child(even) {
+.file-browser-list .list-item:nth-child(even) {
 	background-color: #FFF;
 }
 
-ul.file-browser-list li:HOVER {
+.file-browser-list .list-item:HOVER {
 	background-color: #EEE;
 }
 
-ul.file-browser-list li.file-highlight,
-ul.file-browser-list li.file-highlight:HOVER {
+.file-browser-list .list-item.file-highlight,
+.file-browser-list .list-item.file-highlight:HOVER {
 	background-color: #7EB51B;
 }
 
 
-ul.file-browser-list li > span {
+.file-browser-list .list-item > div {
 	display: inline-block;
 	padding: 0 5px; 
 	vertical-align: middle;
 }
 
-ul.file-browser-list span.file-name,
-ul.file-browser-list span.dir-parent,
-ul.file-browser-list span.dir-name {
-	min-width: 350px;
+.file-browser-list .file-name,
+.file-browser-list .dir-parent,
+.file-browser-list .dir-name {
+	width: 250px;
 }
 
 /* Directory */
@@ -106,4 +139,4 @@ ul.file-browser-list span.dir-name {
 
 /* File */
 .file-browser-list .file {	background-image: url(../img/filebrowser/file.png); }
-.file-browser-list .file-thumb { width: 60px; }
+.file-browser-list .file-thumb { width: 40px; }

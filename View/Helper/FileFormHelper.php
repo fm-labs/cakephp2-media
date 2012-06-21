@@ -12,26 +12,43 @@ class FileFormHelper extends AppHelper {
 	
 	public $helpers = array('Html','Form','Js');
 	
+	private $__filebrowserUrl = array(
+		'plugin' => 'media',
+		'controller' => 'file_browser',
+		'action' => 'index',
+		'admin' => true,
+		'iframe' => true,
+	);
+	
 	public function __construct(&$View, $settings = array()) {
 		parent::__construct($View,$settings);
+		debug($settings);
 		$this->Html->css('/media/css/fileform',null,array('inline'=>false));
 	}
-	
-	public function imageInput($field, $params = array(), $inputParams = array(), $scriptParams = array()) {
+
+/**
+ * Creates input field which shows the filebrowser
+ * 
+ * @param string $field Field entity
+ * @param string|array $config FileBrowser config as string or url as array
+ * @param array $inputParams Params which will be passed to the input field
+ * @param array $scriptParams Params which will be passed to the colorbox javascript
+ */	
+	public function imageInput($field, $config = 'default', $inputParams = array(), $scriptParams = array()) {
 		
 		$this->Form->setEntity($field);
 		$__model = $this->Form->model();
 		$__field = $this->Form->field();
 		$__value = $this->Form->value($field);
 		
-
-		//params
-		if (!is_array($params)) {
-			$params = array('href' => $params);
+		//url
+		if (is_string($config)) { //use config
+			$filebrowserUrl = $this->__filebrowserUrl + array($config);
+		} elseif (is_array($filebrowserUrl)) {//user-defined Router::url() compatible url -> @deprecated
+			$filebrowserUrl = array_merge($this->__filebrowserUrl, $config);
+			$config = 'default';
 		} else {
-			$params = array_merge(array(
-				'href'=>array('controller'=>'file_browser','action'=>'index','plugin'=>'media','iframe'=>true)
-			),$params);
+			$filebrowserUrl = $this->__filebrowserUrl;
 		}
 		
 		$out = "";
@@ -54,12 +71,20 @@ class FileFormHelper extends AppHelper {
 		$inputParams['data-preview-img'] = $__previewImgId;
 		
 		//preview
-		$_preview = $this->Html->image(
-			DH_IMAGES_URL . $__value,
-			array('class'=>'image-preview', 'id'=>$__previewImgId)
-		);
-		$out .= $this->Html->div('image-input-preview',$_preview,array('id'=>$__previewId));
-		unset($_preview);
+		//baseUrl has to be in IMAGES
+		$_baseUrl = Configure::read('FileBrowser.'.$config.'.baseUrl');
+		if (preg_match('/^(img\/)/',$_baseUrl)) {
+			$_baseUrl = preg_replace('/^(img\/)/','',$_baseUrl);
+			$_preview = $this->Html->image(
+				$_baseUrl . $__value,
+				array('class'=>'image-preview', 'id'=>$__previewImgId)
+			);
+			$out .= $this->Html->div('image-input-preview',$_preview,array('id'=>$__previewId));
+			unset($_preview);
+		} else {
+			//TODO show something if image can not be accessed directly
+			$out .= $this->Html->div('image-input-preview image-input-preview-empty','&nbsp;');
+		}
 		
 		//input
 		$_input = "";
@@ -77,7 +102,7 @@ class FileFormHelper extends AppHelper {
 		
 		//script
 		$scriptParams = array_merge(array(
-			'href' => $params['href'],
+			'href' => $filebrowserUrl,
 			'innerWidth' => '80%',
 			'innerHeight' => '80%',
 			'iframe' => true

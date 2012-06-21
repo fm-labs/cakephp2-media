@@ -31,7 +31,7 @@
 		echo $this->Html->css('/media/css/reset');
 		echo $this->Html->css('/admin_panel/css/screen/cake');
 		echo $this->Html->css('/admin_panel/css/screen/style');
-		#echo $this->Html->css('/media/css/layout/filebrowser');
+		echo $this->Html->css('/media/css/filebrowser');
 
 		$this->Js->loadJquery();
 		echo $this->Html->css('/jquery/css/ui/smoothness/jquery-ui-1.8.14.custom');
@@ -48,7 +48,7 @@
 		
 		<div id="contentwrap">
 			<div id="contentcontainer" class="container_16">
-				<div id="flash">
+				<div id="flash" class="canhide">
 					<?php echo $this->Session->flash(); ?>
 					<?php echo $this->Session->flash('auth'); ?>
 				</div>

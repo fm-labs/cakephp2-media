@@ -1,86 +1,70 @@
-<?php echo $this->Html->css('/media/css/filebrowser');?>
 <?php $this->Helpers->load('Media.FileBrowser');?>
 <?php $this->FileBrowser->setFileBrowser($fileBrowser);?>
-<div>
-	<div class="file-browser" id="file-browser-tabs-1">
-		<div class="file-browser-actions">
-			<div id="file-browser-action-file-rename">
-			<?php if ($fileBrowser['FileBrowser']['cmd'] == "file_rename"):?>
-				<?php 
-				$this->Form->data = $fileBrowser;
-				echo $this->Form->create('FileBrowser',array('url'=>$this->FileBrowser->url('file_rename')));
-				?>
-				<fieldset>
-					<legend><?php echo __("Rename %s", $this->Form->value('dir').$this->Form->value('file'))?></legend>
-				<?php
-				echo $this->Form->hidden('cmd');
-				echo $this->Form->hidden('dir');
-				echo $this->Form->hidden('file');
-				echo $this->Form->input('file_new',array('default'=>$this->Form->value('file')));
-				echo $this->Form->submit(__("Rename"));
-				?>
-				<?php echo $this->Html->link(__("Back to '%s'", $this->Form->value('dir')),$this->FileBrowser->url('open') );?>
-				<?php $this->Form->end();?>
-				</fieldset>
-			<?php elseif ($fileBrowser['FileBrowser']['file']):?>
-			<script type="text/javascript">
-				$(document).ready(function() {
-					$.scrollTo($("#<?php echo md5($fileBrowser['FileBrowser']['file']); ?>"),400);
-				});
-			</script>
-			<?php endif; ?>
-			</div>
-		</div>
-	
+<?php if ($fileBrowser['FileBrowser']['file']):?>
+<script type="text/javascript">
+	$(document).ready(function() {
+		$.scrollTo($("#<?php echo md5($fileBrowser['FileBrowser']['file']); ?>"),500,{
+			offset: {top: -300}
+		});
+
+		$(".canhide").click(function() {
+			$(this).fadeOut('300');
+		});
+	});
+</script>
+<?php endif; ?>
+<div class="file-browser">
+	<div id="file-browser-tabs-1">
 		<div class="file-browser-column">
 		<!-- COL 1 -->
 		<div class="file-browser-col1">
 		<div>
-			<h3><?php echo __("Current Folder: %s",'/'.$fileBrowser['FileBrowser']['dir']);?></h3>
+			<h3><?php echo __("Current Folder: %s",'/'.$fileBrowser['FileBrowser']['dir']);?>&nbsp;
+			<?php echo $this->Html->link(__("Reload"),$this->Html->url(null,true));?>
+			</h3>
 			<div>
-				<ul class="file-browser-list">
+				<div class="file-browser-list">
 				
 					<!-- PARENT DIR -->
-					<li class="dir"><?php 
+					<div class="list-item dir"><?php 
 						echo $this->Html->tag(
 							'span',
 							$this->Html->link('..',$this->FileBrowser->url('parent_dir'),array('class'=>'dir-name'))); 
-					?></li>
+					?></div>
 					
 					<!-- DIRECTORIES -->
 					<?php foreach($fileBrowser['Folder'] as $folder):?>
 					<?php if ($fileBrowser['FileBrowser']['dir']):?>
 					<?php endif; ?>
-					<li class="dir"><?php 
+					<div class="list-item dir"><?php 
 						echo $this->Html->tag(
 							'span',
-							$this->Html->link($folder,array('action'=>$this->params['action'],'dir'=>base64_encode($fileBrowser['FileBrowser']['dir'].$folder.'/'))),array('class'=>'dir-name')); 
-					?></li>
+							$this->Html->link($folder,$this->FileBrowser->url(array('cmd'=>'open','dir'=>$folder.'/','file'=>null)),array('class'=>'dir-name')));
+					?></div>
 					<?php endforeach;?>
 					
 					<!-- FILES -->
 					<?php foreach($fileBrowser['File'] as $file):?>
 					<?php $this->FileBrowser->isImage($file); ?>
 					<?php 
-					$_fileClass = "file-jpg";
+					$_fileClass = "list-item file";
 					if ($file == $fileBrowser['FileBrowser']['file'])
 						$_fileClass .= " file-highlight";
 					?>
-					<li id="<?php echo md5($file); ?>" class="file <?php echo $_fileClass?>"><?php
+					<div id="<?php echo md5($file); ?>" class="file <?php echo $_fileClass?>"><?php
 						$__fileUrl = $fileBrowser['FileBrowser']['dir'] . $file;
-						echo $this->Html->tag('span', 
-							$this->FileBrowser->thumbImage($file),
-							array('class' => 'file-thumb')
+						echo $this->Html->div('file-thumb', 
+							$this->FileBrowser->thumbImage($file)
 						);
-						echo $this->Html->tag('span',$file,array('class'=>'file-name','title'=>$__fileUrl)); 
-						echo $this->Html->tag('span',
+						echo $this->Html->div('file-name',$file,array('title'=>$__fileUrl)); 
+						echo $this->Html->tag('div',
 							$this->Html->link(__("Rename"),
 								//array('action'=>$this->params['action'],'cmd'=>'file_rename','dir'=>base64_encode($fileBrowser['dir']),'file'=>base64_encode($file)),
 								$this->FileBrowser->url(array('cmd'=>'file_rename','file'=>$file)),
 								array('class'=>'file-action file-rename','data-url'=>$__fileUrl)
 							)
 						);
-						echo $this->Html->tag('span',
+						echo $this->Html->tag('div',
 							$this->Html->link(__("Delete"),
 								//array('action'=>$this->params['action'],'cmd'=>'file_delete','dir'=>base64_encode($fileBrowser['FileBrowser']['dir']),'file'=>base64_encode($file)),
 								$this->FileBrowser->url(array('cmd'=>'file_delete','file'=>$file)),
@@ -88,12 +72,12 @@
 								__("Sure, that you want to delete the file '%s'",h($file))
 							)
 						);
-						echo $this->Html->tag('span',
+						echo $this->Html->tag('div',
 							$this->Html->link(__("Select"),'#',
 								array('class'=>'file-action file-select','data-url'=>$__fileUrl)));
-					?></li>
+					?></div>
 					<?php endforeach;?>
-				</ul>
+				</div>
 			</div>
 			<div id="file-browser-debug">
 			<?php debug($fileBrowser);?>
@@ -175,7 +159,7 @@ $this->Js->get("a[rel='filebrowser']")->colorbox(array(
 
 <script type="text/javascript">
 $(document).ready(function() {
-	var filebrowserBaseUrl = '<?php echo $fileBrowser['FileBrowser']['baseUrl']; ?>';
+	var filebrowserBaseUrl = '<?php echo @$fileBrowser['FileBrowser']['baseUrl']; ?>';
 
 	$("a[rel='filebrowser']").bind('click',function(e) {
 		$("#file-browser-preview-image").attr('src', $(this).attr('href'));

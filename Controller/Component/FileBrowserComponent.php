@@ -3,44 +3,136 @@ App::uses('Component','Controller/Component');
 App::uses('Folder','Utility');
 App::uses('File','Utility');
 
+/**
+ * FileBrowserComponent
+ * 
+ * @author Flow
+ * @property SessionComponent $Session
+ */
 class FileBrowserComponent extends Component {
 
+	
+	public $components = array('Session');
+	
 /**
  * Controller instance
  * @var Controller
  */
 	protected $Controller;
 
-	
+/**
+ * Absolute path to file root
+ * @var string
+ */	
 	protected $_basePath = WWW_ROOT;
+	
+/**
+ * Base url relative to FULL_BASE_URL
+ * @var string
+ */
 	protected $_baseUrl = '/';
-	
+
+/**
+ * Current FileBrowser
+ * @var mixed
+ */	
 	private $__fileBrowser = array();
+
+
+/**
+ * Currently used config
+ * @var string Default 'default'
+ */	
+	private $__config = 'default';
 	
-	private $__cmd;
-	private $__file;
-	private $__dir;
-	private $__error;
+/**
+ * User Command
+ * Supported commands: open|parent_dir|file_rename|file_delete
+ * 
+ * @var string Default 'open'
+ */	
+	private $__cmd 		= "open";
 	
-	public $components = array('Session');
+/**
+ * Current selected file name in format: [filename].[ext]
+ * @var string Default NULL
+ */
+	private $__file 	= null;
 	
+/**
+ * Current selected directory in format [directoryname]/
+ * with trailing slash!
+ * @var string Default '/'
+ */
+	private $__dir 		= "/";
+	
+/**
+ * Last error
+ * @var string
+ */
+	private $__error 	= "";
+	
+/**
+ * Name of view file to be rendered after dispatching
+ * @var string Default 'index'
+ */
+	private $__view 	= "index";
+	
+/**
+ * @see Component::initialize()
+ */
 	public function initialize(&$controller) {
 		$this->Controller =& $controller;
 		$this->basePath($this->basePath());
 		$this->baseUrl($this->baseUrl());
 		
-		$this->_initRequest();
 	}	
-	
-	public function startup(&$controller) {
-		#$this->layout = 'Media.file_browser';
-	}
 
+/**
+ * @see Component::beforeRender()
+ */
 	public function beforeRender(&$controller) {
-		#$this->Controller->helpers['Js'] = 'Jquery.JqueryExt';
 		$this->Controller->set('fileBrowser',$this->__fileBrowser);
 	}	
 	
+	public function config($name = 'default') {
+		$config = Configure::read('FileBrowser.'.$name);
+		if (!$config)
+			throw new CakeException(__("FileBrowserComponent::config() No configuration '%s' found",$name));
+			
+		$this->__config = $name;
+		foreach($config as $key => $val) {
+			switch($key) {
+				case "basePath":
+					$this->basePath($val);
+					break;
+				case "baseUrl":
+					$this->baseUrl($val);
+					break;
+				default:
+					break;
+			}
+		}
+	}
+	
+	public function basePath($path = null) {
+		if (is_null($path))
+			return $this->_basePath;
+			
+		$this->_basePath = $path;
+	}
+	
+	public function baseUrl($url = null) {
+		if (is_null($url))
+			return $this->_baseUrl;
+			
+		$this->_baseUrl = Router::url('/'.$url);
+	}		
+
+/**
+ * Initalizes params from Controller request
+ * @return void
+ */	
 	protected function _initRequest() {
 		$dir = $file = $cmd = null;
 		
@@ -65,17 +157,25 @@ class FileBrowserComponent extends Component {
 		}
 		$this->__cmd = $cmd;
 	}
-	
+
+/**
+ * Dispatches the selected command
+ * @return void
+ * @throws CakeException
+ */	
 	public function dispatch() {
+		
+		$this->_initRequest();
+		
 		$dispatch = true;
 		
 		$exception = null;
 		if ($this->__cmd) {
 			$cmdMethod = "_cmd".Inflector::camelize($this->__cmd);
-			if (!method_exists($this, $cmdMethod))
-				throw new CakeException(__("Unknown FileBrowser Command '%s'",strval($this->__cmd)));
-
 			try {
+				if (!method_exists($this, $cmdMethod))
+					throw new CakeException(__("Unknown FileBrowser Command '%s'",strval($this->__cmd)));
+
 				$dispatch = call_user_method($cmdMethod,$this);
 				if (!is_null($dispatch))
 					return $dispatch;
@@ -89,8 +189,18 @@ class FileBrowserComponent extends Component {
 		
 		$this->__fileBrowser = $this->_buildFileBrowser();
 		
-		if ($exception)
-			throw new CakeException($exception->getMessage());
+		if ($exception) {
+			//throw new CakeException($exception->getMessage());
+			$this->Controller->Session->setFlash($exception->getMessage());
+		}
+		
+		if (!$this->__view)
+			$this->__view = "index";
+			
+		$_view = 'Media.FileBrowser/admin_'.$this->__view;
+		
+		$this->Controller->autoRender = false;
+		$this->Controller->render($_view, 'Media.filebrowser');
 		
 		return $dispatch;
 	}	
@@ -109,12 +219,17 @@ class FileBrowserComponent extends Component {
 	public function _cmdParentDir() {
 		
 		$dir = $this->__dir;
+		
 		if (!$dir || $dir == '/' || $dir == DS)
 			return null;
 			
 		$_dir = explode('/', substr($dir, 0,-1));
 		array_pop($_dir);
-		$dir = join('/',$_dir) . '/';
+		if (count($_dir) > 0) {
+			$dir = join('/',$_dir) . '/';
+		} else {
+			$dir = null;
+		}
 		$this->__dir = $dir;
 		$this->__file = null;
 		return null;
@@ -184,6 +299,7 @@ class FileBrowserComponent extends Component {
 	
 	public function _cmdFileRename() {
 		
+		$this->__view = "file_rename";
 		if ($this->Controller->request->is('post') || $this->Controller->request->is('put')) {
 			$_data = &$this->Controller->request->data;
 			
@@ -205,32 +321,17 @@ class FileBrowserComponent extends Component {
 				
 			$this->__file = $_data['FileBrowser']['file_new'];
 			$this->__cmd = null;
+			$this->__view = null;
 				
-			//$this->Controller->autoRender = false;
-			//$this->Controller->render('Media.FileBrowser/admin_file_rename','Media.filebrowser');
-		}
+		} 
 		
 		return null;
 	}
 	
-
-	public function basePath($path = null) {
-		if (is_null($path))
-			return $this->_basePath;
-			
-		$this->_basePath = $path;
-	}
-	
-	public function baseUrl($url = null) {
-		if (is_null($url))
-			return $this->_baseUrl;
-			
-		$this->_baseUrl = Router::url('/'.$url);
-	}	
-	
 	protected function _buildFileBrowser($fileBrowser = array(),$params = array()) {
 		
 		$_fileBrowser = array_merge(array(
+			'config' => $this->__config,
 			'basePath' => $this->basePath(),
 			'baseUrl' => $this->baseUrl(),
 			//'cwd' => null,
