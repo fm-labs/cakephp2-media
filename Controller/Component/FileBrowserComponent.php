@@ -156,6 +156,14 @@ class FileBrowserComponent extends Component {
 			$cmd = $this->Controller->passedArgs['cmd'];
 		}
 		$this->__cmd = $cmd;
+		
+		//filepath
+		if (isset($this->Controller->passedArgs['filepath'])) {
+			$filepath = base64_decode($this->Controller->passedArgs['filepath']);
+			$parts = explode('/',$filepath);
+			$this->__file = array_pop($parts);
+			$this->__dir = (count($parts) > 0) ? join('/',$parts).'/' : '';
+		}
 	}
 
 /**

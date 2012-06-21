@@ -22,7 +22,6 @@ class FileFormHelper extends AppHelper {
 	
 	public function __construct(&$View, $settings = array()) {
 		parent::__construct($View,$settings);
-		debug($settings);
 		$this->Html->css('/media/css/fileform',null,array('inline'=>false));
 	}
 
@@ -50,6 +49,8 @@ class FileFormHelper extends AppHelper {
 		} else {
 			$filebrowserUrl = $this->__filebrowserUrl;
 		}
+		
+		$filebrowserUrl += array('filepath'=>base64_encode($__value));
 		
 		$out = "";
 		
