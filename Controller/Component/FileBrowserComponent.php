@@ -359,7 +359,7 @@ class FileBrowserComponent extends Component {
 				throw new CakeException(__("Directory %s not found",strval($_fileBrowser['dir'])));
 			}
 			if (!$Folder->inPath($BaseFolder->pwd())) {
-				throw new CakeException(__("Directory %s not accessable",strval($_fileBrowser['dir'])));
+				throw new CakeException(__("Directory %s not accessable (Not in %s)",strval($_fileBrowser['dir']), $BaseFolder->pwd()));
 			}
 		}
 		

@@ -33,10 +33,28 @@ class FileBrowserController extends MediaAppController {
  * ROOT FileBrowser
  */	
 	public function admin_root() {
-		$this->FileBrowser->basePath(ROOT);
-		$this->FileBrowser->baseUrl('/');
-		$this->FileBrowser->dispatch();
+		try {
+			debug(ROOT);
+			$this->FileBrowser->basePath(ROOT.DS);
+			$this->FileBrowser->baseUrl('/');
+			$this->FileBrowser->dispatch();
+		} catch(Exception $e) {
+			debug($e->getMessage());
+		}
 	}
+	
+	public function admin_tmp() {
+		try {
+			$this->FileBrowser->basePath(TMP);
+			$this->FileBrowser->baseUrl(false);
+			$this->FileBrowser->dispatch();
+		} catch(Exception $e) {
+			debug($e->getFile().":".$e->getLine()." >". $e->getMessage());
+		}
+	}
+	
+	
+	
 	
 	public function admin_upload() {
 		

@@ -39,7 +39,7 @@
 					<div class="list-item dir"><?php 
 						echo $this->Html->tag(
 							'span',
-							$this->Html->link($folder,$this->FileBrowser->url(array('cmd'=>'open','dir'=>$folder.'/','file'=>null)),array('class'=>'dir-name')));
+							$this->Html->link($folder,$this->FileBrowser->url(array('cmd'=>'open','dir'=>$fileBrowser['FileBrowser']['dir'].$folder.'/','file'=>null)),array('class'=>'dir-name')));
 					?></div>
 					<?php endforeach;?>
 					
