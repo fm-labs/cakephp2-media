@@ -98,7 +98,7 @@ class FileBrowserComponent extends Component {
 	public function config($name = 'default') {
 		$config = Configure::read('FileBrowser.'.$name);
 		if (!$config)
-			throw new CakeException(__("FileBrowserComponent::config() No configuration '%s' found",$name));
+			throw new CakeException(__d('media',"FileBrowserComponent::config() No configuration '%s' found",$name));
 			
 		$this->__config = $name;
 		foreach($config as $key => $val) {
@@ -182,7 +182,7 @@ class FileBrowserComponent extends Component {
 			$cmdMethod = "_cmd".Inflector::camelize($this->__cmd);
 			try {
 				if (!method_exists($this, $cmdMethod))
-					throw new CakeException(__("Unknown FileBrowser Command '%s'",strval($this->__cmd)));
+					throw new CakeException(__d('media',"Unknown FileBrowser Command '%s'",strval($this->__cmd)));
 
 				$dispatch = call_user_method($cmdMethod,$this);
 				if (!is_null($dispatch))
@@ -248,13 +248,13 @@ class FileBrowserComponent extends Component {
 		$File = $this->_getFile();
 		
 		if (!$File)
-			throw new CakeException(__("Failed to delete file. No file specified"));
+			throw new CakeException(__d('media',"Failed to delete file. No file specified"));
 
 		$_fileName = $File->name().".".$File->ext();
 		if ($File->delete()) {
-			$this->Controller->Session->setFlash(__("File '%s' deleted", $_fileName));
+			$this->Controller->Session->setFlash(__d('media',"File '%s' deleted", $_fileName));
 		} else
-			throw new CakeException(__("Failed to delete file '%s'", $_fileName));
+			throw new CakeException(__d('media',"Failed to delete file '%s'", $_fileName));
 
 
 		$this->__file = null;	
@@ -296,10 +296,10 @@ class FileBrowserComponent extends Component {
 		$upload = $Model->save($this->Controller->request->data);
 		if ($upload) {
 			$_data = $Model->data[$Model->alias];
-			$this->Controller->Session->setFlash(__("Successfully uploaded as '%s'",$_data['name']));
+			$this->Controller->Session->setFlash(__d('media',"Successfully uploaded as '%s'",$_data['name']));
 			$this->__file = $_data['name'];
 		} else {
-			throw new CakeException(__("Upload failed"));
+			throw new CakeException(__d('media',"Upload failed"));
 		}
 		
 		return null;
@@ -315,17 +315,17 @@ class FileBrowserComponent extends Component {
 			$filePath2 = $_data['FileBrowser']['dir'].$_data['FileBrowser']['file_new'];
 			
 			if ($filePath1 == $filePath2)
-				throw new CakeException(__("File '%s' not renamed", $filePath1));
+				throw new CakeException(__d('media',"File '%s' not renamed", $filePath1));
 			
 			
 			if (!file_exists($this->basePath().$filePath1))
-				throw new CakeException(__("File '%s' not found", $filePath1));
+				throw new CakeException(__d('media',"File '%s' not found", $filePath1));
 				
 			if (file_exists($this->basePath().$filePath2))
-				throw new CakeException(__("File '%s' already exists", $filePath2));
+				throw new CakeException(__d('media',"File '%s' already exists", $filePath2));
 
 			if (!rename($this->basePath().$filePath1, $this->basePath().$filePath2))
-				throw new CakeException(__("Failed to rename '%s' to '%s'",$filePath1, $filePath2));
+				throw new CakeException(__d('media',"Failed to rename '%s' to '%s'",$filePath1, $filePath2));
 				
 			$this->__file = $_data['FileBrowser']['file_new'];
 			$this->__cmd = null;
@@ -356,10 +356,10 @@ class FileBrowserComponent extends Component {
 		
 		if ($_fileBrowser['dir']) {
 			if (!$Folder->cd($_fileBrowser['dir'])) {
-				throw new CakeException(__("Directory %s not found",strval($_fileBrowser['dir'])));
+				throw new CakeException(__d('media',"Directory %s not found",strval($_fileBrowser['dir'])));
 			}
 			if (!$Folder->inPath($BaseFolder->pwd())) {
-				throw new CakeException(__("Directory %s not accessable (Not in %s)",strval($_fileBrowser['dir']), $BaseFolder->pwd()));
+				throw new CakeException(__d('media',"Directory %s not accessable (Not in %s)",strval($_fileBrowser['dir']), $BaseFolder->pwd()));
 			}
 		}
 		

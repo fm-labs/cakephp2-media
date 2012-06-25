@@ -56,7 +56,7 @@ class ThumbBehavior extends ModelBehavior {
 			$_image = $model->data[$model->alias][$_field];
 			$_imagePath = IMAGES . $s['baseDir'] . $_image;
 			if (!file_exists($_imagePath)) {
-				$model->invalidate($_field, __("The file '%s' does not exist", $_image));
+				$model->invalidate($_field, __d('media',"The file '%s' does not exist", $_image));
 				$validated = false;
 			}
 		}
@@ -122,7 +122,7 @@ class ThumbBehavior extends ModelBehavior {
 		//config	
 		if (!isset($this->thumbs[$model->alias][$field])) {
 			if (Configure::read('debug') > 0) {
-				throw new CakeException(__("ThumbBehavior::attachThumb() Thumb configuration for field '%s' is not set"));
+				throw new CakeException(__d('media',"ThumbBehavior::attachThumb() Thumb configuration for field '%s' is not set"));
 			}
 			$thumbs = array(
 				'default' => array(
@@ -146,7 +146,7 @@ class ThumbBehavior extends ModelBehavior {
 					if ($s['defaultImage']) //use default image if source not found
 						$file = $s['defaultImage'];
 					else
-						throw new CakeException(__("Source file '%s' does not exist", $source));
+						throw new CakeException(__d('media',"Source file '%s' does not exist", $source));
 				}
 				$source = IMAGES.$s['baseDir'].$file;
 				$source_url = Router::url('/',true) . IMAGES_URL . $s['baseDir'] . $file;
@@ -160,7 +160,7 @@ class ThumbBehavior extends ModelBehavior {
 					
 			} catch(Exception $e) {
 				debug($e->getMessage());
-				CakeLog::write('error', __("ThumbBehavior::attachThumb() [Field '%s';Thumb '%s']: %s",$field, $name, $e->getMessage()));
+				CakeLog::write('error', __d('media',"ThumbBehavior::attachThumb() [Field '%s';Thumb '%s']: %s",$field, $name, $e->getMessage()));
 				$error = $e->getMessage();
 			}
 			

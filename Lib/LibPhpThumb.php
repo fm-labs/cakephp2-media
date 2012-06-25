@@ -27,7 +27,7 @@ class LibPhpThumb {
 			}
 		} catch(Exception $e) {
 			CakeLog::write('phpthumb',$e->getMessage());
-			throw new CakeException(__("Failed to create image thumbnail"));
+			throw new CakeException(__d('media',"Failed to create image thumbnail"));
 		}
 			
 		return $target;
@@ -101,7 +101,7 @@ class LibPhpThumb {
 		
 		
 		if (!file_exists($source))
-			throw new NotFoundException(__("File %s not found",$source));
+			throw new NotFoundException(__d('media',"File %s not found",$source));
 		
 		// Configuring thumbnail settings
 		$phpThumb = new phpthumb;
@@ -138,7 +138,7 @@ class LibPhpThumb {
 		$q = (isset($params['q'])) ? $params['q'] : null;
 		
 		if (!file_exists($source))
-			throw new NotFoundException(__("Source file '%s' does not exist", $source));
+			throw new NotFoundException(__d('media',"Source file '%s' does not exist", $source));
 			
 		$File = new File($source,false);
 		

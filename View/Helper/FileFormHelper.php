@@ -93,8 +93,8 @@ class FileFormHelper extends AppHelper {
 		$_input .= $this->Form->input($field,$inputParams);
 		
 		$_actions = "";
-		$_actions .= $this->Html->link(__("Change"),'#',array('class'=>'image-input-action', 'id'=>$__openerId,'data-target'=>$__id));
-		//$_actions .= $this->Html->link(__("Remove"),'#',array('class'=>'image-input-action'));
+		$_actions .= $this->Html->link(__d('media',"Change"),'#',array('class'=>'image-input-action', 'id'=>$__openerId,'data-target'=>$__id));
+		//$_actions .= $this->Html->link(__d('media',"Remove"),'#',array('class'=>'image-input-action'));
 		$_input .= $this->Html->div('image-input-actions',$_actions);
 		unset($_actions);
 		

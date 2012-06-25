@@ -7,9 +7,9 @@ class FileUploadsController extends MediaAppController {
 	
 		if ($this->request->is('post')) {
 			if ($this->Attachment->saveAll($this->request->data)) {
-				$this->Session->setFlash(__("Attachment successfull"));
+				$this->Session->setFlash(__d('media',"Attachment successfull"));
 			} else {
-				$this->Session->setFlash(__("Upload failed"));
+				$this->Session->setFlash(__d('media',"Upload failed"));
 				debug($this->Attachment->validationErrors);
 			}
 		}
@@ -24,10 +24,10 @@ class FileUploadsController extends MediaAppController {
 		
 		#$this->Upload->create();
 		if ($this->Upload->saveAll($this->request->data)) {
-			$this->Session->setFlash(__("Upload successfull"));
+			$this->Session->setFlash(__d('media',"Upload successfull"));
 			#debug($this->Upload->Attachment->getUploads());
 		} else {
-			$this->Session->setFlash(__("Upload failed"));
+			$this->Session->setFlash(__d('media',"Upload failed"));
 			debug($this->Upload->validationErrors);
 			debug($this->Upload->Attachment->validationErrors);
 			#debug($this->Upload->Attachment->getUploadErrors());

@@ -7,7 +7,7 @@
 		<div class="file-browser-column">
 		<div class="file-browser-col1">
 		<div>
-			<h3><?php echo __("Current Folder: %s",'/'.$fileBrowser['dir']);?></h3>
+			<h3><?php echo __d('media',"Current Folder: %s",'/'.$fileBrowser['dir']);?></h3>
 			<div>
 				<ul class="file-browser-list">
 					<li class="dir"><?php 
@@ -36,20 +36,20 @@
 						);
 						echo $this->Html->tag('span',$file,array('class'=>'file-name','title'=>$__fileUrl)); 
 						echo $this->Html->tag('span',
-							$this->Html->link(__("Rename"),
+							$this->Html->link(__d('media',"Rename"),
 								array('action'=>$this->params['action'],'cmd'=>'file_rename','dir'=>base64_encode($fileBrowser['dir']),'file'=>base64_encode($file)),
 								array('class'=>'file-action file-rename','data-url'=>$__fileUrl)
 							)
 						);
 						echo $this->Html->tag('span',
-							$this->Html->link(__("Delete"),
+							$this->Html->link(__d('media',"Delete"),
 								array('action'=>$this->params['action'],'cmd'=>'file_delete','dir'=>base64_encode($fileBrowser['dir']),'file'=>base64_encode($file)),
 								array('class'=>'file-action file-delete','data-url'=>$__fileUrl),
-								__("Sure, that you want to delete the file '%s'",h($file))
+								__d('media',"Sure, that you want to delete the file '%s'",h($file))
 							)
 						);
 						echo $this->Html->tag('span',
-							$this->Html->link(__("Select"),'#',
+							$this->Html->link(__d('media',"Select"),'#',
 								array('class'=>'file-action file-select','data-url'=>$__fileUrl)));
 					?></li>
 					<?php endforeach;?>
@@ -65,9 +65,9 @@
 						'id' => 'file-browser-preview-image',
 						'alt' => 'Preview',
 					));?><br /><br />
-					<?php echo $this->Html->link(__("Large Preview"),'#',array('class'=>'file-browser-btn-preview-large'));?>
-					<?php #echo $this->Html->link(__("Source"),'#',array('class'=>'file-browser-btn-source'));?>
-					<?php #echo $this->Html->link(__("Download"),'#',array('class'=>'file-browser-btn-download'));?>
+					<?php echo $this->Html->link(__d('media',"Large Preview"),'#',array('class'=>'file-browser-btn-preview-large'));?>
+					<?php #echo $this->Html->link(__d('media',"Source"),'#',array('class'=>'file-browser-btn-source'));?>
+					<?php #echo $this->Html->link(__d('media',"Download"),'#',array('class'=>'file-browser-btn-download'));?>
 				</div>
 				<?php 
 				$this->Js->get('.__file-browser-btn-preview-large')->colorbox(array(
@@ -81,7 +81,7 @@
 			<h1>Upload</h1>
 				<div class="file-browser-preview-image">
 					<?php $uploadDir = ($fileBrowser['dir']) ? $fileBrowser['dir'] : '/'; ?>
-					<h1><?php echo __("Upload to %s", h($uploadDir));?></h1>
+					<h1><?php echo __d('media',"Upload to %s", h($uploadDir));?></h1>
 					<?php
 					    echo $this->Form->create('FileBrowserUpload', array('type' => 'file','url'=>array(
 					    	'controller'=>$this->params->controller, 

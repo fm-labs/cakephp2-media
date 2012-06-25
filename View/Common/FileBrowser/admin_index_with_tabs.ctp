@@ -8,15 +8,15 @@ $_id = uniqid('file-browser-tabs');
 <div id="<?php echo $_id ?>">
 
 	<ul>
-		<li><?php echo $this->Html->link(__("FileBrowser"),'#file-browser-tabs-1'); ?></li>
-		<li><?php echo $this->Html->link(__("Upload"),'#file-browser-tabs-2'); ?></li>
+		<li><?php echo $this->Html->link(__d('media',"FileBrowser"),'#file-browser-tabs-1'); ?></li>
+		<li><?php echo $this->Html->link(__d('media',"Upload"),'#file-browser-tabs-2'); ?></li>
 	</ul>
 
 	<div class="file-browser" id="file-browser-tabs-1">
 		<div class="file-browser-col1">
 		<div>
-			<h1><?php echo __("Select Image");?></h1>
-			<h3><?php echo __("Current Folder: %s",'/'.$fileBrowser['dir']);?></h3>
+			<h1><?php echo __d('media',"Select Image");?></h1>
+			<h3><?php echo __d('media',"Current Folder: %s",'/'.$fileBrowser['dir']);?></h3>
 			<div>
 				<ul class="file-browser-list">
 					<li class="dir"><?php 
@@ -35,10 +35,10 @@ $_id = uniqid('file-browser-tabs');
 						$__fileUrl = $fileBrowser['dir'].$file; 
 						echo $this->Html->tag('span',$file,array('class'=>'file-name','title'=>$__fileUrl)); 
 						echo $this->Html->tag('span',
-							$this->Html->link(__("View"),'#',
+							$this->Html->link(__d('media',"View"),'#',
 								array('class'=>'file-action file-view','data-url'=>$__fileUrl)));
 						echo $this->Html->tag('span',
-							$this->Html->link(__("Select"),'#',
+							$this->Html->link(__d('media',"Select"),'#',
 								array('class'=>'file-action file-select','data-url'=>$__fileUrl)));
 					?></li>
 					<?php endforeach;?>
@@ -50,14 +50,14 @@ $_id = uniqid('file-browser-tabs');
 			<div id="file-browser-preview" class="file-browser-preview">
 			<h1>Preview</h1>
 				<div class="file-browser-preview-image">
-					<?php echo __("No file selected"); ?>
+					<?php echo __d('media',"No file selected"); ?>
 				</div>
 			</div>
 			<div id="file-browser-upload" class="file-browser-upload">
 			<h1>Preview</h1>
 				<div class="file-browser-preview-image">
 					<?php $uploadDir = ($fileBrowser['dir']) ? $fileBrowser['dir'] : '/'; ?>
-					<h1><?php echo __("Upload to %s", h($uploadDir));?></h1>
+					<h1><?php echo __d('media',"Upload to %s", h($uploadDir));?></h1>
 					<?php
 					    echo $this->Form->create('FileBrowserUpload', array('type' => 'file','url'=>array(
 					    	'controller'=>$this->params->controller, 
@@ -84,7 +84,7 @@ $_id = uniqid('file-browser-tabs');
 	<div id="file-browser-tabs-2">
 		<div>
 			<?php $uploadDir = ($fileBrowser['dir']) ? $fileBrowser['dir'] : '/'; ?>
-			<h1><?php echo __("Upload to %s", h($uploadDir));?></h1>
+			<h1><?php echo __d('media',"Upload to %s", h($uploadDir));?></h1>
 			<?php
 			    echo $this->Form->create('FileBrowserUpload', array('type' => 'file','url'=>array(
 			    	'controller'=>$this->params->controller, 

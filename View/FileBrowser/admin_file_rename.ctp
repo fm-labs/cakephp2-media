@@ -8,15 +8,15 @@
 			echo $this->Form->create('FileBrowser',array('url'=>$this->FileBrowser->url('file_rename')));
 			?>
 			<fieldset>
-				<legend><?php echo __("Rename %s", $this->Form->value('dir').$this->Form->value('file'))?></legend>
+				<legend><?php echo __d('media',"Rename %s", $this->Form->value('dir').$this->Form->value('file'))?></legend>
 			<?php
 			echo $this->Form->hidden('cmd');
 			echo $this->Form->hidden('dir');
-			echo $this->Form->input('file',array('readonly'=>true,'label'=>__("Original name")));
-			echo $this->Form->input('file_new',array('label'=>__("New name"), 'default'=>$this->Form->value('file')));
-			echo $this->Form->submit(__("Rename"));
+			echo $this->Form->input('file',array('readonly'=>true,'label'=>__d('media',"Original name")));
+			echo $this->Form->input('file_new',array('label'=>__d('media',"New name"), 'default'=>$this->Form->value('file')));
+			echo $this->Form->submit(__d('media',"Rename"));
 			?>
-			<?php echo $this->Html->link(__("Back to '/%s'", $this->Form->value('dir')),$this->FileBrowser->url('open') );?>
+			<?php echo $this->Html->link(__d('media',"Back to '/%s'", $this->Form->value('dir')),$this->FileBrowser->url('open') );?>
 			</fieldset>
 			<?php $this->Form->end();?>
 	</div>

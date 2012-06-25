@@ -116,14 +116,14 @@ class UploadBehavior extends ModelBehavior {
 
 		//upload error
 		$uploadErrors = array(
-	        UPLOAD_ERR_OK =>__("There is no error, the file uploaded successfully"),
-	        UPLOAD_ERR_INI_SIZE =>__("The uploaded file exceeds the upload_max_filesize directive in php.ini"),
-	        UPLOAD_ERR_FORM_SIZE =>__("The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form"),
-	        UPLOAD_ERR_PARTIAL =>__("The uploaded file was only partially uploaded"),
-	        UPLOAD_ERR_NO_FILE =>__("No file was uploaded"),
-	        UPLOAD_ERR_NO_TMP_DIR =>__("Missing a temporary folder"),
-	        UPLOAD_ERR_CANT_WRITE => __("Can not write to disk"),
-	        UPLOAD_ERR_EXTENSION => __("File upload stopped by extension")
+	        UPLOAD_ERR_OK =>__d('media',"There is no error, the file uploaded successfully"),
+	        UPLOAD_ERR_INI_SIZE =>__d('media',"The uploaded file exceeds the upload_max_filesize directive in php.ini"),
+	        UPLOAD_ERR_FORM_SIZE =>__d('media',"The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form"),
+	        UPLOAD_ERR_PARTIAL =>__d('media',"The uploaded file was only partially uploaded"),
+	        UPLOAD_ERR_NO_FILE =>__d('media',"No file was uploaded"),
+	        UPLOAD_ERR_NO_TMP_DIR =>__d('media',"Missing a temporary folder"),
+	        UPLOAD_ERR_CANT_WRITE => __d('media',"Can not write to disk"),
+	        UPLOAD_ERR_EXTENSION => __d('media',"File upload stopped by extension")
 		);
 		
 		if ($model->data[$model->alias]['error'] > 0){
@@ -149,7 +149,7 @@ class UploadBehavior extends ModelBehavior {
 		
 		foreach($check as $field => $name) {
 			if (strlen($name) > $this->settings[$model->alias]['nameMaxLength']) {
-				$model->invalidate($__uploadField,__("The filename can not be larger than %s characters", $this->settings[$model->alias]['nameMaxLength']));
+				$model->invalidate($__uploadField,__d('media',"The filename can not be larger than %s characters", $this->settings[$model->alias]['nameMaxLength']));
 				return false;
 			}
 		}
@@ -173,7 +173,7 @@ class UploadBehavior extends ModelBehavior {
 			
 		foreach($check as $field => $mime) {
 			if (!in_array($mime,$allowedMime)) {
-				$model->invalidate($__uploadField, __("'%s' is not a valid mime type",$mime));
+				$model->invalidate($__uploadField, __d('media',"'%s' is not a valid mime type",$mime));
 				return false;
 			}
 		}
@@ -197,7 +197,7 @@ class UploadBehavior extends ModelBehavior {
 		
 		foreach($check as $field => $ext) {
 			if (!in_array($ext,$allowedExt)) {
-				#$model->invalidate($field, __("'%s' is not a valid file extension",$ext));
+				#$model->invalidate($field, __d('media',"'%s' is not a valid file extension",$ext));
 				return false;
 			}
 		}
@@ -219,7 +219,7 @@ class UploadBehavior extends ModelBehavior {
 		
 		foreach($check as $field => $size) {
 			if ($size <= 0 || $size < $minFileSize) {
-				$model->invalidate($field,__("File size minimum file size of %s KB expected",round($minFileSize/1024,0)));
+				$model->invalidate($field,__d('media',"File size minimum file size of %s KB expected",round($minFileSize/1024,0)));
 			}
 		}
 		return true;
@@ -231,7 +231,7 @@ class UploadBehavior extends ModelBehavior {
 		
 		foreach($check as $field => $size) {
 			if ($size <= 0 || $size > $maxFileSize) {
-				$model->invalidate($field,__("File size exceeds the maximum file size of %s KB",round($maxFileSize/1024,0)));
+				$model->invalidate($field,__d('media',"File size exceeds the maximum file size of %s KB",round($maxFileSize/1024,0)));
 			}
 		}
 		return true;
@@ -286,7 +286,7 @@ class UploadBehavior extends ModelBehavior {
 				$uploadTarget = $_uniqueUploadTarget;
 				$model->data[$model->alias]['basename'] = $_newBasename;
 			} else {
-				$model->invalidate($__uploadField, __("A file with the same name already exists"));
+				$model->invalidate($__uploadField, __d('media',"A file with the same name already exists"));
 				return false;
 			}
 		}
@@ -295,12 +295,12 @@ class UploadBehavior extends ModelBehavior {
 		if (isset($model->data[$model->alias]['tmp_name']) 
 			&& !is_uploaded_file($model->data[$model->alias]['tmp_name'])) {
 				
-			$model->invalidate($__uploadField, __("File was not uploaded properly"));
+			$model->invalidate($__uploadField, __d('media',"File was not uploaded properly"));
 			return false;
 		} elseif (isset($model->data[$model->alias]['tmp_name']) 
 			&& !$this->_moveUploadedFile($model->data[$model->alias]['tmp_name'], $uploadTarget)) {
 
-			$model->invalidate($__uploadField, __("Failed to store uploaded file"));
+			$model->invalidate($__uploadField, __d('media',"Failed to store uploaded file"));
 			return false;	
 		}
 		

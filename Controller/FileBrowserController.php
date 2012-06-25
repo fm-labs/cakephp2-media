@@ -65,13 +65,13 @@ class FileBrowserController extends MediaAppController {
 			$upload = $this->Upload->save($this->request->data);
 			debug($upload);
 			if ($upload) {
-				$this->Session->setFlash(__("Upload successful"));
+				$this->Session->setFlash(__d('media',"Upload successful"));
 				debug($this->Upload->data);
 			} else {
-				$this->Session->setFlash(__("Upload failed"));
+				$this->Session->setFlash(__d('media',"Upload failed"));
 			}
 		} else {
-			$this->Session->setFlash(__("No upload started"));
+			$this->Session->setFlash(__d('media',"No upload started"));
 		}
 	}
 }

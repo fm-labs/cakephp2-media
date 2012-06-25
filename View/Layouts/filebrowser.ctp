@@ -22,7 +22,7 @@
 <head>
 	<?php echo $this->Html->charset(); ?>
 	<title>
-		<?php echo __("ImageBrowser"); ?> |
+		<?php echo __d('media',"ImageBrowser"); ?> |
 		<?php echo $title_for_layout; ?>
 	</title>
 	<?php
