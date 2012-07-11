@@ -32,6 +32,7 @@
 							$this->Html->link('..',$this->FileBrowser->url('parent_dir'),array('class'=>'dir-name'))); 
 					?></div>
 					
+					<h4><?php echo __("Folders (%s)",count($fileBrowser['Folder']));?></h4>
 					<!-- DIRECTORIES -->
 					<?php foreach($fileBrowser['Folder'] as $folder):?>
 					<?php if ($fileBrowser['FileBrowser']['dir']):?>
@@ -43,6 +44,7 @@
 					?></div>
 					<?php endforeach;?>
 					
+					<h4><?php echo __("Files (%s)",count($fileBrowser['File']));?></h4>
 					<!-- FILES -->
 					<?php foreach($fileBrowser['File'] as $file):?>
 					<?php $this->FileBrowser->isImage($file); ?>

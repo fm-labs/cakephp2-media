@@ -198,8 +198,9 @@ class FileBrowserComponent extends Component {
 		$this->__fileBrowser = $this->_buildFileBrowser();
 		
 		if ($exception) {
-			//throw new CakeException($exception->getMessage());
 			$this->Controller->Session->setFlash($exception->getMessage());
+		} elseif ($this->__fileBrowser['FileBrowser']['error']) {
+			$this->Controller->Session->setFlash($this->__fileBrowser['FileBrowser']['error']);
 		}
 		
 		if (!$this->__view)
@@ -228,17 +229,8 @@ class FileBrowserComponent extends Component {
 		
 		$dir = $this->__dir;
 		
-		if (!$dir || $dir == '/' || $dir == DS)
-			return null;
-			
-		$_dir = explode('/', substr($dir, 0,-1));
-		array_pop($_dir);
-		if (count($_dir) > 0) {
-			$dir = join('/',$_dir) . '/';
-		} else {
-			$dir = null;
-		}
-		$this->__dir = $dir;
+		
+		$this->__dir = self::parentDir($dir);
 		$this->__file = null;
 		return null;
 	}
@@ -355,11 +347,21 @@ class FileBrowserComponent extends Component {
 		$Folder = clone($BaseFolder); //clone
 		
 		if ($_fileBrowser['dir']) {
-			if (!$Folder->cd($_fileBrowser['dir'])) {
-				throw new CakeException(__d('media',"Directory %s not found",strval($_fileBrowser['dir'])));
+			$dir = $_fileBrowser['dir'];
+			if (!$Folder->cd($dir)) {
+				$_fileBrowser['error'] = __d('media',"Directory %s not found",strval($_fileBrowser['dir']));
+				do {
+					$dir = self::parentDir($dir);
+					if ($Folder->cd($dir)) {
+						break;
+					}
+				} while(!is_null($dir));
+				
 			}
+			$_fileBrowser['dir'] = $dir;
+			
 			if (!$Folder->inPath($BaseFolder->pwd())) {
-				throw new CakeException(__d('media',"Directory %s not accessable (Not in %s)",strval($_fileBrowser['dir']), $BaseFolder->pwd()));
+				$_fileBrowser['error'] = __d('media',"Directory %s not accessable (Not in %s)",strval($_fileBrowser['dir']), $BaseFolder->pwd());
 			}
 		}
 		
@@ -374,6 +376,21 @@ class FileBrowserComponent extends Component {
 		return $fileBrowser;
 	}
 
+
+	
+	static public function parentDir($dir) {
+		if (!$dir || $dir == '/' || $dir == DS)
+			return null;
+			
+		$_dir = explode('/', substr($dir, 0,-1));
+		array_pop($_dir);
+		if (count($_dir) > 0) {
+			$dir = join('/',$_dir) . '/';
+		} else {
+			$dir = null;
+		}
+		return $dir;
+	}
 
 	
 }

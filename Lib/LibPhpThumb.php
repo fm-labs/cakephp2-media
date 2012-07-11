@@ -27,7 +27,10 @@ class LibPhpThumb {
 			}
 		} catch(Exception $e) {
 			CakeLog::write('phpthumb',$e->getMessage());
-			throw new CakeException(__d('media',"Failed to create image thumbnail"));
+			if (Configure::read('debug') > 0)
+				throw new CakeException($e->getMessage());
+			else
+				throw new CakeException(__d('media',"Failed to create image thumbnail"));
 		}
 			
 		return $target;

@@ -1,4 +1,5 @@
 <?php
+App::uses('Router','Routing');
 App::uses('ModelBehavior','Model');
 App::uses('LibPhpThumb','Media.Lib');
 
