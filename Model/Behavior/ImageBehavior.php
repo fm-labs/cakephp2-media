@@ -177,7 +177,7 @@ class ImageBehavior extends ModelBehavior {
 				$url_full = LibPhpThumb::getThumbnailUrlFromPath($image, true);
 					
 			} catch(Exception $e) {
-				debug($e->getMessage());
+				#debug($e->getMessage());
 				CakeLog::write('error', __d('media',"ThumbBehavior::attachThumb() [Field '%s';Thumb '%s']: %s",$field, $name, $e->getMessage()));
 				$error = $e->getMessage();
 			}
