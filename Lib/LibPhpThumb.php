@@ -121,8 +121,9 @@ class LibPhpThumb {
 				throw new CakeException('Could not render image to: ' . $target);
 				return false;
 			}
+			@chmod($target, 0644);
 		}
-		#debug($phpThumb->phpThumbDebug());
+		//debug($phpThumb->phpThumbDebug());
 		
 		return true;
 	}
