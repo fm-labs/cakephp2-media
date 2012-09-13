@@ -9,7 +9,6 @@ App::import('Vendor','Media.phpthumb', true , array(), 'phpThumb'.DS.'phpthumb.c
 
 class LibPhpThumb {
 
-
 /**
  * Get Thumbnail path for given source and params
  * If thumbnail does not exist it will be rendered to file
