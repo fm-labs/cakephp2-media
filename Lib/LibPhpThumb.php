@@ -9,7 +9,6 @@ App::import('Vendor','Media.phpthumb', true , array(), 'phpThumb'.DS.'phpthumb.c
 
 class LibPhpThumb {
 
-
 /**
  * Get Thumbnail path for given source and params
  * If thumbnail does not exist it will be rendered to file
@@ -121,8 +120,9 @@ class LibPhpThumb {
 				throw new CakeException('Could not render image to: ' . $target);
 				return false;
 			}
+			@chmod($target, 0644);
 		}
-		#debug($phpThumb->phpThumbDebug());
+		//debug($phpThumb->phpThumbDebug());
 		
 		return true;
 	}

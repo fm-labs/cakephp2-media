@@ -142,7 +142,7 @@ class ImageBehavior extends ModelBehavior {
 		//config	
 		if (!isset($this->images[$model->alias][$field])) {
 			if (Configure::read('debug') > 0) {
-				throw new CakeException(__d('media',"ThumbBehavior::attachThumb() Thumb configuration for field '%s' is not set", $field));
+				throw new CakeException(__d('media',"ImageBehavior::attachThumb() Thumb configuration for field '%s' is not set", $field));
 			}
 			$images = array(
 				'default' => array(
@@ -164,10 +164,19 @@ class ImageBehavior extends ModelBehavior {
 				//image source
 				$file = ($data[$model->alias][$field]) ? $_baseDir.$data[$model->alias][$field] : $s['defaultImage'];
 				$source = IMAGES.$file;
-				$source_url = Router::url('/',true) . IMAGES_URL . $file;
+				
+				//TODO refactor with do-loop and support more fallbacks for default images
 				if (!file_exists($source)) {
-					throw new CakeException(__d('media',"Source file '%s' does not exist", $source));
+					//log that a source file is missing
+					CakeLog::write('error', __d('media','[ImageBehavior] Image file \'%s\' is missing', $source));
+					if ($s['defaultImage']) {
+						//TODO default images can only be located in app webroot. enable plugin support
+						$source = IMAGES.$s['defaultImage'];
+					}
+					else
+						throw new CakeException(__d('media',"Source file '%s' does not exist", $source));
 				}
+				$source_url = Router::url('/',true) . IMAGES_URL . $file;
 					
 				//image-path
 				$image = LibPhpThumb::getThumbnail($source, $config);
@@ -177,8 +186,7 @@ class ImageBehavior extends ModelBehavior {
 				$url_full = LibPhpThumb::getThumbnailUrlFromPath($image, true);
 					
 			} catch(Exception $e) {
-				#debug($e->getMessage());
-				CakeLog::write('error', __d('media',"ThumbBehavior::attachThumb() [Field '%s';Thumb '%s']: %s",$field, $name, $e->getMessage()));
+				CakeLog::write('error', "[ImageBehavior][Field '%s';Thumb '%s']: AttachThumb failed: %s",$field, $name, $e->getMessage());
 				$error = $e->getMessage();
 			}
 			
