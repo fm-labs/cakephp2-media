@@ -22,19 +22,15 @@
 <head>
 	<?php echo $this->Html->charset(); ?>
 	<title>
-		<?php echo __d('media',"ImageBrowser"); ?> |
 		<?php echo $title_for_layout; ?>
 	</title>
 	<?php
 		echo $this->Html->meta('icon');
 
 		echo $this->Html->css('/media/css/reset');
-		echo $this->Html->css('/admin_panel/css/screen/cake');
-		echo $this->Html->css('/admin_panel/css/screen/style');
 		echo $this->Html->css('/media/css/filebrowser');
 
-		$this->Js->loadJquery();
-		echo $this->Html->css('/jquery/css/ui/smoothness/jquery-ui-1.8.14.custom');
+		//echo $this->Html->css('/jquery/css/ui/smoothness/jquery-ui-1.8.14.custom');
 	
 		echo $this->fetch('script');
 		echo $this->Html->script('/media/js/jquery.scrollTo/jquery.scrollTo-min');
@@ -45,20 +41,15 @@
 </head>
 <body>
 	<div id="container">
-		
-		<div id="contentwrap">
-			<div id="contentcontainer" class="container_16">
-				<div id="flash" class="canhide">
-					<?php echo $this->Session->flash(); ?>
-					<?php echo $this->Session->flash('auth'); ?>
-				</div>
-				<div class="clearfix"></div>
-				<div id="content">
-					<?php echo $this->fetch('content'); ?>
-					<div class="clearfix"></div>
-				</div>
-				<div class="clearfix"></div>
+		<div id="content" class="container_16">
+			<div id="flash" class="canhide">
+				<?php echo $this->Session->flash(); ?>
+				<?php echo $this->Session->flash('auth'); ?>
 			</div>
+			<div id="main">
+				<?php echo $this->fetch('content'); ?>
+			</div>
+			<div class="clearfix"></div>
 		</div>
 	</div>
 	

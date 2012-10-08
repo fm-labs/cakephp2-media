@@ -15,54 +15,37 @@ class FileBrowserHelper extends AppHelper {
 	
 	public $fileBrowser;
 	
+	public $configName = 'default';
+	
 	protected $_imageExtensions = array('jpg','jpeg','gif','png','tiff','bmp');
 	
 	public function setFileBrowser(&$fileBrowser) {
 		$this->fileBrowser =& $fileBrowser;
+		$this->configName = $this->fileBrowser['FileBrowser']['config'];
 	}
 	
-	public function url($url = array()) {
-		if (is_string($url))
-			$url = array('cmd' => $url);
-		
-		$url = array_merge(array(
-			'plugin' => $this->request->params['plugin'],
-			'controller' => $this->request->params['controller'],
-			'action' => $this->request->params['action'],
-			$this->fileBrowser['FileBrowser']['config'],
-			'cmd' => $this->fileBrowser['FileBrowser']['cmd'],
-			'dir' => $this->fileBrowser['FileBrowser']['dir'],
-			'file' => $this->fileBrowser['FileBrowser']['file'],
-		),$url);
-		
-		if (isset($url['dir']))
-			$url['dir'] = base64_encode($url['dir']);
-		if (isset($url['file']))
-			$url['file'] = base64_encode($url['file']);
-		
-		return $url;
-	}
-	
-	public function dirEncoded($dir = null) {
-		if (!$dir)
-			$dir = $this->fileBrowser['FileBrowser']['dir'];
-			
-		if (!$dir)
-			return null;
-			
-		return base64_encode($dir);
-	}
-	
-	public function fileEncoded($file = null) {
-		if (!$file)
-			$file = $this->fileBrowser['FileBrowser']['file'];
-			
-		if (!$file)
-			return null;
-			
-		return base64_encode($file);
-	}
 
+	public function url($url) {
+
+		$path = $this->fileBrowser['FileBrowser']['path'];
+		
+		return am(array('config'=>$this->configName),$path, $url);
+	}
+	
+	public function dirUrl($url, $dir) {
+	
+		$path = $this->fileBrowser['FileBrowser']['path'];
+		
+		return am(array('config'=>$this->configName), $path,array($dir),$url);
+	}
+	
+	public function fileUrl($url, $file) {
+		
+		$path = $this->fileBrowser['FileBrowser']['path'];
+		
+		return am(array('config'=>$this->configName), $path,array('file'=>$file),$url);
+	}
+	
 /**
  * Checks if file is an image
  * 

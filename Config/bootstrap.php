@@ -1,5 +1,5 @@
 <?php
-Configure::load('Media.filebrowser');
-@define('MEDIA_BOOTSTRAP',true);
+Configure::load('Media.media');
+@define('MEDIA_BOOTSTRAP',true); //TODO check if this is still needed
 
 ?>
