@@ -1,4 +1,6 @@
 /.settings
 /.buildpath
 /.project
-/Test/test_app/webroot/attachments/*
+/Test/test_app/webroot/attachments/*.txt
+/Test/test_app/webroot/attachments/.dotfile
+/Test/test_app/webroot/attachments/filenoext
