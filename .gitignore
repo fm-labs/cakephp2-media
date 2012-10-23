@@ -1,4 +1,4 @@
 /.settings
 /.buildpath
 /.project
-/Test/test_app/tmp/attachments/*
+/Test/test_app/webroot/attachments/*

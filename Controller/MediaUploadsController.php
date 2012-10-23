@@ -43,7 +43,7 @@ class MediaUploadsController extends MediaAppController {
 			$this->MediaUpload->create();
 			if ($this->MediaUpload->save($this->request->data)) {
 				$this->Session->setFlash(__('The media upload has been saved'));
-				//$this->redirect(array('action' => 'index'));
+				$this->redirect(array('action' => 'index'));
 			} else {
 				debug($this->MediaUpload->validationErrors);
 				$this->Session->setFlash(__('The media upload could not be saved. Please, try again.'));

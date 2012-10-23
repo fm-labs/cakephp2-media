@@ -9,9 +9,7 @@ class MediaUpload extends MediaAppModel {
 	public $actsAs = array('Media.Attachable');
 	
 	public $attachments = array(
-		'file' => array(
-			'dir' => IMAGES
-		)
+		'file' => array()
 	);	
 	
 /**

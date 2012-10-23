@@ -15,15 +15,18 @@ class AttachableBehavior extends ModelBehavior {
 	const UPLOAD_ERR_STORE_UPLOAD = 106;
 	
 	public $defaultSettings = array(
-		'dir' => WWW_ROOT,
+		'dir' => MEDIA_DEFAULT_UPLOAD_DIR,
 		'multiple' => false,
 		'minFileSize' => 0,
 		'maxFileSize' => 2097152, //2MB
 		'allowedMimeType' => '*', //"*" for all or array('image/*,text/plain). 
 		'allowedFileExtension' => '*', //"*" for all or array('jpg','jpeg')
 		'hashFilename' => false,
-		'slug' => '_'
+		'slug' => '_',
+		'removeOnDelete' => true, //remove file if row gets deleted
 	);
+	
+	protected $_flaggedForRemoval = array();
 	
 	/**
 	 * @see ModelBehavior::setup()
@@ -67,32 +70,12 @@ class AttachableBehavior extends ModelBehavior {
 					if (!isset($result[$model->alias][$field]))
 						continue;
 					
+					$config = $settings[$field];
+					
 					//TODO read cache for result
 					
-					$config = $settings[$field];
-					$path = $filename = $basename = $ext = $url = null;
-					
-					//$this->engine($field)->find($model, $result[$model->alias]['id']);
-					
-					//parse field
-					$value = $result[$model->alias][$field];
-					$files = explode(',',$value);
-					$attachments = array();
-					
-					foreach($files as $file) {
-						$file = trim($file);
-						if (!$file)
-							continue;
-						
-						$basename = $file;
-						$path = $config['dir'] . $basename;
-						
-						list($filename, $ext) = $this->_splitBasename($basename);
-						
-						$attachment = compact('path','basename','filename','ext');
-						array_push($attachments, $attachment);
-					}
-						
+					//parse attachments
+					$attachments = $this->_getAttachments($result[$model->alias][$field], $config);
 					
 					//TODO write cache
 					
@@ -205,7 +188,6 @@ class AttachableBehavior extends ModelBehavior {
 					array_push($attachments, $attachment);
 					
 				}
-				
 					
 				$basenames = array();
 				if ($config['multiple'] === true) {
@@ -222,7 +204,6 @@ class AttachableBehavior extends ModelBehavior {
 				$model->data['Attachment'][$field] = $attachments;
 				
 				//TODO write cache
-		
 			}
 			
 			$model->data[$model->alias][$field] = $value;
@@ -230,6 +211,147 @@ class AttachableBehavior extends ModelBehavior {
 		}		
 		
 		return true;
+	}
+	
+	/**
+	 * Check attached files should be removed and flag them. 
+	 * After table row deletion was successful, the attached files will be removed.
+	 * 
+	 * @see ModelBehavior::beforeDelete()
+	 */
+	public function beforeDelete($model) {
+		
+		$settings = $this->settings[$model->alias];
+		$fields = array_keys($settings);
+		
+		$data = $model->read($fields,$model->id);
+		debug($data);
+		
+		foreach($fields as $field) {
+			$config = $settings[$field];
+			
+			//do not remove files
+			if (!$config['removeOnDelete'])
+				continue;
+			
+			if (!isset($data['Attachment']))
+				throw new Exception("Attachment data missing");
+			
+			//flag attachments for removal
+			if (isset($data['Attachment'][$field])) 
+			{
+				$attachments = (isset($data['Attachment'][$field][0])) 
+					? $data['Attachment'][$field] : array($data['Attachment'][$field]);
+				
+				foreach($attachments as $attachment) {
+					$this->_flagForRemoval($model, $attachment['path']);
+				}
+			}
+		}
+		
+		return true;
+	}
+	
+	/**
+	 * Remove flagged files after delete
+	 * 
+	 * @see ModelBehavior::afterDelete()
+	 */
+	public function afterDelete($model) {
+		
+		$this->_removeFiles($model);
+		
+		return true;
+	}
+	
+	/**
+	 * Convert field values to Attachment data set
+	 * 
+	 * @param string|array $value Array or comma-separated string 
+	 * @param array $config Field config
+	 * @return array
+	 */
+	protected function _getAttachments($valueList = '', $config) {
+		
+		$attachments = array();
+		$path = $filename = $basename = $ext = $url = null;
+		if (is_string($valueList))
+			$files = explode(',',$valueList);
+		elseif(is_array($valueList))
+			$files = $valueList;
+		else
+			throw new InvalidArgumentException("Invalid value list of type ".gettype($valueList));
+		
+		foreach($files as $file) {
+			$file = trim($file);
+			if (!$file)
+				continue;
+		
+			$basename = $file;
+			$path = $this->_getFilePath($file, $config);
+		
+			list($filename, $ext) = $this->_splitBasename($basename);
+		
+			$attachment = compact('path','basename','filename','ext');
+			array_push($attachments, $attachment);
+		}
+		
+		return $attachments;
+	}
+	
+	/**
+	 * Get full file path from filename and field config
+	 * 
+	 * @param string $filename
+	 * @param array $config
+	 * @return boolean|string
+	 */
+	protected function _getFilePath($filename = null, $config) {
+		if (!$filename)
+			return false;
+		
+		return $config['dir'] . $filename;
+	}
+	
+	/**
+	 * Flag $filepath to be removed afterDelete
+	 * 
+	 * @param Model $model
+	 * @param string $filepath
+	 * @return void
+	 */
+	protected function _flagForRemoval(Model $model, $filepath) {
+		$this->_flaggedForRemoval[$model->alias][$model->id][] = $filepath;
+	}
+	
+	/**
+	 * Remove flagged files for given model
+	 * 
+	 * @param Model $model
+	 * @return void
+	 */
+	protected function _removeFiles(Model $model) {
+		
+		if (!isset($this->_flaggedForRemoval[$model->alias]) 
+			|| !isset($this->_flaggedForRemoval[$model->alias][$model->id])
+			|| empty($this->_flaggedForRemoval[$model->alias][$model->id]))
+		{
+			return; 
+		}
+		
+		foreach($this->_flaggedForRemoval[$model->alias][$model->id] as $idx => $filepath) {
+			if (!file_exists($filepath) || !is_file($filepath)) {
+				$this->log(__("Skip Delete for attachment for Model %s [%s] (File not found): %s", $model->alias, $model->id, $filepath),'debug');
+				unset($this->_flaggedForRemoval[$model->alias][$model->id][$idx]);
+			}
+			elseif (@unlink($filepath)) {
+				$this->log(__("Deleted attachment for Model %s [%s]: %s", $model->alias, $model->id, $filepath),'debug');
+				unset($this->_flaggedForRemoval[$model->alias][$model->id][$idx]);
+			} 
+			else {
+				$this->log(__("Failed to delete attachment for Model %s [%s]: %s", $model->alias, $model->id, $filepath),'error');
+			}
+		}
 	}
 	
 	/**
@@ -267,6 +389,7 @@ class AttachableBehavior extends ModelBehavior {
 		if (!$this->_validateFileExtension($ext, $config['allowedFileExtension']))
 			throw new AttachableUploadException(self::UPLOAD_ERR_FILE_EXT);
 		
+		
 		if ($config['hashFilename'])
 			$filename = sha1($filename);
 		elseif($config['slug'])
@@ -274,12 +397,13 @@ class AttachableBehavior extends ModelBehavior {
 		
 		//TODO validate filename
 		
-		$upload['basename'] = $filename.".".$ext;
+		$_ext = ($ext) ? '.'.$ext : '';
+		$upload['basename'] = $filename.$_ext;
 		
 		//safe temporary file path
 		$i = 0;
 		do {
-			$tmpTarget = MEDIA_TMP_UPLOAD_DIR . uniqid($filename) . "-". $i++ . "." .$ext;
+			$tmpTarget = MEDIA_TMP_UPLOAD_DIR . uniqid($filename) . "-". $i++ . $_ext;
 		} while(file_exists($tmpTarget));
 		
 		//move uploaded file to tmp upload dir

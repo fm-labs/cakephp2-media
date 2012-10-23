@@ -267,7 +267,7 @@ class AttachableBehaviorTest extends CakeTestCase {
 		$this->assertEqual($data, $expected);
 	}
 	
-	public function testUploadSingle() {
+	public function testSingleUploadSaveDelete() {
 
 		$this->_setupDefault();
 		$data = array(
@@ -302,10 +302,14 @@ class AttachableBehaviorTest extends CakeTestCase {
 		);
 		$this->assertEqual($result, $expected);
 		$this->assertTrue(file_exists($result['Attachment']['file']['path']));
-		$this->assertTrue(unlink($result['Attachment']['file']['path']));
+		
+		//delete
+		$deleted = $this->Attach->delete($this->Attach->id);
+		$this->assertTrue($deleted);
+		$this->assertTrue(!file_exists($result['Attachment']['file']['path']));
 	}
 	
-	public function testUploadMulti() {
+	public function testMultiUploadSaveDelete() {
 
 		$this->_setupDefault();
 		$data = array(
@@ -359,10 +363,14 @@ class AttachableBehaviorTest extends CakeTestCase {
 		);
 		$this->assertEqual($result, $expected);
 		$this->assertTrue(file_exists($result['Attachment']['files'][0]['path']));
-		$this->assertTrue(unlink($result['Attachment']['files'][0]['path']));	
 		$this->assertTrue(file_exists($result['Attachment']['files'][1]['path']));
-		$this->assertTrue(unlink($result['Attachment']['files'][1]['path']));	
 		
+
+		//delete
+		$deleted = $this->Attach->delete($this->Attach->id);
+		$this->assertTrue($deleted);
+		$this->assertTrue(!file_exists($result['Attachment']['files'][0]['path']));
+		$this->assertTrue(!file_exists($result['Attachment']['files'][1]['path']));
 	}
 	
 	public function tearDown() {
