@@ -1,0 +1,141 @@
+@CHARSET "UTF-8";
+
+#flash {
+	position: fixed;
+	top: 0;
+	left: 33%;
+	margin: 0;
+	opacity: 0.8;
+}
+
+#flash:HOVER {
+	cursor: pointer;
+}
+
+#contentcontainer {
+}
+
+/* Style */
+.file-browser {
+	width: 98%;
+	margin: 10px 1%;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 12px;
+}
+
+.file-browser a {
+	color: #333;
+}
+
+.file-browser h1 {
+	font-size: 160%;
+	margin: 2px 0 10px;
+}
+
+.file-browser h2 {
+	margin: 2px 0 7px;
+	font-size: 140%;
+}
+
+.file-browser h3 {
+	margin: 2px 0 4px;
+	font-size: 120%;
+}
+
+/* Layout */
+.file-browser-column {
+	display: block;
+    overflow: hidden;
+    padding-right: 315px;
+    width: auto;
+    min-height: 600px;
+}
+
+.file-browser-col1 {
+	width: 100%;
+}
+
+.file-browser-col2 {
+	width: 300px;
+	position: fixed;
+	top: 10px;
+	right: 10px;
+}
+
+.file-browser-preview,
+.file-browser-upload {
+	border-bottom: 1px solid #CCC;
+	padding-bottom: 10px;
+	margin-bottom: 20px;
+}
+
+#file-browser-preview-image,
+.file-browser-preview-image {
+	max-width: 255px;
+	max-height: 255px;
+}
+
+.filebrowser-list ul
+.filebrowser-list ul li {
+	margin: 0;
+}
+
+/* Actions */
+.file-browser-cmd {
+	padding:20px;
+	margin: 10px;
+	background: #f8f8f8;
+}
+
+.file-browser-cmd form {
+	max-width: 500px;
+}
+
+.file-browser-cmd input[readonly="readonly"] {
+	color: #333;
+	background-color: #f8f8f8;
+}
+
+
+/* Listing */
+.file-browser-list .list-item {
+	padding: 5px 25px;
+	background-repeat: no-repeat;
+	background-position: center left;
+}
+
+.file-browser-list .list-item:nth-child(odd) {
+	background-color: #F7F7F7;
+}
+.file-browser-list .list-item:nth-child(even) {
+	background-color: #FFF;
+}
+
+.file-browser-list .list-item:HOVER {
+	background-color: #EEE;
+}
+
+.file-browser-list .list-item.file-highlight,
+.file-browser-list .list-item.file-highlight:HOVER {
+	background-color: #7EB51B;
+}
+
+
+.file-browser-list .list-item > div {
+	display: inline-block;
+	padding: 0 5px; 
+	vertical-align: middle;
+}
+
+.file-browser-list .file-name,
+.file-browser-list .dir-parent,
+.file-browser-list .dir-name {
+	width: 250px;
+}
+
+/* Directory */
+.file-browser-list .dir { background-image: url(../img/filebrowser/directory.png); }
+
+/* File */
+.file-browser-list .file {	background-image: url(../img/filebrowser/file.png); }
+.file-browser-list .file-thumb { width: 40px; }
