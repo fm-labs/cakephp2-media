@@ -1,5 +1,16 @@
-<?php echo $this->Html->script('/media/js/uploader'); ?>
+<?php $this->Html->script('/media/js/uploader',array('inline'=>false)); ?>
 		
+<style>
+.media-uploader-container {
+	border: 3px dashed #CCC; 
+	padding: 10px;
+}
+
+.media-uploader-queue {
+	border: 1px dashed #CCC; 
+	background-color: #d8d8d8;
+}
+</style>
 <div class="mediaUploads form">
 
 	<h2><?php echo __('Media Upload'); ?></h2>
@@ -15,21 +26,15 @@
 	<?php
 		echo $this->Form->input('title', array('default'=>'Upload'));
 	?>
-	<div class="media-uploader" style="border: 3px dashed #CCC; padding: 10px;">
 		<?php 
 		echo $this->Form->input('file_upload',array(
-			'id'=>'fileUploadSingleInline', 
 			'type'=>'file', 
 			'label'=>'Single File Upload',
-			'style' => 'visibility:hidden;'
+			'rel' => 'html5upload',
+			'id' => 'fileUploadSingleInline',
+			'multiple' => true
 		));
 		?>
-		<div id="queueUploadSingleInline"></div>
-		<progress id="progressUploadSingleInline" max="100" value="0">Progress not supported</progress>
-		<button id="btnUploadSingleInlineSelect">Select Files</button>
-		<button id="btnUploadSingleInlineSend">Upload</button>
-	</div>
-		
 	<?php 
 		echo $this->Form->error('file_upload');
 	?>
@@ -39,15 +44,10 @@
 
 	
 	<script>
+	var uploader = new Uploader();
 	uploader.init({
 		uploadUrl: '<?php echo Router::url(array('action'=>'upload_html5'));?>',
-		holder: '#fileUploadSingleInline',
-		handler: '#btnUploadSingleInlineSelect',
-		upload: '#btnUploadSingleInlineSend',
-		queue: '#queueUploadSingleInline'
-	});
-	
-	$(document).ready(function() {
+		holder: '#fileUploadSingleInline'
 	});
 	</script>
 	
