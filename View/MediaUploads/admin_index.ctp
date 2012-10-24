@@ -6,6 +6,7 @@
 	<div class="actions">
 		<ul>
 			<li><?php echo $this->Html->link(__('New %s',__('Media Upload')), array('action' => 'add')); ?></li>
+			<li><?php echo $this->Html->link(__('New %s',__('Media Upload HTML5')), array('action' => 'add_html5')); ?></li>
 			</ul>
 	</div>
 	
@@ -14,7 +15,7 @@
 			<th><?php echo $this->Paginator->sort('id'); ?></th>
 			<th><?php echo $this->Paginator->sort('title'); ?></th>
 			<th><?php echo $this->Paginator->sort('file'); ?></th>
-			<th><?php echo __('Exists') ?></th>
+			<th><?php echo $this->Paginator->sort('files'); ?></th>
 			<th class="actions"><?php echo __('Actions'); ?></th>
 	</tr>
 	<?php
@@ -22,8 +23,24 @@
 	<tr>
 		<td><?php echo h($mediaUpload['MediaUpload']['id']); ?>&nbsp;</td>
 		<td><?php echo h($mediaUpload['MediaUpload']['title']); ?>&nbsp;</td>
-		<td><?php echo h($mediaUpload['MediaUpload']['file']); ?>&nbsp;</td>
-		<td><?php echo $this->BackendHtml->iconBool(file_exists($mediaUpload['Attachment']['file']['path'])); ?></td>
+		<?php if ($mediaUpload['MediaUpload']['file']):?>
+		<td><?php 
+			echo h($mediaUpload['MediaUpload']['file'])
+			.$this->BackendHtml->iconBool(file_exists($mediaUpload['Attachment']['file'][0]['path'])); ?>
+		</td>
+		<?php else: ?>
+		<td>&nbsp;</td>
+		<?php endif; ?>
+		
+		<?php if ($mediaUpload['MediaUpload']['files']): ?>
+		<td><strong><?php echo h($mediaUpload['MediaUpload']['files']); ?></strong><br />
+		<?php foreach($mediaUpload['Attachment']['files'] as $attachment): ?>
+			<?php echo $attachment['basename'] . $this->BackendHtml->iconBool(file_exists($attachment['path'])); ?>
+		<?php endforeach; ?>
+		</td>
+		<?php else: ?>
+		<td>&nbsp;</td>
+		<?php endif; ?>
 		<td class="actions">
 		<ul class="actions">
 			<li><?php echo $this->Html->link(__('View'), array('action' => 'view', $mediaUpload['MediaUpload']['id'])); ?></li>

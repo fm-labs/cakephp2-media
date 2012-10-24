@@ -8,13 +8,16 @@
 				<li><?php echo $this->Html->link(__('List %s',__('Media Uploads')), array('action' => 'index')); ?></li>
 			</ul>
 	</div>
-<?php echo $this->Form->create('MediaUpload'); ?>
+<?php echo $this->Form->create('MediaUpload',array('type'=>'file')); ?>
 	<fieldset>
 		<legend><?php echo __('Admin Edit %s', __('Media Upload')); ?></legend>
 	<?php
 		echo $this->Form->input('id');
 		echo $this->Form->input('title');
-		echo $this->Form->input('file');
+		echo $this->Form->input('file',array('readonly'=>true));
+		echo $this->Form->input('file_upload',array('type'=>'file', 'label'=>'Single File Upload'));
+		//echo $this->Form->input('file_upload.',array('type'=>'file', 'label'=>'Multi File Upload', 'multiple'=>'multiple'));
+		echo $this->Form->error('file_upload');
 	?>
 	</fieldset>
 <?php echo $this->Form->button(__('Submit')); ?>

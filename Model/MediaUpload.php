@@ -9,7 +9,12 @@ class MediaUpload extends MediaAppModel {
 	public $actsAs = array('Media.Attachable');
 	
 	public $attachments = array(
-		'file' => array()
+		'file' => array(
+			'multiple' => false
+		),
+		'files' => array(
+			'multiple' => true
+		)
 	);	
 	
 /**

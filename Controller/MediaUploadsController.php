@@ -33,6 +33,36 @@ class MediaUploadsController extends MediaAppController {
 		$this->set('mediaUpload', $this->MediaUpload->read(null, $id));
 	}
 
+
+	/**
+	 * admin_add method
+	 *
+	 * @return void
+	 */
+	public function admin_add_html5() {
+		
+		if ($this->request->is('post')) {
+			debug($this->data);
+			
+			$this->MediaUpload->create();
+			if ($this->MediaUpload->save($this->request->data)) {
+				$this->Session->setFlash(__('The media upload has been saved'));
+				//$this->redirect(array('action' => 'index'));
+			} else {
+				debug($this->MediaUpload->validationErrors);
+				$this->Session->setFlash(__('The media upload could not be saved. Please, try again.'));
+			}
+		}
+	}	
+	
+	public function admin_upload_html5() {
+		$this->layout = null;
+		$this->viewClass = 'Json';
+		
+		$this->set('response',array('data'=>$this->request->data));
+		$this->set('_serialize',array('response'));
+	}
+	
 /**
  * admin_add method
  *
@@ -40,10 +70,13 @@ class MediaUploadsController extends MediaAppController {
  */
 	public function admin_add() {
 		if ($this->request->is('post')) {
+
+			debug($_FILES);
+			
 			$this->MediaUpload->create();
 			if ($this->MediaUpload->save($this->request->data)) {
 				$this->Session->setFlash(__('The media upload has been saved'));
-				$this->redirect(array('action' => 'index'));
+				//$this->redirect(array('action' => 'index'));
 			} else {
 				debug($this->MediaUpload->validationErrors);
 				$this->Session->setFlash(__('The media upload could not be saved. Please, try again.'));
@@ -69,6 +102,7 @@ class MediaUploadsController extends MediaAppController {
 				$this->redirect(array('action' => 'index'));
 			} else {
 				$this->Session->setFlash(__('The media upload could not be saved. Please, try again.'));
+				debug($this->MediaUpload->validationErrors);
 			}
 		} else {
 			$this->request->data = $this->MediaUpload->read(null, $id);

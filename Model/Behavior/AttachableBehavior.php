@@ -1,8 +1,11 @@
 <?php
 App::uses('ModelBehavior', 'Model');
+App::uses('Cache','Cache');
+App::uses('String', 'Utility');
 
-defined('MEDIA_TMP_UPLOAD_DIR') or define('MEDIA_TMP_UPLOAD_DIR', TMP . "attachments" . DS);
-defined('MEDIA_DEFAULT_UPLOAD_DIR') or define('MEDIA_DEFAULT_UPLOAD_DIR', WWW_ROOT . "uploads" . DS);
+defined('MEDIA_CACHE_DIR') or define('MEDIA_CACHE_DIR', CACHE . "media" . DS);
+defined('MEDIA_UPLOAD_TMP_DIR') or define('MEDIA_UPLOAD_TMP_DIR', TMP . "attachments" . DS);
+defined('MEDIA_UPLOAD_DIR') or define('MEDIA_UPLOAD_DIR', WWW_ROOT . "uploads" . DS);
 
 class AttachableBehavior extends ModelBehavior {
 
@@ -13,12 +16,19 @@ class AttachableBehavior extends ModelBehavior {
 	const UPLOAD_ERR_FILE_EXISTS = 104;
 	const UPLOAD_ERR_STORE_TMP_UPLOAD = 105;
 	const UPLOAD_ERR_STORE_UPLOAD = 106;
+
+	const CACHE_CONFIG = 'media_upload';
 	
-	public $defaultSettings = array(
-		'dir' => MEDIA_DEFAULT_UPLOAD_DIR,
+	const CACHE_KEY_INSERTSTRING = '@:cacheKey@';
+	
+	public $defaultConfig = array(
+		'uploadField' => 'file_upload',
+		'dir' => MEDIA_UPLOAD_DIR,
 		'multiple' => false,
 		'minFileSize' => 0,
 		'maxFileSize' => 2097152, //2MB
+		'allowEmpty' => true, //Allow field to be empty
+		'allowOverwrite' => false,
 		'allowedMimeType' => '*', //"*" for all or array('image/*,text/plain). 
 		'allowedFileExtension' => '*', //"*" for all or array('jpg','jpeg')
 		'hashFilename' => false,
@@ -28,6 +38,23 @@ class AttachableBehavior extends ModelBehavior {
 	
 	protected $_flaggedForRemoval = array();
 	
+	protected $_runtime = array();
+	
+	public function __construct() {
+		parent::__construct();
+		
+		if (!Cache::config(self::CACHE_CONFIG)) {
+			Cache::config(self::CACHE_CONFIG,array(
+				'engine' => 'File',
+				'duration' => 300,
+				'prefix' => 'attachable_',
+				'probability' => 100,
+				'serialize' => true,
+				'path' => MEDIA_CACHE_DIR,
+			));
+		}
+	}
+	
 	/**
 	 * @see ModelBehavior::setup()
 	 * @param $settings
@@ -36,41 +63,94 @@ class AttachableBehavior extends ModelBehavior {
 		
 		if (!isset($this->settings[$model->alias])) {
 			
-			if (isset($model->attachments)) {
-				$attachments = $model->attachments;
-			} else {
-				$attachments = array();
-			}
-			
-			//TODO apply settings to each attachment
+			$attachments = (isset($model->attachments)) ? $model->attachments : array();
 			foreach($attachments as $field => &$config) {
-				$config = am($this->defaultSettings, $config);
+				$config = am($this->defaultConfig, array('uploadField'=>$field.'_upload'), $config);
 			}
 			
 			$this->settings[$model->alias] = $attachments;
 		}
 	}
 	
+	public function attachment(Model $model, $field = null, $config = null) {
+		if ($field === false) {
+			$this->_runtime[$model->alias]['attachment'] = false;
+			return $model;
+		}
+		
+		$this->_runtime[$model->alias]['attachment'][$field] = $config;
+		return $model;
+	}
+	
 	public function beforeFind(Model $model, $query) {
+		
+		$attachRuntime = null;
+		if (isset($this->_runtime[$model->alias]['attachment'])) {
+			$attachRuntime = $this->_runtime[$model->alias]['attachment'];
+		}
+		
+		$attachQuery = null;
+		if (isset($query['attachment'])) {
+			$attachQuery = $query['attachment'];
+			unset($query['attachment']);
+		}
+		
+		$runtime = array();
+		foreach(array($attachRuntime, $attachQuery) as $attachment) {
+			
+			if ($attachment === null) 
+				continue;
+			
+			if ($attachment === false || !is_array($attachment)) {
+				$runtime = false;
+				break;
+			}
+			
+			foreach((array)$attachment as $field => $config) {
+				$runtime[$field] = $config;
+			}
+		}
+		
+		$this->_runtime[$model->alias]['attachment'] = $runtime;
 		
 		return $query;
 	}
 	
+	/**
+	 * Append Attachment data to results
+	 * 
+	 * @see ModelBehavior::afterFind()
+	 */
 	public function afterFind(Model $model, $results, $primary) {
 		
-		$settings = $this->settings[$model->alias];
+		$attachment = true;
+		if (isset($this->_runtime[$model->alias]['attachment'])) {
+			$attachment = $this->_runtime[$model->alias]['attachment'];
+			unset($this->_runtime[$model->alias]);
+		}
+
+		if ($attachment === false)
+			return $results;
 		
 		if ($primary) {
 			
 			foreach($results as &$result) {
 				
 				//check if any field is set
-				$fields = array_keys($settings);
+				$fields = array_keys($this->settings[$model->alias]);
 				foreach($fields as $field) {
+					
+					//check runtime config
+					if (is_array($attachment) && array_key_exists($field, $attachment)) {
+						$runtime = $attachment[$field];
+						if (!$runtime)
+							continue;
+					}
+					
 					if (!isset($result[$model->alias][$field]))
 						continue;
 					
-					$config = $settings[$field];
+					$config = $this->settings[$model->alias][$field];
 					
 					//TODO read cache for result
 					
@@ -79,17 +159,22 @@ class AttachableBehavior extends ModelBehavior {
 					
 					//TODO write cache
 					
+					/*
 					$data = array();
 					if ($config['multiple'] === true) {
 						$data = $attachments;
 					} elseif (isset($attachments[0])) {
 						$data = $attachments[0];
 					}
+					*/
+					$data = $attachments;
 					
 					$result['Attachment'][$field] = $data;
 				}
 				
 			}
+		} else {
+			//TODO afterFind non-primary results
 		}
 		
 		return $results;
@@ -110,36 +195,144 @@ class AttachableBehavior extends ModelBehavior {
 		//check if any field is set
 		$fields = array_keys($settings);
 		foreach($fields as $field) {
-			if (!isset($model->data[$model->alias][$field]))
-				continue;
-			
-			$value = $model->data[$model->alias][$field];
 			$config = $settings[$field];
 			
 			//detect upload
-			if (is_array($value)) {
-				$uploadedFiles = $value;
-				if (!isset($uploadedFiles[0])) {
-					$uploadedFiles = array($uploadedFiles);
-				}
+			if (isset($model->data[$model->alias][$config['uploadField']])) {
+			
+				$value = $model->data[$model->alias][$config['uploadField']];
 				
-				foreach($uploadedFiles as &$upload) {
-					try {
-						$this->_upload($upload, $config);
-					} catch(Exception $e) {
-						$model->invalidate($field, $e->getMessage());
-						return false;
+				if (is_array($value)) {
+					$formFiles = $value;
+					if (!isset($formFiles[0])) {
+						$formFiles = array($formFiles);
 					}
+					
+					foreach($formFiles as $idx => &$upload) {
+						try {
+							//no upload
+							if ($upload['error'] == UPLOAD_ERR_NO_FILE && $config['allowEmpty']) {
+								unset($formFiles[$idx]);
+								continue;
+							}
+								
+							$this->_upload($upload, $config);
+						} catch(Exception $e) {
+							$model->invalidate($field, $upload['name'].': '.$e->getMessage());
+							continue;
+						}
+					}
+					
+					$cacheKey = $this->_writeUploadCache($formFiles);
+					$cacheKeyString = self::getCacheKeyString($cacheKey);
+					
+					$model->data[$model->alias][$config['uploadField']] = null;
+					//TODO preserve field data on edit / delete files on overwrite
+					$model->data[$model->alias][$field] = $cacheKeyString;
+				} else {
+					//ignore non array values
+					//$value = null;
+					//throw new AttachableUploadException(UPLOAD_ERR_NO_FILE); 
 				}
 				
-				$value = '@'.serialize($uploadedFiles).'@';
-				
-			} else {
-				//no upload
+			}
+			else {
+				//upload field not set
 			}
 			
-			$model->data[$model->alias][$field] = $value;
 		}
+		
+		return true;
+	}
+	
+	protected function _writeUploadCache($formFiles, $cacheKey = null) {
+		
+		if (!$cacheKey)
+			$cacheKey = String::uuid();
+		
+		if (!Cache::write($cacheKey, $formFiles, self::CACHE_CONFIG))
+			throw new Exception("Failed to write upload cache");
+		
+		return $cacheKey;
+	}
+	
+	protected function _readUploadCache($cacheKey) {
+		return Cache::read($cacheKey, self::CACHE_CONFIG);
+	}
+	
+	
+	/**
+	 * Temporary Upload
+	 *
+	 * @param array $upload Mulitpart form upload data
+	 * @param array $config Field config
+	 * @throws AttachableUploadException
+	 */
+	protected function _upload(&$upload, $config) {
+	
+		//validate upload error
+		if ($upload['error'] > 0) {
+			throw new AttachableUploadException($upload['error']);
+		}
+	
+		//check upload dir
+		if (!is_dir(MEDIA_UPLOAD_TMP_DIR) || !is_writeable(MEDIA_UPLOAD_TMP_DIR)) {
+			$upload['error'] = UPLOAD_ERR_CANT_WRITE;
+		}
+	
+		//validate size
+		elseif ($upload['size'] < $config['minFileSize'])
+		throw new AttachableUploadException(self::UPLOAD_ERR_MIN_FILE_SIZE);
+		elseif ($upload['size'] > $config['maxFileSize'])
+		throw new AttachableUploadException(self::UPLOAD_ERR_MAX_FILE_SIZE);
+	
+		//validate mime
+		elseif (!$this->_validateMimeType($upload['type'], $config['allowedMimeType']))
+		throw new AttachableUploadException(self::UPLOAD_ERR_MIME_TYPE);
+	
+		//split basename
+		list($filename,$ext, $dotExt) = $this->_splitBasename(trim($upload['name']));
+	
+		//validate extension
+		if (!$this->_validateFileExtension($ext, $config['allowedFileExtension']))
+			throw new AttachableUploadException(self::UPLOAD_ERR_FILE_EXT);
+	
+		if ($config['hashFilename'])
+			$filename = sha1($filename);
+		elseif($config['slug'])
+			$filename = Inflector::slug($filename,$config['slug']);
+	
+		//TODO validate filename
+	
+		$upload['name'] = $filename.$dotExt;
+	
+		//safe temporary file path
+		$i = 0;
+		do {
+			$tmpTarget = MEDIA_UPLOAD_TMP_DIR . uniqid($filename) . "-". $i++ . $dotExt;
+		} while(file_exists($tmpTarget));
+	
+		//move uploaded file to tmp upload dir
+		if (is_uploaded_file($upload['tmp_name'])) {
+			if (!move_uploaded_file($upload['tmp_name'], $tmpTarget))
+				throw new AttachableUploadException(self::UPLOAD_ERR_STORE_TMP_UPLOAD);
+				
+		} else {
+			//TODO use a file engine here. Something like $this->_engine->storeTemporaryUpload($upload);
+			if (!copy($upload['tmp_name'], $tmpTarget))
+				throw new AttachableUploadException(self::UPLOAD_ERR_STORE_TMP_UPLOAD);
+		}
+	
+		//update tmp name
+		$upload['tmp_name'] = $tmpTarget;
+	}
+	
+	public function onError($model, $error) {
+		
+		debug($error);
+	}
+	
+	public function beforeSave(Model $model) {
 		
 		return true;
 	}
@@ -147,9 +340,9 @@ class AttachableBehavior extends ModelBehavior {
 	/**
 	 * Check for uploaded files and store them
 	 * 
-	 * @see ModelBehavior::beforeSave()
+	 * @see ModelBehavior::afterSave()
 	 */
-	public function beforeSave(Model $model) {
+	public function afterSave(Model $model, $created) {
 
 		$settings = $this->settings[$model->alias];
 		
@@ -159,58 +352,106 @@ class AttachableBehavior extends ModelBehavior {
 		//check if any field is set
 		$fields = array_keys($settings);
 		foreach($fields as $field) {
-			if (!isset($model->data[$model->alias][$field]))
-				continue;
-			
-			$value = $model->data[$model->alias][$field];
 			$config = $settings[$field];
-				
-			//detect temp upload
-			if (preg_match('/^@(.*)@$/', $value, $matches)) {
-				
-				$tmpUploads = unserialize($matches[1]);
-
-				$attachments = array();
-				foreach($tmpUploads as &$tmpUpload) {
+			
+			if (isset($model->data[$model->alias][$field])) {
+			
+				$upload = $model->data[$model->alias][$field];
 					
-					$basename = $tmpUpload['basename'];
-					list($filename, $ext) = $this->_splitBasename($basename);
-					$path = $config['dir'] . $basename;
+				//START tmp upload
+				if (($cacheKey = self::getCacheKey($upload)) != false) {
 					
-					try {
-						$this->_store($tmpUpload, $path);
-					} catch(Exception $e) {
-						$model->invalidate($field, $e->getMessage());
-						return false;
+					$tmpUploads = $this->_readUploadCache($cacheKey);
+					//TODO what if cacheKey has expired
+					
+					$attachments = array();
+					foreach((array)$tmpUploads as $tmpUpload) {
+						
+						try {
+							$attachment = $this->_store($tmpUpload, $config);
+							array_push($attachments, $attachment);
+						} catch(AttachableUploadException $e) {
+							debug($e->getMessage());
+							$model->invalidate($config['uploadField'], $tmpUpload['name'].': '. $e->getMessage());
+						} catch(Exception $e) {
+							debug($e->getMessage());
+							$model->invalidate($config['uploadField'], $tmpUpload['name'].': '.__('An internal error occured'));
+							$this->log($e->getMessage(), 'error');
+						}
+						
 					}
 					
-					$attachment = compact('path','basename','filename','ext');
-					array_push($attachments, $attachment);
-					
-				}
-					
-				$basenames = array();
-				if ($config['multiple'] === true) {
 					$basenames = Hash::extract($attachments, '{n}.basename');
-				} elseif (isset($attachments[0])) {
-					$attachments = $attachments[0];
-					$basenames = array($attachments['basename']);
-				}
-				
-				//save basenames in $field
-				$value = join(',',$basenames);
 					
-				//assign Attachment(s)
-				$model->data['Attachment'][$field] = $attachments;
-				
-				//TODO write cache
+					//save basenames in $field
+					$fileStr = join(',',$basenames);
+						
+					//assign data
+					$model->data['Attachment'][$field] = $attachments;
+					$model->data[$model->alias][$field] = $fileStr;
+					unset($model->data[$model->alias][$config['uploadField']]);
+					
+					//need to clone model before saveField()
+					//otherwise the result of the parent save() action would be boolean
+					$modelClone = clone $model;
+					$modelClone->id = $model->id;
+					if (!$modelClone->saveField($field, $fileStr))
+						return false;
+					
+					unset($modelClone);
+					
+					//clear cache
+					Cache::delete($cacheKey, self::CACHE_CONFIG);
+					
+				} // END tmp upload
 			}
-			
-			$model->data[$model->alias][$field] = $value;
-			
 		}		
 		
 		return true;
+	}
+	
+
+	/**
+	 * Move temporary upload to destination
+	 *
+	 * @param array $tmpUpload
+	 * @param string $dest Filepath to destination
+	 * @throws AttachableUploadException
+	 */
+	protected function _store($tmpUpload, $config) {
+	
+		$basename = $tmpUpload['name'];
+		list($filename, $ext, $dotExt) = $this->_splitBasename($basename);
+	
+		//safe target
+		$path = $config['dir'] . $basename;
+		if (file_exists($path) && !$config['allowOverwrite']) {
+			$_filename = $filename;
+			$i = 0;
+			do {
+				$filename = $_filename.$config['slug'].++$i;
+				$basename = $filename.$dotExt;
+				$path = $config['dir'].$basename;
+			} while(file_exists($path) == true);
+		}
+	
+		//move temporary file
+		$tmpPath = $tmpUpload['tmp_name'];
+		if (!copy($tmpUpload['tmp_name'], $path))
+			throw new AttachableUploadException(self::UPLOAD_ERR_STORE_UPLOAD);
+		
+		unlink($tmpPath);
+	
+		return array(
+				'path' => $path,
+				'basename' => $basename,
+				'filename' => $filename,
+				'ext' => $ext,
+				//'dotExt' => $dotExt,
+				//'size' => $tmpUpload['size'],
+				//'type' => $tmpUpload['type'],
+				//'error' => $tmpUpload['error'],
+		);
 	}
 	
 	/**
@@ -225,7 +466,6 @@ class AttachableBehavior extends ModelBehavior {
 		$fields = array_keys($settings);
 		
 		$data = $model->read($fields,$model->id);
-		debug($data);
 		
 		foreach($fields as $field) {
 			$config = $settings[$field];
@@ -235,15 +475,14 @@ class AttachableBehavior extends ModelBehavior {
 				continue;
 			
 			if (!isset($data['Attachment']))
-				throw new Exception("Attachment data missing");
+				//throw new Exception("Attachment data missing");
+				continue;
 			
 			//flag attachments for removal
 			if (isset($data['Attachment'][$field])) 
 			{
-				$attachments = (isset($data['Attachment'][$field][0])) 
-					? $data['Attachment'][$field] : array($data['Attachment'][$field]);
 				
-				foreach($attachments as $attachment) {
+				foreach($data['Attachment'][$field] as $idx => $attachment) {
 					$this->_flagForRemoval($model, $attachment['path']);
 				}
 			}
@@ -353,88 +592,7 @@ class AttachableBehavior extends ModelBehavior {
 			}
 		}
 	}
-	
-	/**
-	 * Temporary Upload
-	 * 
-	 * @param array $upload Mulitpart form upload data
-	 * @param array $config Field config
-	 * @throws AttachableUploadException
-	 */
-	protected function _upload(&$upload, $config) {
-		
-		//validate upload error
-		if ($upload['error'] > 0)
-			throw new AttachableUploadException($upload['error']);
-		
-		//check upload dir
-		if (!is_dir(MEDIA_TMP_UPLOAD_DIR) || !is_writeable(MEDIA_TMP_UPLOAD_DIR)) {
-			$upload['error'] = UPLOAD_ERR_CANT_WRITE;
-		}
-		
-		//validate size
-		elseif ($upload['size'] < $config['minFileSize'])
-			throw new AttachableUploadException(self::UPLOAD_ERR_MIN_FILE_SIZE);
-		elseif ($upload['size'] > $config['maxFileSize'])
-			throw new AttachableUploadException(self::UPLOAD_ERR_MAX_FILE_SIZE);
-		
-		//validate mime
-		elseif (!$this->_validateMimeType($upload['type'], $config['allowedMimeType']))
-			throw new AttachableUploadException(self::UPLOAD_ERR_MIME_TYPE);
 
-		//split basename
-		list($filename,$ext) = $this->_splitBasename(trim($upload['name']));
-		
-		//validate extension
-		if (!$this->_validateFileExtension($ext, $config['allowedFileExtension']))
-			throw new AttachableUploadException(self::UPLOAD_ERR_FILE_EXT);
-		
-		
-		if ($config['hashFilename'])
-			$filename = sha1($filename);
-		elseif($config['slug'])
-			$filename = Inflector::slug($filename,$config['slug']);
-		
-		//TODO validate filename
-		
-		$_ext = ($ext) ? '.'.$ext : '';
-		$upload['basename'] = $filename.$_ext;
-		
-		//safe temporary file path
-		$i = 0;
-		do {
-			$tmpTarget = MEDIA_TMP_UPLOAD_DIR . uniqid($filename) . "-". $i++ . $_ext;
-		} while(file_exists($tmpTarget));
-		
-		//move uploaded file to tmp upload dir
-		if (is_uploaded_file($upload['tmp_name'])) {
-			if (!move_uploaded_file($upload['tmp_name'], $tmpTarget))				
-				throw new AttachableUploadException(self::UPLOAD_ERR_STORE_TMP_UPLOAD);
-			
-		} else {
-			if (!copy($upload['tmp_name'], $tmpTarget))
-				throw new AttachableUploadException(self::UPLOAD_ERR_STORE_TMP_UPLOAD);
-		}
-		
-		//store tmp path
-		$upload['path'] = $tmpTarget;
-	}
-	
-	/**
-	 * Move temporary upload to destination
-	 * 
-	 * @param array $tmpUpload
-	 * @param string $dest Filepath to destination
-	 * @throws AttachableUploadException
-	 */
-	protected function _store($tmpUpload, $dest) {
-		
-		if (!copy($tmpUpload['path'], $dest))
-			throw new AttachableUploadException(self::UPLOAD_ERR_STORE_UPLOAD);
-		
-		unlink($tmpUpload['path']);
-	}
-	
 	protected function _validateMimeType($mime, $allowed = array()) {
 		
 		if (is_string($allowed)) {
@@ -479,15 +637,32 @@ class AttachableBehavior extends ModelBehavior {
 		if (strrpos($basename,'.') !== false) {
 			$parts = explode('.', $basename);
 			$ext = array_pop($parts);
+			$dotExt = '.'.$ext;
 			$filename = join('.',$parts);
 		} else {
-			$ext = null;
+			$ext = $dotExt = null;
 			$filename = $basename;
 		}
 		
-		return array($filename, $ext);
+		return array($filename, $ext, $dotExt);
 	}
 	
+	static public function getCacheKeyPattern() {
+		return '/^'.self::getCacheKeyString('(.*)').'$/';
+	}
+
+	static public function getCacheKeyString($cacheKey) {
+		return String::insert(self::CACHE_KEY_INSERTSTRING, array('cacheKey'=>$cacheKey));
+	}
+	
+	static public function getCacheKey($cacheKeyString) {
+		
+		if (preg_match(self::getCacheKeyPattern(), $cacheKeyString, $matches)) {
+			return $matches[1];
+		}
+		
+		return false;
+	}
 	
 }
 
