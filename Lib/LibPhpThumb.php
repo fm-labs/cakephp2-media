@@ -22,7 +22,7 @@ class LibPhpThumb {
 		try {
 			$target = self::target($source,$params);
 			if (!file_exists($target)) {
-				self::createThumbnail($source,$target,$params);
+				$target = self::createThumbnail($source,$target,$params);
 			}
 		} catch(Exception $e) {
 			CakeLog::write('phpthumb',$e->getMessage());
@@ -124,7 +124,7 @@ class LibPhpThumb {
 		}
 		//debug($phpThumb->phpThumbDebug());
 		
-		return true;
+		return $target;
 	}
 
 /**

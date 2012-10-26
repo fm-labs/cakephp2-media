@@ -2,8 +2,10 @@
 App::uses('ModelBehavior', 'Model');
 App::uses('Cache','Cache');
 App::uses('String', 'Utility');
+App::uses('LibPhpThumb','Media.Lib');
 
 defined('MEDIA_CACHE_DIR') or define('MEDIA_CACHE_DIR', CACHE . "media" . DS);
+defined('MEDIA_THUMB_CACHE_DIR') or define('MEDIA_THUMB_CACHE_DIR', IMAGES . "cache" . DS);
 defined('MEDIA_UPLOAD_TMP_DIR') or define('MEDIA_UPLOAD_TMP_DIR', TMP . "attachments" . DS);
 defined('MEDIA_UPLOAD_DIR') or define('MEDIA_UPLOAD_DIR', WWW_ROOT . "uploads" . DS);
 
@@ -23,6 +25,10 @@ class AttachableBehavior extends ModelBehavior {
 	
 	const CACHE_KEY_INSERTSTRING = '@:cacheKey@';
 	
+	const DEFAULT_PREVIEW_W = 125;
+	const DEFAULT_PREVIEW_H = 125;
+	const DEFAULT_PREVIEW_Q = 60;
+	
 	public $defaultConfig = array(
 		'uploadField' => 'file_upload',
 		'baseDir' => MEDIA_UPLOAD_DIR,
@@ -37,6 +43,8 @@ class AttachableBehavior extends ModelBehavior {
 		'hashFilename' => false,
 		'slug' => '_',
 		'removeOnDelete' => true, //remove file if row gets deleted
+		'preview' => false, //TRUE for standard preview, key/config pairs for custom sizes. Applies only to images. Requires phpThumb
+		'thumbDir' => MEDIA_THUMB_CACHE_DIR
 	);
 	
 	protected $_flaggedForRemoval = array();
@@ -65,14 +73,46 @@ class AttachableBehavior extends ModelBehavior {
 	public function setup(Model $model, $settings = array()) {
 		
 		if (!isset($this->settings[$model->alias])) {
-			
 			$attachments = (isset($model->attachments)) ? $model->attachments : array();
-			foreach($attachments as $field => &$config) {
-				$config = am($this->defaultConfig, array('uploadField'=>$field.'_upload'), $config);
-			}
-			
-			$this->settings[$model->alias] = $attachments;
+			$this->configureAttachment($model, $attachments);
 		}
+	}
+	
+	/**
+	 * Setup Field
+	 * 
+	 * @param string $field
+	 * @param mixed $config
+	 * @param boolean $reset
+	 */
+	public function configureAttachment(Model $model, $field, $config = array(), $reset = false) {
+		
+		if (is_array($field)) {
+			foreach($field as $_field => $_config) {
+				$this->configureAttachment($model, $_field, $_config, $reset);
+			}
+			return; 
+		}
+		
+		if ($reset || !$this->_getConfig($model, $field))
+			$config = am($this->defaultConfig, array('uploadField'=>$field.'_upload'), $config);
+		else
+			$config = am($this->settings[$model->alias][$field], $config);
+		
+		//TODO check if directories exist and are writeable
+		
+		$this->settings[$model->alias][$field] = $config;
+	}
+	
+	protected function _getConfig(Model $model, $field) {
+		if (!isset($this->settings[$model->alias][$field]))
+			return false;
+		
+		return $this->settings[$model->alias][$field];
+	}
+	
+	protected function _getFields(Model $model) {
+		return array_keys($this->settings[$model->alias]);
 	}
 	
 	/**
@@ -148,8 +188,7 @@ class AttachableBehavior extends ModelBehavior {
 			foreach($results as &$result) {
 				
 				//check if any field is set
-				$fields = array_keys($this->settings[$model->alias]);
-				foreach($fields as $field) {
+				foreach($this->_getFields($model) as $field) {
 					
 					//check runtime config
 					if (is_array($attachment) && array_key_exists($field, $attachment)) {
@@ -161,7 +200,7 @@ class AttachableBehavior extends ModelBehavior {
 					if (!isset($result[$model->alias][$field]))
 						continue;
 					
-					$config = $this->settings[$model->alias][$field];
+					$config = $this->_getConfig($model, $field);
 					
 					//TODO read attachment cache for result
 					
@@ -221,8 +260,6 @@ class AttachableBehavior extends ModelBehavior {
 		if (!$model->data)
 			return false;
 		
-		$settings = $this->settings[$model->alias];
-		
 		//cacheKey
 		$cacheKey = null;
 		if (is_string($options))
@@ -234,9 +271,8 @@ class AttachableBehavior extends ModelBehavior {
 		
 		$uploadDetected = false;
 		//check if any field is set
-		$fields = array_keys($settings);
-		foreach($fields as $field) {
-			$fieldConfig = $settings[$field];
+		foreach($this->_getFields($model) as $field) {
+			$fieldConfig = $this->_getConfig($model, $field);
 			$config = am($fieldConfig, $options);
 			
 			//detect upload
@@ -412,15 +448,12 @@ class AttachableBehavior extends ModelBehavior {
 	 */
 	public function afterSave(Model $model, $created) {
 
-		$settings = $this->settings[$model->alias];
-		
 		if (!$model->data)
 			return true;		
 		
 		//check if any field is set
-		$fields = array_keys($settings);
-		foreach($fields as $field) {
-			$config = $settings[$field];
+		foreach($this->_getFields($model) as $field) {
+			$config = $this->_getConfig($model, $field);
 			
 			if (isset($model->data[$model->alias][$field])) {
 			
@@ -463,8 +496,6 @@ class AttachableBehavior extends ModelBehavior {
 					
 					//save basenames in $field
 					$fileStr = join(',',$basenames);
-
-					
 					
 					//assign data
 					$model->data['Attachment'][$field] = $attachments;
@@ -524,7 +555,8 @@ class AttachableBehavior extends ModelBehavior {
 		
 		unlink($tmpPath);
 	
-		return array(
+		//attachment data
+		$attachment = array(
 				'path' => $path,
 				'basename' => $basename,
 				'filename' => $filename,
@@ -534,7 +566,59 @@ class AttachableBehavior extends ModelBehavior {
 				//'type' => $tmpUpload['type'],
 				//'error' => $tmpUpload['error'],
 		);
+		
+		//TODO trigger event 'afterStore'. Use for creating preview
+		$attachment = $this->_createPreview($attachment, $config);
+		
+		return $attachment;
 	}
+	
+	protected function _createPreview($attachment, $config) {
+		
+		//check if enabled in config
+		if ($config['preview'] === false)
+			return $attachment;
+		
+		//check if preview can be created for this file extension
+		if (!$this->_validateFileExtension($attachment['ext'], array('jpg','jpeg','png','gif'))) {
+			return $attachment;
+		}
+
+		//TODO validate mime type
+		//if (!$this->_validateMimeType($attachment['type'], 'image/*'))
+		//	return $attachment;
+		
+		//default preview params
+		if ($config['preview'] === true) {
+			$config['preview'] = array('default' => array(
+				'width'=>self::DEFAULT_PREVIEW_W,
+				'height'=>self::DEFAULT_PREVIEW_H,
+				'quality'=>self::DEFAULT_PREVIEW_Q,
+			));
+		}
+		
+		//create thumbs
+		foreach($config['preview'] as $size => $params) {
+			$thumbSource = $attachment['path'];
+			$thumbTarget = $config['thumbDir'] . $this->_getPreviewName($attachment, $size, $config);
+			
+			try {
+				$thumbPath = LibPhpThumb::createThumbnail($thumbSource, $thumbTarget, $params);
+			} catch(Exception $e) {
+				$thumbPath = false;
+				$this->log('AttachableBehavior::_createPreview(): '.$e->getMessage(), 'error');
+			}
+			$attachment['preview'][$size] = $thumbPath;
+		}
+		return $attachment;
+	}
+	
+	protected function _getPreviewName($attachment, $size, $config) {
+		
+		list ($filename, $ext, $dotExt) = $this->_splitBasename($attachment['basename']);
+		
+		return $filename . $config['slug'] . $size .$config['slug'] . md5($attachment['path']) . $dotExt;
+	} 
 	
 	/**
 	 * Check attached files should be removed and flag them. 
@@ -718,7 +802,16 @@ class AttachableBehavior extends ModelBehavior {
 		return true;
 	}
 	
+	/**
+	 * @see AttachableBehavior::splitBasename()
+	 * @param string $basename
+	 * @deprecated Use the static function instead
+	 */
 	protected function _splitBasename($basename) {
+		return self::splitBasename($basename);
+	}
+	
+	static public function splitBasename($basename) {
 		
 		if (strrpos($basename,'.') !== false) {
 			$parts = explode('.', $basename);
@@ -731,6 +824,7 @@ class AttachableBehavior extends ModelBehavior {
 		}
 		
 		return array($filename, $ext, $dotExt);
+		
 	}
 	
 	static public function generateCacheKey() {

@@ -1,8 +1,16 @@
 <?php
-App::uses('FormHelper', 'View/Helper');
+App::uses('AppHelper', 'View/Helper');
 
-class FormUploadHelper extends FormHelper {
+/**
+ * 
+ * @author flow
+ * @property HtmlHelper $Html
+ * @property FormHelper $Form
+ */
+class FormUploadHelper extends AppHelper {
 
+	public $helpers = array('Html', 'Form');
+	
 	public function __construct($View, $settings = array()) {
 		parent::__construct($View, $settings);
 		
@@ -11,28 +19,30 @@ class FormUploadHelper extends FormHelper {
 		$this->Html->css('/media/css/uploader',null, array('inline'=>false));
 	}
 	
-	public function input($field, $options = array(), $uploaderConfig = array()) {
+	public function input($fieldName, $options = array(), $uploaderConfig = array()) {
 
 		$options = am(array(
+			'holder' => $fieldName.'_upload',
 			'multiple' => false,
 			'type' => 'file',
 			'id' => uniqid('fileinput')
 		),$options);
 		
-		if (substr($field, -1) == '.') {
-			$options['multiple'] = 'multiple';
-		}
-		
 		$uploaderConfig = am(array(
 			'uploadUrl' => Router::url(array('action'=>'upload'))		
 		),$uploaderConfig);
 		
-		$out = parent::input($field, $options);
-
-		$script = 'var uploader = new UploaderUi('.json_encode($uploaderConfig).');';
-		//$script .= 'uploader.init('.json_encode($uploaderConfig).');';
-		$script .= 'uploader.bindTo("#'.$options['id'].'");';
+		//output form field
+		$fieldName = $options['holder'];
+		unset($options['holder']);
 		
+		if ($options['multiple'])
+			$fieldName .= '.';
+		$out = $this->Form->input($fieldName, $options);
+
+		//build uploader script
+		$script = 'var uploader = new UploaderUi('.json_encode($uploaderConfig).');';
+		$script .= 'uploader.bindTo("#'.$options['id'].'");';
 		$out .= $this->Html->scriptBlock($script);
 		
 		return $out;

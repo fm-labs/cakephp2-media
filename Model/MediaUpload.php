@@ -3,6 +3,7 @@ App::uses('MediaAppModel', 'Media.Model');
 /**
  * MediaUpload Model
  *
+ * @property AttachableBehavior $Attachable
  */
 class MediaUpload extends MediaAppModel {
 

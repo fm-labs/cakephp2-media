@@ -1,4 +1,5 @@
 <?php $this->Helpers->load('Media.FormUpload'); ?>
+<?php $this->Helpers->load('Media.Attachment'); ?>
 <div class="mediaUploads form">
 
 	<h2><?php echo __('Media Upload'); ?></h2>
@@ -16,11 +17,13 @@
 		echo $this->Form->input('id');
 		echo $this->Form->input('title');
 		echo $this->Form->input('file',array('readonly'=>true));
-		echo $this->FormUpload->input('MediaUpload.file_upload',array('type'=>'file', 'label'=>'Single File Upload'));
+		
+		echo $this->FormUpload->input('MediaUpload.file',array('type'=>'file', 'label'=>'Single File Upload'));
+		echo $this->Attachment->preview('MediaUpload.file');
 		echo $this->Form->error('file');
 
 		echo $this->Form->input('files',array('readonly'=>true));
-		echo $this->FormUpload->input('MediaUpload.files_upload.',array('type'=>'file', 'label'=>'Multi File Upload'));
+		echo $this->FormUpload->input('MediaUpload.files',array('type'=>'file', 'multiple'=>'multiple', 'label'=>'Multi File Upload'));
 		echo $this->Form->error('files');
 	?>
 	</fieldset>

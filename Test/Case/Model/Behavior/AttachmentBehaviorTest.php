@@ -34,8 +34,10 @@ class AttachableBehaviorTest extends CakeTestCase {
 	public $attachmentDir = MEDIA_UPLOAD_DIR;
 	public $tmpDir = MEDIA_UPLOAD_TESTFILES_DIR;
 	
-	protected $file1;
-	protected $file2;
+	protected $upload1;
+	protected $upload2;
+	protected $uploadNoExt;
+	protected $uploadImage;
 	
 	
 	public function setUp() {
@@ -65,13 +67,43 @@ class AttachableBehaviorTest extends CakeTestCase {
 				'size' => filesize($this->tmpDir.'upload2.txt')
 		);
 		
+		$this->uploadNoExt = array(
+				'name' => 'Upload_Without_Ext',
+				'type' => 'text/plain',
+				'tmp_name' => $this->tmpDir.'upload_noext',
+				'error' => (int) 0,
+				'size' => filesize($this->tmpDir.'upload_noext')
+		);
+
+		$this->uploadImage = array(
+				'name' => 'Upload.jpg',
+				'type' => 'image/jpg',
+				'tmp_name' => $this->tmpDir.'upload.jpg',
+				'error' => (int) 0,
+				'size' => filesize($this->tmpDir.'upload.jpg')
+		);
+		
 		$this->MediaUpload = ClassRegistry::init('Media.MediaUpload');
 		
 	}
 	
+	protected function _getExpectedAttachment($upload, $expectedName) {
+		
+		list($filename, $ext, $dotExt) = TestAttachableBehavior::splitBasename($expectedName);
+		
+		return array(
+				'path' => $this->attachmentDir . $expectedName,
+				'basename' => $expectedName,
+				'filename' => $filename,
+				'ext' => $ext,
+                //'size' => $upload['size'],
+                //'type' => $upload['type']
+		);
+	}
+	
 	protected function _setupDefault() {
 		
-		$this->MediaUpload->attachments = array(
+		$this->MediaUpload->configureAttachment(array(
 			'file' => array(
 					'baseDir' => $this->attachmentDir,
 					'multiple' => false,
@@ -80,7 +112,28 @@ class AttachableBehaviorTest extends CakeTestCase {
 					'baseDir' => $this->attachmentDir,
 					'multiple' => true,
 			)
-		);
+		),true);
+		$this->MediaUpload->validate = array();
+		$this->MediaUpload->Behaviors->load('Media.Attachable',array());
+	}
+
+	protected function _setupImages() {
+	
+		$this->MediaUpload->configureAttachment(array(
+				'file' => array(
+						'baseDir' => $this->attachmentDir,
+						'multiple' => false,
+						'preview' => true
+				),
+				'files' => array(
+						'baseDir' => $this->attachmentDir,
+						'multiple' => true,
+						'preview' => array(
+							'small' => array('width' => 50, 'height' => 50),
+							'big' => array('width' => 50, 'height' => 50),
+						)
+				)
+		),true);
 		$this->MediaUpload->validate = array();
 		$this->MediaUpload->Behaviors->load('Media.Attachable',array());
 	}
@@ -127,7 +180,9 @@ class AttachableBehaviorTest extends CakeTestCase {
 				'allowedFileExtension' => '*',
 				'hashFilename' => false,
 				'slug' => '_',
-				'removeOnDelete' => true
+				'removeOnDelete' => true,
+				'preview' => false,
+				'thumbDir' => MEDIA_THUMB_CACHE_DIR
 			)
 		);
 		$this->assertEqual($result, $expected);
@@ -491,13 +546,7 @@ class AttachableBehaviorTest extends CakeTestCase {
 		$data = array(
 			'MediaUpload' => array(
 				'title' => 'My Upload',
-				'file_upload' => array(
-					'name' => 'Upload File 1.txt',
-					'type' => 'text/plain',
-					'tmp_name' => $this->tmpDir.'upload1.txt',
-					'error' => (int) 0,
-					'size' => filesize($this->tmpDir.'upload1.txt')
-				)
+				'file_upload' => $this->upload1
 			)
 		);
 		
@@ -511,12 +560,7 @@ class AttachableBehaviorTest extends CakeTestCase {
 			),
 			'Attachment' => array(
 				'file' => array(
-					0 => array(
-						'path' => $this->attachmentDir . 'Upload_File_1.txt',
-						'basename' => 'Upload_File_1.txt',
-						'filename' => 'Upload_File_1',
-						'ext' => 'txt',
-					)
+					0 => $this->_getExpectedAttachment($this->upload1, 'Upload_File_1.txt')
 				)
 			),
 		);
@@ -573,12 +617,7 @@ class AttachableBehaviorTest extends CakeTestCase {
 			),
 			'Attachment' => array(
 				'file' => array(
-					0 => array(
-						'path' => $this->attachmentDir . 'Upload_File_1.txt',
-						'basename' => 'Upload_File_1.txt',
-						'filename' => 'Upload_File_1',
-						'ext' => 'txt',
-					)
+					0 => $this->_getExpectedAttachment($this->upload1, 'Upload_File_1.txt')
 				)
 			),
 		);
@@ -606,12 +645,8 @@ class AttachableBehaviorTest extends CakeTestCase {
 		);
 		$expected = $result;
 		$expected['MediaUpload']['file'] = 'Upload_File_1.txt';
-		$expected['Attachment']['file'][0] = array(
-			'path' => $this->attachmentDir . 'Upload_File_1.txt',
-			'basename' => 'Upload_File_1.txt',
-			'filename' => 'Upload_File_1',
-			'ext' => 'txt',
-		);
+		$expected['Attachment']['file'][0] = $this->_getExpectedAttachment($this->upload1, 'Upload_File_1.txt');
+		
 		$this->MediaUpload->create();
 		$result = $this->MediaUpload->save($data);
 		$this->assertEqual($result, $expected);
@@ -630,12 +665,7 @@ class AttachableBehaviorTest extends CakeTestCase {
 		
 		$expected = $result;
 		$expected['MediaUpload']['file'] = 'Upload_File_2.txt';
-		$expected['Attachment']['file'][0] = array(
-			'path' => $this->attachmentDir . 'Upload_File_2.txt',
-			'basename' => 'Upload_File_2.txt',
-			'filename' => 'Upload_File_2',
-			'ext' => 'txt',
-		);
+		$expected['Attachment']['file'][0] = $this->_getExpectedAttachment($this->upload2, 'Upload_File_2.txt');
 		$result = $this->MediaUpload->read(null, 2);
 		$this->assertEqual($result, $expected);
 		
@@ -656,18 +686,8 @@ class AttachableBehaviorTest extends CakeTestCase {
 		);
 		$expected = $record;
 		$expected['MediaUpload']['files'] = 'Upload_File_2_1.txt,Upload_File_2_2.txt';
-		$expected['Attachment']['files'][0] = array(
-				'path' => $this->attachmentDir . 'Upload_File_2_1.txt',
-				'basename' => 'Upload_File_2_1.txt',
-				'filename' => 'Upload_File_2_1',
-				'ext' => 'txt',
-		);		
-		$expected['Attachment']['files'][1] = array(
-				'path' => $this->attachmentDir . 'Upload_File_2_2.txt',
-				'basename' => 'Upload_File_2_2.txt',
-				'filename' => 'Upload_File_2_2',
-				'ext' => 'txt',
-		);
+		$expected['Attachment']['files'][0] = $this->_getExpectedAttachment($this->upload2, 'Upload_File_2_1.txt');
+		$expected['Attachment']['files'][1] = $this->_getExpectedAttachment($this->upload2, 'Upload_File_2_2.txt');
 		$this->MediaUpload->create();
 		$result = $this->MediaUpload->save($data);
 		$this->assertEqual($result, $expected);
@@ -686,31 +706,12 @@ class AttachableBehaviorTest extends CakeTestCase {
 		);
 
 		$expected['MediaUpload']['files'] = 'Upload_File_2_1.txt,Upload_File_2_2.txt,Upload_File_1.txt,Upload_File_1_1.txt';
-		$expected['Attachment']['files'][0] = array(
-				'path' => $this->attachmentDir . 'Upload_File_2_1.txt',
-				'basename' => 'Upload_File_2_1.txt',
-				'filename' => 'Upload_File_2_1',
-				'ext' => 'txt',
-		);
-		$expected['Attachment']['files'][1] = array(
-				'path' => $this->attachmentDir . 'Upload_File_2_2.txt',
-				'basename' => 'Upload_File_2_2.txt',
-				'filename' => 'Upload_File_2_2',
-				'ext' => 'txt',
-		);
-		$expected['Attachment']['files'][2] = array(
-				'path' => $this->attachmentDir . 'Upload_File_1.txt', // <-- the file uploaded in szenario 1 has already been overwritten by szenario 2
-				'basename' => 'Upload_File_1.txt',
-				'filename' => 'Upload_File_1',
-				'ext' => 'txt',
-		);
-		$expected['Attachment']['files'][3] = array(
-				'path' => $this->attachmentDir . 'Upload_File_1_1.txt',
-				'basename' => 'Upload_File_1_1.txt',
-				'filename' => 'Upload_File_1_1',
-				'ext' => 'txt',
-		);
+		$expected['Attachment']['files'][0] = $this->_getExpectedAttachment($this->upload2, 'Upload_File_2_1.txt');
+		$expected['Attachment']['files'][1] = $this->_getExpectedAttachment($this->upload2, 'Upload_File_2_2.txt');
 		
+		// the file uploaded in szenario 1 has already been overwritten by szenario 2, so 'Upload_File_1.txt' is available again
+		$expected['Attachment']['files'][2] = $this->_getExpectedAttachment($this->upload1, 'Upload_File_1.txt');
+		$expected['Attachment']['files'][3] = $this->_getExpectedAttachment($this->upload1, 'Upload_File_1_1.txt');
 
 		$this->MediaUpload->create();
 		$result = $this->MediaUpload->save($data);
@@ -739,18 +740,8 @@ class AttachableBehaviorTest extends CakeTestCase {
 
 		$expected = $record;
 		$expected['MediaUpload']['files'] = 'Upload_File_1_2.txt,Upload_File_2_3.txt';
-		$expected['Attachment']['files'][0] = array(
-				'path' => $this->attachmentDir . 'Upload_File_1_2.txt',
-				'basename' => 'Upload_File_1_2.txt',
-				'filename' => 'Upload_File_1_2',
-				'ext' => 'txt',
-		);
-		$expected['Attachment']['files'][1] = array(
-				'path' => $this->attachmentDir . 'Upload_File_2_3.txt',
-				'basename' => 'Upload_File_2_3.txt',
-				'filename' => 'Upload_File_2_3',
-				'ext' => 'txt',
-		);
+		$expected['Attachment']['files'][0] = $this->_getExpectedAttachment($this->upload1, 'Upload_File_1_2.txt');
+		$expected['Attachment']['files'][1] = $this->_getExpectedAttachment($this->upload2, 'Upload_File_2_3.txt');
 
 		$this->MediaUpload->create();
 		$result = $this->MediaUpload->save($data,array('attachment'=>array('preserve'=>false)));
@@ -796,20 +787,8 @@ class AttachableBehaviorTest extends CakeTestCase {
 			'MediaUpload' => array(
 				'title' => 'My Multi Upload',
 				'files_upload' => array(
-					0 => array(
-						'name' => 'Upload File 1.txt',
-						'type' => 'text/plain',
-						'tmp_name' => $this->tmpDir.'upload1.txt',
-						'error' => (int) 0,
-						'size' => filesize($this->tmpDir.'upload1.txt')
-					),
-					1 => array(
-						'name' => 'Upload File 2.txt',
-						'type' => 'text/plain',
-						'tmp_name' => $this->tmpDir.'upload2.txt',
-						'error' => (int) 0,
-						'size' => filesize($this->tmpDir.'upload2.txt')
-					)
+					0 => $this->upload1,
+					1 => $this->upload2
 				)
 			)
 		);
@@ -825,18 +804,8 @@ class AttachableBehaviorTest extends CakeTestCase {
 				),
 				'Attachment' => array(
 					'files' => array(
-						0 => array(
-							'path' => $this->attachmentDir . 'Upload_File_1.txt',
-							'basename' => 'Upload_File_1.txt',
-							'filename' => 'Upload_File_1',
-							'ext' => 'txt',
-						),
-						1 => array(
-							'path' => $this->attachmentDir . 'Upload_File_2.txt',
-							'basename' => 'Upload_File_2.txt',
-							'filename' => 'Upload_File_2',
-							'ext' => 'txt',
-						),
+						0 => $this->_getExpectedAttachment($this->upload1, 'Upload_File_1.txt'),
+						1 => $this->_getExpectedAttachment($this->upload2, 'Upload_File_2.txt'),
 							
 					)
 				),
@@ -857,31 +826,13 @@ class AttachableBehaviorTest extends CakeTestCase {
 	public function testCombinedSingleMultiUploadSaveDelete() {
 	
 		$this->_setupDefault();
-		$data = array(
+				$data = array(
 				'MediaUpload' => array(
 						'title' => 'My Multi Upload',
-						'file_upload' => array(
-								'name' => 'Upload_Without_Ext',
-								'type' => 'text/plain',
-								'tmp_name' => $this->tmpDir.'upload_noext',
-								'error' => (int) 0,
-								'size' => filesize($this->tmpDir.'upload_noext')
-						),
+						'file_upload' => $this->uploadNoExt,
 						'files_upload' => array(
-								0 => array(
-										'name' => 'Upload File 1.txt',
-										'type' => 'text/plain',
-										'tmp_name' => $this->tmpDir.'upload1.txt',
-										'error' => (int) 0,
-										'size' => filesize($this->tmpDir.'upload1.txt')
-								),
-								1 => array(
-										'name' => 'Upload File 2.txt',
-										'type' => 'text/plain',
-										'tmp_name' => $this->tmpDir.'upload2.txt',
-										'error' => (int) 0,
-										'size' => filesize($this->tmpDir.'upload2.txt')
-								)
+								0 => $this->upload1,
+								1 => $this->upload2
 						)
 				)
 		);
@@ -898,27 +849,11 @@ class AttachableBehaviorTest extends CakeTestCase {
 				),
 				'Attachment' => array(
 						'file' => array(
-							0 => array(
-								'path' => $this->attachmentDir . 'Upload_Without_Ext',
-								'basename' => 'Upload_Without_Ext',
-								'filename' => 'Upload_Without_Ext',
-								'ext' => '',
-							)
+							0 => $this->_getExpectedAttachment($this->uploadNoExt, 'Upload_Without_Ext')
 						),
 						'files' => array(
-								0 => array(
-										'path' => $this->attachmentDir . 'Upload_File_1.txt',
-										'basename' => 'Upload_File_1.txt',
-										'filename' => 'Upload_File_1',
-										'ext' => 'txt',
-								),
-								1 => array(
-										'path' => $this->attachmentDir . 'Upload_File_2.txt',
-										'basename' => 'Upload_File_2.txt',
-										'filename' => 'Upload_File_2',
-										'ext' => 'txt',
-								),
-									
+							0 => $this->_getExpectedAttachment($this->upload1, 'Upload_File_1.txt'),
+							1 => $this->_getExpectedAttachment($this->upload2, 'Upload_File_2.txt'),
 						)
 				),
 		);
@@ -935,7 +870,23 @@ class AttachableBehaviorTest extends CakeTestCase {
 		$this->assertTrue(!file_exists($result['Attachment']['files'][0]['path']));
 		$this->assertTrue(!file_exists($result['Attachment']['files'][1]['path']));
 	}	
+
+
+	public function testSaveWithPreview() {
+		$this->_setupImages();
 	
+		$data = array('MediaUpload' => array('file_upload'=>$this->uploadImage, 'files_upload'=>$this->uploadImage));
+		$this->MediaUpload->create();
+		$result = $this->MediaUpload->save($data);
+	
+		$this->assertTrue(isset($result['Attachment']['file'][0]['preview']['default']));
+		$this->assertTrue(file_exists($result['Attachment']['file'][0]['preview']['default']));
+		$this->assertTrue(isset($result['Attachment']['files'][0]['preview']['small']));
+		$this->assertTrue(file_exists($result['Attachment']['files'][0]['preview']['small']));
+		$this->assertTrue(isset($result['Attachment']['files'][0]['preview']['big']));
+		$this->assertTrue(file_exists($result['Attachment']['files'][0]['preview']['big']));
+	
+	}	
 	
 	public function tearDown() {
 		parent::tearDown();
@@ -951,6 +902,11 @@ class AttachableBehaviorTest extends CakeTestCase {
 }
 
 class TestAttachableBehavior extends AttachableBehavior {
+	
+	
+	public function _createPreview($attachment, $config) {
+		return parent::_createPreview($attachment, $config);
+	}
 	
 	public function _splitBasename($basename) {
 		return parent::_splitBasename($basename);
