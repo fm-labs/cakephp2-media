@@ -26,11 +26,21 @@ class MediaUpload extends MediaAppModel {
 		'title' => array(
 			'notempty' => array(
 				'rule' => array('notempty'),
-				//'message' => 'Your custom message here',
+				'message' => 'Upload title missing',
 				//'allowEmpty' => false,
 				//'required' => false,
 				//'last' => false, // Stop validation after this rule
 				//'on' => 'create', // Limit validation to 'create' or 'update' operations
+			),
+		),
+		'file' => array(
+			'notempty' => array(
+				'rule' => array('notempty'),
+				'message' => 'File can not be empty',
+				//'allowEmpty' => false,
+				'required' => true,
+				//'last' => false, // Stop validation after this rule
+				'on' => 'create', // Limit validation to 'create' or 'update' operations
 			),
 		),
 	);

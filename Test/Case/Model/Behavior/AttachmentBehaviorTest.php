@@ -9,17 +9,22 @@ define('MEDIA_UPLOAD_TESTFILES_DIR', CakePlugin::path('Media') . 'Test/test_app/
 App::uses('AttachableBehavior', 'Media.Model/Behavior');
 App::uses('Folder','Utility');
 
+/**
+ * 
+ * @author flow
+ * @todo Test with/without validation options for file input
+ */
 class AttachableBehaviorTest extends CakeTestCase {
 	
 	/**
 	 * @var array
 	 */
-	public $fixtures = array('plugin.media.attach');
+	public $fixtures = array('plugin.media.media_upload');
 	
 	/**
-	 * @var Model
+	 * @var MediaUpload
 	 */
-	public $Attach;
+	public $MediaUpload;
 	
 	/**
 	 * Attachable dir path with trailing DS
@@ -32,12 +37,6 @@ class AttachableBehaviorTest extends CakeTestCase {
 	protected $file1;
 	protected $file2;
 	
-	/*
-	public function __construct() {
-		parent::__construct();
-		
-	}
-	*/
 	
 	public function setUp() {
 		parent::setUp();
@@ -66,23 +65,24 @@ class AttachableBehaviorTest extends CakeTestCase {
 				'size' => filesize($this->tmpDir.'upload2.txt')
 		);
 		
-		$this->Attach = ClassRegistry::init('Attach');
+		$this->MediaUpload = ClassRegistry::init('Media.MediaUpload');
 		
 	}
 	
 	protected function _setupDefault() {
 		
-		$this->Attach->attachments = array(
+		$this->MediaUpload->attachments = array(
 			'file' => array(
-					'dir' => $this->attachmentDir,
+					'baseDir' => $this->attachmentDir,
 					'multiple' => false,
 			),
 			'files' => array(
-					'dir' => $this->attachmentDir,
+					'baseDir' => $this->attachmentDir,
 					'multiple' => true,
 			)
 		);
-		$this->Attach->Behaviors->load('Media.Attachable',array());
+		$this->MediaUpload->validate = array();
+		$this->MediaUpload->Behaviors->load('Media.Attachable',array());
 	}
 	
 	public function testStaticCacheKeyMethods() {
@@ -107,17 +107,18 @@ class AttachableBehaviorTest extends CakeTestCase {
 	public function testDefaultConfig() {
 		$Behavior = new TestAttachableBehavior();
 
-		$this->Attach->attachments = array(
+		$this->MediaUpload->attachments = array(
 				'file' => array()
 		);
-		$Behavior->setup($this->Attach);
-		$result = $Behavior->getModelSettings($this->Attach);
+		$Behavior->setup($this->MediaUpload);
+		$result = $Behavior->getModelSettings($this->MediaUpload);
 		
 		$expected = array(
 			'file' => array(
 				'uploadField' => 'file_upload',
-				'dir' => MEDIA_UPLOAD_DIR,
+				'baseDir' => MEDIA_UPLOAD_DIR,
 				'multiple' => false,
+				'preserve' => true,
 				'minFileSize' => (int) 0,
 				'maxFileSize' => 2 * 1024 * 1024,
 				'allowEmpty' => true,
@@ -261,7 +262,125 @@ class AttachableBehaviorTest extends CakeTestCase {
 		$this->expectException('AttachableUploadException','Invalid file extension');
 		$result = $Behavior->_upload($upload, $config);
 	}	
+
+
+	public function testValidateWithNoFileSubmitted() {
+
+		$this->_setupDefault();
 		
+		$this->MediaUpload->validate = array(
+				'file_upload' => array(
+						'notempty' => array(
+								'rule' => array('notempty'),
+								'message' => 'FileUpload can not be empty',
+								'required' => true,
+						),
+				)
+		);
+		
+		//no file has been submitted
+		$data = array(
+				'MediaUpload' => array(
+						'title' => 'Upload',
+						'file' => '',
+						'file_upload' => array(
+								'name' => '',
+								'type' => '',
+								'tmp_name' => '',
+								'error' => (int) 4,
+								'size' => (int) 0
+						)
+				)
+		);
+		$expectedResultData = array(
+			'MediaUpload' => array(
+				'title' => 'Upload',
+				'file' => '',
+				//'file_upload' => null
+			)
+		);
+		
+		$this->MediaUpload->create($data);
+		$result = $this->MediaUpload->validates();
+		$resultData = $this->MediaUpload->data;
+		$resultValidationErrors = $this->MediaUpload->validationErrors;
+		
+		$this->assertTrue(($result === false));
+		$this->assertEqual($resultData, $expectedResultData);
+		$this->assertTrue(isset($resultValidationErrors['file_upload']));
+	}
+	
+	/**
+	 * TODO clean this up. split up in separate test methods
+	 */
+	public function testAttachTemporary() {
+	
+		$this->_setupDefault();
+		
+		//test data with no file submitted
+		$data = array(
+				'MediaUpload' => array(
+						'title' => 'Upload',
+						'file' => '',
+						'file_upload' => array(
+								'name' => '',
+								'type' => '',
+								'tmp_name' => '',
+								'error' => (int) 4,
+								'size' => (int) 0
+						)
+				)
+		);
+		$expectedResultData = array(
+			'MediaUpload' => array(
+				'title' => 'Upload',
+				'file' => '',
+				//'file_upload' => null
+			)
+		);
+		$this->MediaUpload->create($data);
+		$result = $this->MediaUpload->attachTemporary();
+		$resultData = $this->MediaUpload->data;
+		$this->assertTrue(($result === false));
+		$this->assertEqual($resultData, $expectedResultData);
+		
+		$data = array(
+				'MediaUpload' => array(
+						'file_upload' => array(
+								'name' => 'Upload File 1.txt',
+								'type' => 'text/plain',
+								'tmp_name' => $this->tmpDir.'upload1.txt',
+								'error' => (int) 0,
+								'size' => filesize($this->tmpDir.'upload1.txt')
+						)
+				)
+		);
+	
+		//set data using Model::set($data) and use a custom cache key here
+		$customCacheKey = 'my-cache-key';
+		$this->MediaUpload->create();
+		$this->MediaUpload->set($data);
+		$result = $this->MediaUpload->attachTemporary(null, $customCacheKey);
+		$resultData = $this->MediaUpload->data;
+	
+		$expectedKeyString = '@my-cache-key@';
+	
+		//test manual generation
+		$resultKeyString = String::insert(TestAttachableBehavior::CACHE_KEY_INSERTSTRING,
+				array('cacheKey'=>$customCacheKey));
+		$this->assertEqual($resultKeyString, $expectedKeyString);
+	
+		//test implemented generation
+		$resultKeyString = TestAttachableBehavior::getCacheKeyString($customCacheKey);
+		$this->assertEqual($resultKeyString, $expectedKeyString);
+	
+		//test if set
+		$this->assertTrue($result);
+		$this->assertEqual($resultData['MediaUpload']['file'], $expectedKeyString);
+		$this->assertEqual($resultData['MediaUpload']['file_upload'], $expectedKeyString);
+	
+		//now try to save again in new request and cache key passed
+	}	
 	
 	
 	public function testReadSingle() {
@@ -269,7 +388,7 @@ class AttachableBehaviorTest extends CakeTestCase {
 		$this->_setupDefault();
 		
 		$expectedBare = array(
-			$this->Attach->alias => array('id' => 1, 'title' => 'Single File', 'file' => 'file1.txt', 'files' => null ),
+			'MediaUpload' => array('id' => 1, 'title' => 'Single File', 'file' => 'file1.txt', 'files' => null ),
 		);
 		$expected = am($expectedBare,array(
 			'Attachment' => array(
@@ -283,53 +402,53 @@ class AttachableBehaviorTest extends CakeTestCase {
 				)
 			))
 		);
-		$data = $this->Attach->read(null, 1);
+		$data = $this->MediaUpload->read(null, 1);
 		$this->assertEqual($data, $expected);
 	
 		//the "find way"
-		$data = $this->Attach->find('first',array('attachment'=>false));
+		$data = $this->MediaUpload->find('first',array('attachment'=>false));
 		$this->assertEqual($data, $expectedBare);
 
 		//second find without ->attachment() should contain attachment
-		$data = $this->Attach->find('first');
+		$data = $this->MediaUpload->find('first');
 		$this->assertEqual($data, $expected);
 		
 		//the "find way" for a field
-		$data = $this->Attach->find('first',array('attachment'=>array('file'=>false)));
+		$data = $this->MediaUpload->find('first',array('attachment'=>array('file'=>false)));
 		$this->assertEqual($data, $expectedBare);
 		
 		//the "read" way
-		$this->Attach->attachment(false);
-		$data = $this->Attach->read(null, 1);
+		$this->MediaUpload->attachment(false);
+		$data = $this->MediaUpload->read(null, 1);
 		$this->assertEqual($data, $expectedBare);
 		
 		//second read without ->attachment() should contain attachment
-		$data = $this->Attach->read(null, 1);
+		$data = $this->MediaUpload->read(null, 1);
 		$this->assertEqual($data, $expected);
 		
 		//the "read" way for a single field
-		$this->Attach->attachment(false);
-		$data = $this->Attach->read(null, 1);
+		$this->MediaUpload->attachment(false);
+		$data = $this->MediaUpload->read(null, 1);
 		$this->assertEqual($data, $expectedBare);
 	}	
 	
-	public function testSaveSingle() {
+	public function testCreateSingleWithFileName() {
 		$this->_setupDefault();
 		$data = array(
-				$this->Attach->alias => array('title' => 'New Single File', 'file' => 'file2.txt', 'files' => null ),
+				'MediaUpload' => array('title' => 'New Single File', 'file' => 'file2.txt', 'files' => null ),
 		);
-		$this->Attach->create();
-		$saved = $this->Attach->save($data);
+		$this->MediaUpload->create();
+		$saved = $this->MediaUpload->save($data);
 		$this->assertTrue((bool)$saved);
 		
-		$result = $this->Attach->read(null, $this->Attach->id);
+		$result = $this->MediaUpload->read(null, $this->MediaUpload->id);
 		$expected = array(
-				$this->Attach->alias => array('id' => $this->Attach->id, 'title' => 'New Single File', 'file' => 'file2.txt', 'files' => null ),
+				'MediaUpload' => array('id' => $this->MediaUpload->id, 'title' => 'New Single File', 'file' => 'file2.txt', 'files' => null ),
 				'Attachment' => array(
 						'file' => array(
 							0 => array(
-								'path' => $this->attachmentDir . $data[$this->Attach->alias]['file'],
-								'basename' => $data[$this->Attach->alias]['file'],
+								'path' => $this->attachmentDir . $data['MediaUpload']['file'],
+								'basename' => $data['MediaUpload']['file'],
 								'filename' => 'file2',
 								'ext' => 'txt',
 							)
@@ -338,14 +457,14 @@ class AttachableBehaviorTest extends CakeTestCase {
 		);
 		$this->assertEqual($result,$expected);
 		
-		$this->assertTrue($this->Attach->delete($this->Attach->id,true));
+		$this->assertTrue($this->MediaUpload->delete($this->MediaUpload->id,true));
 	}
 	
 	public function testReadMulti() {
 		$this->_setupDefault();
-		$data = $this->Attach->read(null, 3);
+		$data = $this->MediaUpload->read(null, 3);
 		$expected = array(
-				$this->Attach->alias => array('id' => 3, 'title' => 'Multi File', 'file' => null, 'files' => 'file1.txt,file2.txt' ),
+				'MediaUpload' => array('id' => 3, 'title' => 'Multi File', 'file' => null, 'files' => 'file1.txt,file2.txt' ),
 				'Attachment' => array(
 					'files' => array(
 						0 => array(
@@ -366,53 +485,11 @@ class AttachableBehaviorTest extends CakeTestCase {
 		$this->assertEqual($data, $expected);
 	}
 	
-	public function testTemporaryUpload() {
-
-		$this->_setupDefault();
-		
-		$data = array(
-			$this->Attach->alias => array(
-				'file_upload' => array(
-					'name' => 'Upload File 1.txt',
-					'type' => 'text/plain',
-					'tmp_name' => $this->tmpDir.'upload1.txt',
-					'error' => (int) 0,
-					'size' => filesize($this->tmpDir.'upload1.txt')
-				)
-			)
-		);
-		
-		//we use a custom cache key here
-		$customCacheKey = 'my-cache-key';
-		$this->Attach->create();
-		$this->Attach->set($data);
-		$result = $this->Attach->uploadTemporary(null, $customCacheKey);
-		$resultData = $this->Attach->data;
-		
-		$expectedKeyString = '@my-cache-key@';
-		
-		//test manual generation
-		$resultKeyString = String::insert(TestAttachableBehavior::CACHE_KEY_INSERTSTRING, 
-				array('cacheKey'=>$customCacheKey));
-		$this->assertEqual($resultKeyString, $expectedKeyString);
-		
-		//test implemented generation
-		$resultKeyString = TestAttachableBehavior::getCacheKeyString($customCacheKey);
-		$this->assertEqual($resultKeyString, $expectedKeyString);
-		
-		//test if set
-		$this->assertTrue($result);
-		$this->assertEqual($resultData[$this->Attach->alias]['file'], $expectedKeyString);
-		$this->assertEqual($resultData[$this->Attach->alias]['file_upload'], null);
-		
-		//now try to save again in new request and cache key passed
-	}
-	
 	public function testSingleUploadSaveDelete() {
 
 		$this->_setupDefault();
 		$data = array(
-			$this->Attach->alias => array(
+			'MediaUpload' => array(
 				'title' => 'My Upload',
 				'file_upload' => array(
 					'name' => 'Upload File 1.txt',
@@ -424,11 +501,11 @@ class AttachableBehaviorTest extends CakeTestCase {
 			)
 		);
 		
-		$this->Attach->create();
-		$result = $this->Attach->save($data);
+		$this->MediaUpload->create();
+		$result = $this->MediaUpload->save($data);
 		$expected = array(
-			$this->Attach->alias => array(
-				'id' => $this->Attach->id,
+			'MediaUpload' => array(
+				'id' => $this->MediaUpload->id,
 				'title' => 'My Upload',
 				'file' => 'Upload_File_1.txt'
 			),
@@ -447,20 +524,19 @@ class AttachableBehaviorTest extends CakeTestCase {
 		$this->assertTrue(file_exists($result['Attachment']['file'][0]['path']));
 		
 		//delete
-		$deleted = $this->Attach->delete($this->Attach->id);
+		$deleted = $this->MediaUpload->delete($this->MediaUpload->id);
 		$this->assertTrue($deleted);
 		$this->assertTrue(!file_exists($result['Attachment']['file'][0]['path']));
 	}
 
-
 	public function testSingleUploadSaveWithOtherValidationError() {
 	
 		$this->_setupDefault();
-		$this->Attach->validator()->add('title', 'notempty',array('rule'=>'notEmpty'));
+		$this->MediaUpload->validator()->add('title', 'notempty',array('rule'=>'notEmpty'));
 		
 		//try to submit data where an other field won't pass validation
 		$data = array(
-				$this->Attach->alias => array(
+				'MediaUpload' => array(
 						'title' => '',
 						'file_upload' => array(
 								'name' => 'Upload File 1.txt',
@@ -472,26 +548,26 @@ class AttachableBehaviorTest extends CakeTestCase {
 				)
 		);
 	
-		$this->Attach->create();
-		$result = $this->Attach->save($data);
-		$modelData = $this->Attach->data;
+		$this->MediaUpload->create();
+		$result = $this->MediaUpload->save($data);
+		$modelData = $this->MediaUpload->data;
 		
 		$this->assertEqual($result, false);
-		$this->assertTrue(isset($this->Attach->validationErrors['title']));
-		$this->assertTrue(isset($modelData[$this->Attach->alias]['file']));
+		$this->assertTrue(isset($this->MediaUpload->validationErrors['title']));
+		$this->assertTrue(isset($modelData['MediaUpload']['file']));
 		
-		$result = TestAttachableBehavior::getCacheKey($modelData[$this->Attach->alias]['file']);
+		$result = TestAttachableBehavior::getCacheKey($modelData['MediaUpload']['file']);
 		$this->assertNotEqual($result, false);
 		
 		//resolve errors and submit again
 		//the temporary upload should continue
 		
-		$data[$this->Attach->alias]['title'] = 'Has title now';
-		$this->Attach->create();
-		$result = $this->Attach->save($data);
+		$data['MediaUpload']['title'] = 'Has title now';
+		$this->MediaUpload->create();
+		$result = $this->MediaUpload->save($data);
 		$expected = array(
-			$this->Attach->alias => array(
-				'id' => $this->Attach->id,
+			'MediaUpload' => array(
+				'id' => $this->MediaUpload->id,
 				'title' => 'Has title now',
 				'file' => 'Upload_File_1.txt'
 			),
@@ -509,16 +585,215 @@ class AttachableBehaviorTest extends CakeTestCase {
 		$this->assertEqual($result, $expected);
 		
 		//delete
-		$deleted = $this->Attach->delete($this->Attach->id);
+		$deleted = $this->MediaUpload->delete($this->MediaUpload->id);
 		$this->assertTrue($deleted);
 		$this->assertTrue(!file_exists($result['Attachment']['file'][0]['path']));
 	}	
+	
+	public function testSingleEditWithUpload() {
+		
+		$this->_setupDefault();
+		// ### szenario 1: row has no file set. we upload one. ###
+		
+		//get row with no file
+		$result = $this->MediaUpload->read(null, 2); //the second record in MediaUploadFixture has no file
+		$this->assertTrue(empty($result['MediaUpload']['file']));
+		
+		//add upload
+		$data = $result;
+		$data['MediaUpload']['file_upload'] = array(
+				0 => $this->upload1
+		);
+		$expected = $result;
+		$expected['MediaUpload']['file'] = 'Upload_File_1.txt';
+		$expected['Attachment']['file'][0] = array(
+			'path' => $this->attachmentDir . 'Upload_File_1.txt',
+			'basename' => 'Upload_File_1.txt',
+			'filename' => 'Upload_File_1',
+			'ext' => 'txt',
+		);
+		$this->MediaUpload->create();
+		$result = $this->MediaUpload->save($data);
+		$this->assertEqual($result, $expected);
+		
+		$expectedPath1 = $expected['Attachment']['file'][0]['path'];
+		$this->assertTrue(file_exists($expectedPath1));
+		
+		// ### szenerio 2: record has attachment. upload new file and replace file.
+		
+		$data = $result;
+		$data['MediaUpload']['file_upload'] = array(
+				0 => $this->upload2
+		);
+		$this->MediaUpload->create();
+		$result = $this->MediaUpload->save($data);
+		
+		$expected = $result;
+		$expected['MediaUpload']['file'] = 'Upload_File_2.txt';
+		$expected['Attachment']['file'][0] = array(
+			'path' => $this->attachmentDir . 'Upload_File_2.txt',
+			'basename' => 'Upload_File_2.txt',
+			'filename' => 'Upload_File_2',
+			'ext' => 'txt',
+		);
+		$result = $this->MediaUpload->read(null, 2);
+		$this->assertEqual($result, $expected);
+		
+		$expectedPath2 = $expected['Attachment']['file'][0]['path'];
+		$this->assertTrue(file_exists($expectedPath2));
+		$this->assertTrue(!file_exists($expectedPath1));
+		
+		
+		// ### szenario 3: repeat szenario 1 & 2 with multiple
+		$this->MediaUpload->attachment(false);
+		$record = $this->MediaUpload->read(null, 2);
+		$this->assertTrue(empty($record['MediaUpload']['files']));
+		
+		$data = $record;
+		$data['MediaUpload']['files_upload'] = array(
+				0 => $this->upload2, //<-- this file has been uploaded before in szenario 2!
+				1 => $this->upload2 //<-- uploading the same file twice! tricky, ha..
+		);
+		$expected = $record;
+		$expected['MediaUpload']['files'] = 'Upload_File_2_1.txt,Upload_File_2_2.txt';
+		$expected['Attachment']['files'][0] = array(
+				'path' => $this->attachmentDir . 'Upload_File_2_1.txt',
+				'basename' => 'Upload_File_2_1.txt',
+				'filename' => 'Upload_File_2_1',
+				'ext' => 'txt',
+		);		
+		$expected['Attachment']['files'][1] = array(
+				'path' => $this->attachmentDir . 'Upload_File_2_2.txt',
+				'basename' => 'Upload_File_2_2.txt',
+				'filename' => 'Upload_File_2_2',
+				'ext' => 'txt',
+		);
+		$this->MediaUpload->create();
+		$result = $this->MediaUpload->save($data);
+		$this->assertEqual($result, $expected);
+		
+		$expectedPathFiles1 = $expected['Attachment']['files'][0]['path'];
+		$this->assertTrue(file_exists($expectedPathFiles1));
+		
+		$expectedPathFiles2 = $expected['Attachment']['files'][1]['path'];
+		$this->assertTrue(file_exists($expectedPathFiles2));
+		
+		// ### szenario 4. We upload some more files. Default behavior is preserving the attachments.
+		$data = $result;
+		$data['MediaUpload']['files_upload'] = array(
+				0 => $this->upload1,
+				1 => $this->upload1
+		);
+
+		$expected['MediaUpload']['files'] = 'Upload_File_2_1.txt,Upload_File_2_2.txt,Upload_File_1.txt,Upload_File_1_1.txt';
+		$expected['Attachment']['files'][0] = array(
+				'path' => $this->attachmentDir . 'Upload_File_2_1.txt',
+				'basename' => 'Upload_File_2_1.txt',
+				'filename' => 'Upload_File_2_1',
+				'ext' => 'txt',
+		);
+		$expected['Attachment']['files'][1] = array(
+				'path' => $this->attachmentDir . 'Upload_File_2_2.txt',
+				'basename' => 'Upload_File_2_2.txt',
+				'filename' => 'Upload_File_2_2',
+				'ext' => 'txt',
+		);
+		$expected['Attachment']['files'][2] = array(
+				'path' => $this->attachmentDir . 'Upload_File_1.txt', // <-- the file uploaded in szenario 1 has already been overwritten by szenario 2
+				'basename' => 'Upload_File_1.txt',
+				'filename' => 'Upload_File_1',
+				'ext' => 'txt',
+		);
+		$expected['Attachment']['files'][3] = array(
+				'path' => $this->attachmentDir . 'Upload_File_1_1.txt',
+				'basename' => 'Upload_File_1_1.txt',
+				'filename' => 'Upload_File_1_1',
+				'ext' => 'txt',
+		);
+		
+
+		$this->MediaUpload->create();
+		$result = $this->MediaUpload->save($data);
+		$this->assertEqual($result, $expected);
+		
+		$expectedPathFiles1 = $expected['Attachment']['files'][0]['path'];
+		$this->assertTrue(file_exists($expectedPathFiles1));
+		
+		$expectedPathFiles2 = $expected['Attachment']['files'][1]['path'];
+		$this->assertTrue(file_exists($expectedPathFiles2));
+		
+		$expectedPathFiles3 = $this->attachmentDir . 'Upload_File_1.txt';
+		$this->assertTrue(file_exists($expectedPathFiles3));
+		
+		$expectedPathFiles4 = $this->attachmentDir . 'Upload_File_1_1.txt';
+		$this->assertTrue(file_exists($expectedPathFiles4));
+		
+		// ### szenario 5: repeat szenario 4, but do not preserve attachments$data = $result;
+
+		$data = $record;
+		$data['MediaUpload']['files_upload'] = array(
+				0 => $this->upload1,
+				1 => $this->upload2
+		);
+		$data['MediaUpload']['files'] = $result['MediaUpload']['files'];
+
+		$expected = $record;
+		$expected['MediaUpload']['files'] = 'Upload_File_1_2.txt,Upload_File_2_3.txt';
+		$expected['Attachment']['files'][0] = array(
+				'path' => $this->attachmentDir . 'Upload_File_1_2.txt',
+				'basename' => 'Upload_File_1_2.txt',
+				'filename' => 'Upload_File_1_2',
+				'ext' => 'txt',
+		);
+		$expected['Attachment']['files'][1] = array(
+				'path' => $this->attachmentDir . 'Upload_File_2_3.txt',
+				'basename' => 'Upload_File_2_3.txt',
+				'filename' => 'Upload_File_2_3',
+				'ext' => 'txt',
+		);
+
+		$this->MediaUpload->create();
+		$result = $this->MediaUpload->save($data,array('attachment'=>array('preserve'=>false)));
+		$this->assertEqual($result, $expected);		
+
+		$expectedPathFiles5 = $expected['Attachment']['files'][0]['path'];
+		$this->assertTrue(file_exists($expectedPathFiles5));
+		
+		$expectedPathFiles6 = $expected['Attachment']['files'][1]['path'];
+		$this->assertTrue(file_exists($expectedPathFiles6));
+		
+		$this->assertTrue(!file_exists($expectedPathFiles1));
+		$this->assertTrue(!file_exists($expectedPathFiles2));
+		$this->assertTrue(!file_exists($expectedPathFiles3));
+		$this->assertTrue(!file_exists($expectedPathFiles4));
+				
+		// ### finally check if we got it right alltogether
+		$record = $this->MediaUpload->read(null, 2);
+		$this->assertEqual($record['MediaUpload']['file'], 'Upload_File_2.txt');
+		$this->assertEqual($record['MediaUpload']['files'], 'Upload_File_1_2.txt,Upload_File_2_3.txt');
+
+		$this->assertTrue(isset($record['Attachment']['file'][0]));
+		$this->assertTrue(!isset($record['Attachment']['file'][1]));
+		$this->assertTrue(isset($record['Attachment']['files'][0]));
+		$this->assertTrue(isset($record['Attachment']['files'][1]));
+		$this->assertTrue(!isset($record['Attachment']['files'][2]));
+		
+		$this->assertTrue(!file_exists($expectedPath1));
+		$this->assertTrue(file_exists($expectedPath2));
+		$this->assertTrue(!file_exists($expectedPathFiles1));
+		$this->assertTrue(!file_exists($expectedPathFiles2));
+		$this->assertTrue(!file_exists($expectedPathFiles3));
+		$this->assertTrue(!file_exists($expectedPathFiles4));
+		$this->assertTrue(file_exists($expectedPathFiles5));
+		$this->assertTrue(file_exists($expectedPathFiles6));
+		
+	}
 	
 	public function testMultiUploadSaveDelete() {
 
 		$this->_setupDefault();
 		$data = array(
-			$this->Attach->alias => array(
+			'MediaUpload' => array(
 				'title' => 'My Multi Upload',
 				'files_upload' => array(
 					0 => array(
@@ -540,11 +815,11 @@ class AttachableBehaviorTest extends CakeTestCase {
 		);
 		
 
-		$this->Attach->create();
-		$result = $this->Attach->save($data);
+		$this->MediaUpload->create();
+		$result = $this->MediaUpload->save($data);
 		$expected = array(
-				$this->Attach->alias => array(
-					'id' => $this->Attach->id,
+				'MediaUpload' => array(
+					'id' => $this->MediaUpload->id,
 					'title' => 'My Multi Upload',
 					'files' => 'Upload_File_1.txt,Upload_File_2.txt'
 				),
@@ -572,17 +847,18 @@ class AttachableBehaviorTest extends CakeTestCase {
 		
 
 		//delete
-		$deleted = $this->Attach->delete($this->Attach->id);
+		$deleted = $this->MediaUpload->delete($this->MediaUpload->id);
 		$this->assertTrue($deleted);
 		$this->assertTrue(!file_exists($result['Attachment']['files'][0]['path']));
 		$this->assertTrue(!file_exists($result['Attachment']['files'][1]['path']));
 	}
 	
+	
 	public function testCombinedSingleMultiUploadSaveDelete() {
 	
 		$this->_setupDefault();
 		$data = array(
-				$this->Attach->alias => array(
+				'MediaUpload' => array(
 						'title' => 'My Multi Upload',
 						'file_upload' => array(
 								'name' => 'Upload_Without_Ext',
@@ -611,11 +887,11 @@ class AttachableBehaviorTest extends CakeTestCase {
 		);
 	
 	
-		$this->Attach->create();
-		$result = $this->Attach->save($data);
+		$this->MediaUpload->create();
+		$result = $this->MediaUpload->save($data);
 		$expected = array(
-				$this->Attach->alias => array(
-						'id' => $this->Attach->id,
+				'MediaUpload' => array(
+						'id' => $this->MediaUpload->id,
 						'title' => 'My Multi Upload',
 						'file' => 'Upload_Without_Ext',
 						'files' => 'Upload_File_1.txt,Upload_File_2.txt'
@@ -653,7 +929,7 @@ class AttachableBehaviorTest extends CakeTestCase {
 	
 	
 		//delete
-		$deleted = $this->Attach->delete($this->Attach->id);
+		$deleted = $this->MediaUpload->delete($this->MediaUpload->id);
 		$this->assertTrue($deleted);
 		$this->assertTrue(!file_exists($result['Attachment']['file'][0]['path']));
 		$this->assertTrue(!file_exists($result['Attachment']['files'][0]['path']));

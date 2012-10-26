@@ -1,0 +1,76 @@
+@CHARSET "UTF-8";
+
+.upload-container {
+	border: 3px dashed #CCC;
+	padding: 10px;
+}
+
+.upload-container:HOVER {
+	border-color: #FF9966;
+}
+
+.upload-container.dragover {
+	border: 5px dashed #FF9966;
+}
+
+.upload-queue {
+	border: 1px dashed #CCC;
+	padding: 7px;
+}
+
+.upload-file {
+	color: #222;
+	padding: 5px;
+	margin: 0 0 10px;
+	position: relative;
+	background-color: #ff6600;
+}
+
+.upload-file > div {
+	padding: 0 5px;
+	display: inline-block;
+	margin: 0;
+}
+
+.upload-file .upload-file-queueId {
+	text-align: right;
+}
+
+.upload-file .upload-file-name {
+	font-weight: bold;
+}
+
+.upload-file .upload-file-size:after {
+	content: " byte";
+}
+
+.upload-file .upload-file-progress {
+	display: block;
+	width: 96%;
+	margin: 10px 2% 5px;
+	height: 10px;
+}
+
+.upload-file .upload-file-status {
+	margin-left: 20px;
+}
+
+.upload-file .upload-file-control {
+	top: 5px;
+    right: 2%;
+    display: block;
+    position: absolute;
+    text-align: right;
+}
+
+.upload-file .upload-file-abort {
+	
+}
+
+.upload-file.loading .upload-file-abort {
+	display: inline;
+}
+
+.upload-file.removed {
+	background-color: #CCC;
+}
