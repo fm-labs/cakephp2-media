@@ -16,6 +16,8 @@ class AttachableBehavior extends ModelBehavior {
 	const UPLOAD_ERR_FILE_EXISTS = 104;
 	const UPLOAD_ERR_STORE_TMP_UPLOAD = 105;
 	const UPLOAD_ERR_STORE_UPLOAD = 106;
+	const UPLOAD_ERR_CACHE_READ = 107;
+	const UPLOAD_ERR_CACHE_WRITE = 108;
 
 	const CACHE_CONFIG = 'media_upload';
 	
@@ -187,6 +189,21 @@ class AttachableBehavior extends ModelBehavior {
 	 */
 	public function beforeValidate(Model $model) {
 		
+		return $this->_checkForUploads($model);
+		
+	}
+	
+	public function uploadTemporary(Model $model, $data = null, $cacheKey = null) {
+
+		if ($data !== null) {
+			$model->create();
+			$model->set($data);
+		}
+		return $this->_checkForUploads($model, $cacheKey);
+	}
+	
+	protected function _checkForUploads(Model $model, $cacheKey = null) {
+		
 		$settings = $this->settings[$model->alias];
 		
 		if (!$model->data)
@@ -223,8 +240,7 @@ class AttachableBehavior extends ModelBehavior {
 						}
 					}
 					
-					$cacheKey = $this->_writeUploadCache($formFiles);
-					$cacheKeyString = self::getCacheKeyString($cacheKey);
+					$cacheKeyString = $this->_writeUploadCache($formFiles, $cacheKey);
 					
 					$model->data[$model->alias][$config['uploadField']] = null;
 					//TODO preserve field data on edit / delete files on overwrite
@@ -245,15 +261,21 @@ class AttachableBehavior extends ModelBehavior {
 		return true;
 	}
 	
+	/**
+	 * 
+	 * @param array $formFiles
+	 * @throws Exception
+	 * @return Ambigous <string, mixed, string>
+	 */
 	protected function _writeUploadCache($formFiles, $cacheKey = null) {
 		
 		if (!$cacheKey)
-			$cacheKey = String::uuid();
+			$cacheKey = self::generateCacheKey();
 		
 		if (!Cache::write($cacheKey, $formFiles, self::CACHE_CONFIG))
-			throw new Exception("Failed to write upload cache");
-		
-		return $cacheKey;
+			throw new AttachableUploadException(self::UPLOAD_ERR_CACHE_WRITE);
+
+		return self::getCacheKeyString($cacheKey);
 	}
 	
 	protected function _readUploadCache($cacheKey) {
@@ -647,7 +669,11 @@ class AttachableBehavior extends ModelBehavior {
 		return array($filename, $ext, $dotExt);
 	}
 	
-	static public function getCacheKeyPattern() {
+	static public function generateCacheKey() {
+		return String::uuid();	
+	}
+	
+	static public function getCacheKeyStringPattern() {
 		return '/^'.self::getCacheKeyString('(.*)').'$/';
 	}
 
@@ -657,7 +683,7 @@ class AttachableBehavior extends ModelBehavior {
 	
 	static public function getCacheKey($cacheKeyString) {
 		
-		if (preg_match(self::getCacheKeyPattern(), $cacheKeyString, $matches)) {
+		if (preg_match(self::getCacheKeyStringPattern(), $cacheKeyString, $matches)) {
 			return $matches[1];
 		}
 		
@@ -691,6 +717,8 @@ class AttachableUploadException extends CakeException {
 			AttachableBehavior::UPLOAD_ERR_MAX_FILE_SIZE => __("Maximum file size exceeded"),
 			AttachableBehavior::UPLOAD_ERR_STORE_TMP_UPLOAD => __("Failed to store uploaded file temporary"),
 			AttachableBehavior::UPLOAD_ERR_STORE_UPLOAD => __("Failed to store uploaded file"),
+			AttachableBehavior::UPLOAD_ERR_CACHE_READ => __("Failed reading tmp upload from cache"),
+			AttachableBehavior::UPLOAD_ERR_CACHE_WRITE => __("Failed writting tmp upload to cache")
 		);
 	
 		if (isset($errors[$errCode]))

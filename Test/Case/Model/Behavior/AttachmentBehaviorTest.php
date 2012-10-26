@@ -1,6 +1,10 @@
 <?php
-define('MEDIA_UPLOAD_TMP_DIR', CakePlugin::path('Media') . 'Test/test_app/tmp/attachments/' );
+//define Behavior constants
+define('MEDIA_UPLOAD_TMP_DIR', CakePlugin::path('Media') . 'Test/test_app/tmp/uploadtmp/' );
 define('MEDIA_UPLOAD_DIR', CakePlugin::path('Media') . 'Test/test_app/webroot/attachments/' );
+
+//define TestCase constants
+define('MEDIA_UPLOAD_TESTFILES_DIR', CakePlugin::path('Media') . 'Test/test_app/tmp/attachments/' );
 
 App::uses('AttachableBehavior', 'Media.Model/Behavior');
 App::uses('Folder','Utility');
@@ -23,19 +27,27 @@ class AttachableBehaviorTest extends CakeTestCase {
 	 */
 	
 	public $attachmentDir = MEDIA_UPLOAD_DIR;
-	public $tmpDir = MEDIA_UPLOAD_TMP_DIR;
+	public $tmpDir = MEDIA_UPLOAD_TESTFILES_DIR;
 	
 	protected $file1;
 	protected $file2;
 	
+	/*
+	public function __construct() {
+		parent::__construct();
+		
+	}
+	*/
+	
 	public function setUp() {
 		parent::setUp();
+
+		if (!is_dir(MEDIA_UPLOAD_TMP_DIR) || !is_writeable(MEDIA_UPLOAD_TMP_DIR)) {
+			throw new Exception('Test Tmp dir not found or not writeable');
+		}
 		
-		//cleanup attachmentDir
-		$Folder = new Folder($this->attachmentDir);
-		list($dir, $files) = $Folder->read(true,array('empty'),true); 
-		foreach($files as $file) {
-			@unlink($file);
+		if (!is_dir(MEDIA_UPLOAD_DIR) || !is_writeable(MEDIA_UPLOAD_DIR)) {
+			throw new Exception('Test upload dir not found or not writeable');
 		}
 		
 		$this->upload1 = array(
@@ -75,8 +87,8 @@ class AttachableBehaviorTest extends CakeTestCase {
 	
 	public function testStaticCacheKeyMethods() {
 		
-		//getCacheKeyPattern()
-		$result = TestAttachableBehavior::getCacheKeyPattern();
+		//getCacheKeyStringPattern()
+		$result = TestAttachableBehavior::getCacheKeyStringPattern();
 		$expected = '/^@(.*)@$/';
 		$this->assertEqual($result, $expected);
 		
@@ -354,6 +366,48 @@ class AttachableBehaviorTest extends CakeTestCase {
 		$this->assertEqual($data, $expected);
 	}
 	
+	public function testTemporaryUpload() {
+
+		$this->_setupDefault();
+		
+		$data = array(
+			$this->Attach->alias => array(
+				'file_upload' => array(
+					'name' => 'Upload File 1.txt',
+					'type' => 'text/plain',
+					'tmp_name' => $this->tmpDir.'upload1.txt',
+					'error' => (int) 0,
+					'size' => filesize($this->tmpDir.'upload1.txt')
+				)
+			)
+		);
+		
+		//we use a custom cache key here
+		$customCacheKey = 'my-cache-key';
+		$this->Attach->create();
+		$this->Attach->set($data);
+		$result = $this->Attach->uploadTemporary(null, $customCacheKey);
+		$resultData = $this->Attach->data;
+		
+		$expectedKeyString = '@my-cache-key@';
+		
+		//test manual generation
+		$resultKeyString = String::insert(TestAttachableBehavior::CACHE_KEY_INSERTSTRING, 
+				array('cacheKey'=>$customCacheKey));
+		$this->assertEqual($resultKeyString, $expectedKeyString);
+		
+		//test implemented generation
+		$resultKeyString = TestAttachableBehavior::getCacheKeyString($customCacheKey);
+		$this->assertEqual($resultKeyString, $expectedKeyString);
+		
+		//test if set
+		$this->assertTrue($result);
+		$this->assertEqual($resultData[$this->Attach->alias]['file'], $expectedKeyString);
+		$this->assertEqual($resultData[$this->Attach->alias]['file_upload'], null);
+		
+		//now try to save again in new request and cache key passed
+	}
+	
 	public function testSingleUploadSaveDelete() {
 
 		$this->_setupDefault();
@@ -420,11 +474,12 @@ class AttachableBehaviorTest extends CakeTestCase {
 	
 		$this->Attach->create();
 		$result = $this->Attach->save($data);
+		$modelData = $this->Attach->data;
+		
 		$this->assertEqual($result, false);
 		$this->assertTrue(isset($this->Attach->validationErrors['title']));
-		
-		$modelData = $this->Attach->data;
 		$this->assertTrue(isset($modelData[$this->Attach->alias]['file']));
+		
 		$result = TestAttachableBehavior::getCacheKey($modelData[$this->Attach->alias]['file']);
 		$this->assertNotEqual($result, false);
 		
@@ -608,6 +663,13 @@ class AttachableBehaviorTest extends CakeTestCase {
 	
 	public function tearDown() {
 		parent::tearDown();
+		
+		//cleanup attachmentDir
+		$Folder = new Folder($this->attachmentDir);
+		list($dir, $files) = $Folder->read(true,array('empty'),true);
+		foreach($files as $file) {
+			@unlink($file);
+		}		
 	}
 	
 }

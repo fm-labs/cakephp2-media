@@ -5,6 +5,14 @@
 	padding: 10px;
 }
 
+.upload-container:HOVER {
+	border-color: #FF9966;
+}
+
+.upload-container.dragover {
+	border: 5px dashed #FF9966;
+}
+
 .upload-queue {
 	border: 1px dashed #CCC;
 	padding: 7px;

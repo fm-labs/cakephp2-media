@@ -28,7 +28,8 @@ UploaderUi.prototype.init = function(settings) {
 	
 	if (this.uploader === undefined) {
 		this.uploader = new Uploader()
-		var eventData = { '_this': this }
+		var eventData = { '_this': this };
+		
 		jQuery(this.uploader)
 			.on('uploader.init', eventData, this.onUploaderInit)
 			.on('uploader.filesLoaded', eventData, this.onUploaderFilesLoaded)
@@ -54,17 +55,18 @@ UploaderUi.prototype.bindTo =  function (selector) {
 	console.log("Bind '"+selector+"'");
 	
 	var _prefix = this.settings.prefix;
+	var eventData = { '_this': this };
 	
-	//holder
+	// holder
 	var holder = $(selector);
 	
-	//uploader container
+	// uploader container
 	var container = $('<div>',{ 'class': _prefix+'container'});
 	
 	//queue container
 	var queue = $('<div>',{ 'class': _prefix+'queue'}).html('- QUEUE -');
 
-	//statistics container
+	// statistics container
 	var stats = $('<div>',{ 'class': _prefix+'stats'}).html('- STATS -');
 	
 	//control container
@@ -78,16 +80,33 @@ UploaderUi.prototype.bindTo =  function (selector) {
 		.append(upload);
 	*/
 	
+	//container
 	container
 		//.append(control)
 		.append(queue)
-		.append(stats);
+		.append(stats)
+		.on('dragover', eventData, function (e) {
+			$(this).addClass('dragover');
+			return false;
+		})
+		.on('dragend', eventData, function (e) {
+			//TODO this is not triggered?? 
+			$(this).removeClass('dragover');
+			return false;
+		})
+		.on('drop', eventData, function (e) {
+			console.log("UI: Drop files");
+			e.preventDefault();
+			e.data._this.uploader.readFiles(e.originalEvent.dataTransfer.files);
+			$(this).removeClass('dragover');
+		})
+	;
 		
 	//modifiy holder
 	holder.after(container);
 	
 	//bind callbacks
-	holder.on('change', { '_this': this }, this.selectFiles);
+	holder.on('change', eventData, this.selectFiles);
 	
 	//store jQuery objects
 	this._objects.holder = holder;
@@ -163,7 +182,7 @@ UploaderUi.prototype.onUploaderAddToQueue = function (event, queueId, file) {
 		
 		event.target.removeFromQueue(queueId);
 		//_this.uploader.removeFromQueue(queueId)
-		e.preventDefault();
+		event.preventDefault();
 	});
 
 	_this.updateStats();
@@ -188,9 +207,11 @@ UploaderUi.prototype.onUploaderRemoveFromQueue = function (event, queueId) {
 /**
  * Triggered by Uploader
  */
-UploaderUi.prototype.onUploaderFileProgress = function (event, queueId, completed) {
+UploaderUi.prototype.onUploaderFileProgress = function (event, queueId, progressEvent) {
 
-	console.log("UI: onUploaderFileProgress(event, queueId, completed)"+queueId + ", " + completed);
+	console.log("UI: onUploaderFileProgress(event, queueId, completed)"+queueId);
+
+	var completed = (progressEvent.loaded / progressEvent.total * 100 | 0);
 	
 	event.data._this.updateFileProgress(queueId, completed);
 	event.data._this.updateStats();
@@ -222,16 +243,15 @@ UploaderUi.prototype.onUploaderFileFailure = function (event, queueId) {
 /**
  * Update file upload progress in DOM
  */
-UploaderUi.prototype.updateFileProgress = function (queueId, progress) {
+UploaderUi.prototype.updateFileProgress = function (queueId, completed) {
 
 	var fileContainer = $('#'+this.settings.prefix+'queue-'+queueId);
 	var fileProgress = fileContainer.find('.'+this.settings.prefix+'file-progress');
 	
 	if (typeof fileProgress === 'object') {
-		var completed = (progress.loaded / progress.total * 100 | 0);
 		fileProgress.attr('value', completed);
-		
-		console.log("UI: File status container not found: "+queueId);
+	} else {
+		console.log("UI: File progress container not found: "+queueId);
 	}
 };
 

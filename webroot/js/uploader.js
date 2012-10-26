@@ -230,10 +230,9 @@ Uploader.prototype.onTransferComplete = function (e) {
  * XHR callback for xhr.onload will be directed to this method if successful
  */
 Uploader.prototype.onTransferSuccess = function(e) {
-	var xhr = e.target;
-	var uploader = e.data._this;
-	
-	jQuery(uploader).trigger('uploader.fileTransferSuccess', [e.data.queueId, xhr.responseText]);	
+
+	console.log("Uploader: onTransferSuccess(e). QueueId: "+e.data.queueId);
+	jQuery(e.data._this).trigger('uploader.fileTransferSuccess', [e.data.queueId, e.target.responseText]);	
 }
 
 /**
@@ -249,6 +248,8 @@ Uploader.prototype.onTransferProgress = function (e) {
 	if (e.originalEvent.lengthComputable) {
 		console.log("Uploader Progress Computable");
 		jQuery(e.data._this).trigger('uploader.fileTransferProgress', [e.data.queueId, e.originalEvent]);
+	} else {
+		console.log("Uploader Progress NOT Computable");
 	}
 };
 
@@ -259,13 +260,11 @@ Uploader.prototype.onTransferProgress = function (e) {
  * @todo Keep this DRY
  */
 Uploader.prototype.onTransferFailure = function (e) {
-	var uploader = e.data._this;
-	var queueId = e.data.queueId;
 	
-	console.log("Uploader: onTransferFailure(e). QueueId: "+queueId
+	console.log("Uploader: onTransferFailure(e). QueueId: "+e.data.queueId
 			+" - An error occurred while transferring the file.");
 	
-	jQuery(uploader).trigger('uploader.fileTransferFailure', [queueId]);
+	jQuery(e.data._this).trigger('uploader.fileTransferFailure', [e.data.queueId]);
 };
 
 /**
@@ -275,13 +274,11 @@ Uploader.prototype.onTransferFailure = function (e) {
  * @todo Keep this DRY
  */
 Uploader.prototype.onTransferCancel = function (e) {
-	var uploader = e.data._this;
-	var queueId = e.data.queueId;
 	
-	console.log("Uploader: onTransferCancel(e). QueueId: "+queueId
+	console.log("Uploader: onTransferCancel(e). QueueId: "+e.data.queueId
 			+" - The transfer has been canceled by the user.");
 
-	jQuery(uploader).trigger('uploader.fileTransferCancel', [queueId]);
+	jQuery(e.data._this).trigger('uploader.fileTransferCancel', [e.data.queueId]);
 	
 };
 
