@@ -33,12 +33,14 @@ class FormUploadHelper extends AppHelper {
 		),$uploaderConfig);
 		
 		//output form field
-		$fieldName = $options['holder'];
+		$uploadFieldName = $options['holder'];
 		unset($options['holder']);
 		
 		if ($options['multiple'])
-			$fieldName .= '.';
-		$out = $this->Form->input($fieldName, $options);
+			$uploadFieldName .= '.';
+		$out = $this->Form->input($uploadFieldName, $options);
+		$out .= $this->Form->input($fieldName, array('type' => 'text'));
+		$out .= $this->Form->error($fieldName);
 
 		//build uploader script
 		$script = 'var uploader = new UploaderUi('.json_encode($uploaderConfig).');';

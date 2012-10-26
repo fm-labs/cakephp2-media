@@ -15,17 +15,12 @@
 		echo $this->Form->input('title', array('default'=>'Upload'));
 	?>
 		<?php 
-		echo $this->FormUpload->input('MediaUpload.file_upload',array(
+		echo $this->FormUpload->input('MediaUpload.file',array(
 			'multiple' => true
 		),array(
 			'uploadUrl' => Router::url(array('action'=>'upload_html5')),
 		));
 		?>
-	<?php 
-		echo $this->Form->error('file_upload');
-		echo $this->Form->input('file');
-		echo $this->Form->error('file');
-	?>
 	</fieldset>
 <?php echo $this->Form->button(__('Save')); ?>
 <?php echo $this->Form->end(); ?>

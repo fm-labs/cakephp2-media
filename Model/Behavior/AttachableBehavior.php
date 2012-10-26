@@ -104,6 +104,10 @@ class AttachableBehavior extends ModelBehavior {
 		$this->settings[$model->alias][$field] = $config;
 	}
 	
+	public function getConfig($model) {
+		return $this->settings[$model->alias];
+	}
+	
 	protected function _getConfig(Model $model, $field) {
 		if (!isset($this->settings[$model->alias][$field]))
 			return false;
@@ -206,6 +210,10 @@ class AttachableBehavior extends ModelBehavior {
 					
 					//parse attachments
 					$attachments = $this->_getAttachments($result[$model->alias][$field], $config);
+					
+					//attach preview
+					foreach($attachments as &$attachment)
+						$attachment = $this->_attachPreview($attachment, $config);
 					
 					//TODO write attachment cache
 					
@@ -380,16 +388,18 @@ class AttachableBehavior extends ModelBehavior {
 			throw new AttachableUploadException($upload['error']);
 		}
 	
+		debug($upload);
+		debug($config);
+		
 		//check upload dir
 		if (!is_dir(MEDIA_UPLOAD_TMP_DIR) || !is_writeable(MEDIA_UPLOAD_TMP_DIR)) {
 			$upload['error'] = UPLOAD_ERR_CANT_WRITE;
 		}
-	
 		//validate size
 		elseif ($upload['size'] < $config['minFileSize'])
-		throw new AttachableUploadException(self::UPLOAD_ERR_MIN_FILE_SIZE);
+			throw new AttachableUploadException(self::UPLOAD_ERR_MIN_FILE_SIZE);
 		elseif ($upload['size'] > $config['maxFileSize'])
-		throw new AttachableUploadException(self::UPLOAD_ERR_MAX_FILE_SIZE);
+			throw new AttachableUploadException(self::UPLOAD_ERR_MAX_FILE_SIZE);
 	
 		//validate mime
 		elseif (!$this->_validateMimeType($upload['type'], $config['allowedMimeType']))
@@ -568,12 +578,12 @@ class AttachableBehavior extends ModelBehavior {
 		);
 		
 		//TODO trigger event 'afterStore'. Use for creating preview
-		$attachment = $this->_createPreview($attachment, $config);
+		$attachment = $this->_attachPreview($attachment, $config, true);
 		
 		return $attachment;
 	}
 	
-	protected function _createPreview($attachment, $config) {
+	protected function _attachPreview($attachment, $config, $forceCreate = false) {
 		
 		//check if enabled in config
 		if ($config['preview'] === false)
@@ -602,12 +612,17 @@ class AttachableBehavior extends ModelBehavior {
 			$thumbSource = $attachment['path'];
 			$thumbTarget = $config['thumbDir'] . $this->_getPreviewName($attachment, $size, $config);
 			
-			try {
-				$thumbPath = LibPhpThumb::createThumbnail($thumbSource, $thumbTarget, $params);
-			} catch(Exception $e) {
-				$thumbPath = false;
-				$this->log('AttachableBehavior::_createPreview(): '.$e->getMessage(), 'error');
+			if (!$forceCreate && file_exists($thumbTarget)) {
+				$thumbPath = $thumbTarget;
+			} else {
+				try {
+					$thumbPath = LibPhpThumb::createThumbnail($thumbSource, $thumbTarget, $params);
+				} catch(Exception $e) {
+					$thumbPath = false;
+					$this->log('AttachableBehavior::_createPreview(): '.$e->getMessage(), 'error');
+				}
 			}
+			
 			$attachment['preview'][$size] = $thumbPath;
 		}
 		return $attachment;
@@ -861,7 +876,7 @@ class AttachableUploadException extends CakeException {
 	
 		$errors = array(
 			UPLOAD_ERR_OK => __("Upload successful"),
-			UPLOAD_ERR_INI_SIZE => __("Maximum file size exceeded"),
+			UPLOAD_ERR_INI_SIZE => __("Maximum ini file size exceeded (%s)",ini_get('upload_max_filesize')),
 			UPLOAD_ERR_FORM_SIZE => __("Maximum form file size exceeded"),
 			UPLOAD_ERR_PARTIAL => __("File only partially uploaded"),
 			UPLOAD_ERR_NO_FILE => __("No file uploaded"),

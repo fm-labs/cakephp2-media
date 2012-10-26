@@ -885,7 +885,17 @@ class AttachableBehaviorTest extends CakeTestCase {
 		$this->assertTrue(file_exists($result['Attachment']['files'][0]['preview']['small']));
 		$this->assertTrue(isset($result['Attachment']['files'][0]['preview']['big']));
 		$this->assertTrue(file_exists($result['Attachment']['files'][0]['preview']['big']));
-	
+		
+		//test for preview data after find
+		$result = $this->MediaUpload->read(null,$this->MediaUpload->id);
+		debug($result);
+
+		$this->assertTrue(isset($result['Attachment']['file'][0]['preview']['default']));
+		$this->assertTrue(file_exists($result['Attachment']['file'][0]['preview']['default']));
+		$this->assertTrue(isset($result['Attachment']['files'][0]['preview']['small']));
+		$this->assertTrue(file_exists($result['Attachment']['files'][0]['preview']['small']));
+		$this->assertTrue(isset($result['Attachment']['files'][0]['preview']['big']));
+		$this->assertTrue(file_exists($result['Attachment']['files'][0]['preview']['big']));
 	}	
 	
 	public function tearDown() {

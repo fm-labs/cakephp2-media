@@ -7,12 +7,40 @@ App::uses('MediaAppController', 'Media.Controller');
  */
 class MediaUploadsController extends MediaAppController {
 
+	public $uses = array('Media.MediaUpload');
+	
+	public function beforeFilter() {
+		parent::beforeFilter();
+		
+		$this->_configureAttachment();
+	}
+	
+	public function _configureAttachment() {
+		$this->MediaUpload->configureAttachment(array(
+				'file' => array(
+						'baseDir' => $this->attachmentDir,
+						'multiple' => false,
+						'preview' => true,
+						'maxFileSize' => 8*1024*1014
+				),
+				'files' => array(
+						'baseDir' => $this->attachmentDir,
+						'multiple' => true,
+						'preview' => array(
+							'small' => array('width' => 50, 'height' => 50),
+							'big' => array('width' => 50, 'height' => 50),
+						)
+				)
+		), true);
+	}
+	
 /**
  * admin_index method
  *
  * @return void
  */
 	public function admin_index() {
+		
 		$this->MediaUpload->recursive = 0;
 		$mediaUploads = $this->paginate();
 		$this->set('mediaUploads', $mediaUploads);
@@ -69,6 +97,7 @@ class MediaUploadsController extends MediaAppController {
  * @return void
  */
 	public function admin_add() {
+
 		if ($this->request->is('post')) {
 
 			$this->MediaUpload->create();
