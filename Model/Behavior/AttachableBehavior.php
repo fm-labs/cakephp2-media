@@ -25,9 +25,9 @@ class AttachableBehavior extends ModelBehavior {
 	
 	const CACHE_KEY_INSERTSTRING = '@:cacheKey@';
 	
-	const DEFAULT_PREVIEW_W = 125;
-	const DEFAULT_PREVIEW_H = 125;
-	const DEFAULT_PREVIEW_Q = 60;
+	const DEFAULT_PREVIEW_W = 60;
+	const DEFAULT_PREVIEW_H = 60;
+	const DEFAULT_PREVIEW_Q = 100;
 	
 	public $defaultConfig = array(
 		'uploadField' => 'file_upload',
@@ -388,9 +388,6 @@ class AttachableBehavior extends ModelBehavior {
 			throw new AttachableUploadException($upload['error']);
 		}
 	
-		debug($upload);
-		debug($config);
-		
 		//check upload dir
 		if (!is_dir(MEDIA_UPLOAD_TMP_DIR) || !is_writeable(MEDIA_UPLOAD_TMP_DIR)) {
 			$upload['error'] = UPLOAD_ERR_CANT_WRITE;
@@ -406,7 +403,7 @@ class AttachableBehavior extends ModelBehavior {
 		throw new AttachableUploadException(self::UPLOAD_ERR_MIME_TYPE);
 	
 		//split basename
-		list($filename,$ext, $dotExt) = $this->_splitBasename(trim($upload['name']));
+		list($filename,$ext, $dotExt) = self::splitBasename(trim($upload['name']));
 	
 		//validate extension
 		if (!$this->_validateFileExtension($ext, $config['allowedFileExtension']))
@@ -544,7 +541,7 @@ class AttachableBehavior extends ModelBehavior {
 	protected function _store($tmpUpload, $config) {
 	
 		$basename = $tmpUpload['name'];
-		list($filename, $ext, $dotExt) = $this->_splitBasename($basename);
+		list($filename, $ext, $dotExt) = self::splitBasename($basename);
 	
 		//safe target
 		$path = $config['baseDir'] . $basename;
@@ -578,15 +575,17 @@ class AttachableBehavior extends ModelBehavior {
 		);
 		
 		//TODO trigger event 'afterStore'. Use for creating preview
-		$attachment = $this->_attachPreview($attachment, $config, true);
+		$attachment = $this->_attachPreview($attachment, $config);
 		
 		return $attachment;
 	}
 	
-	protected function _attachPreview($attachment, $config, $forceCreate = false) {
+	protected function _attachPreview($attachment, $config) {
+		
+		$preview = $config['preview'];
 		
 		//check if enabled in config
-		if ($config['preview'] === false)
+		if ($preview === false)
 			return $attachment;
 		
 		//check if preview can be created for this file extension
@@ -599,41 +598,48 @@ class AttachableBehavior extends ModelBehavior {
 		//	return $attachment;
 		
 		//default preview params
-		if ($config['preview'] === true) {
-			$config['preview'] = array('default' => array(
+		if ($preview === true) {
+			$preview = array();
+		}
+		
+		if (!isset($preview['default']))
+			$preview['default'] = array(
 				'width'=>self::DEFAULT_PREVIEW_W,
 				'height'=>self::DEFAULT_PREVIEW_H,
 				'quality'=>self::DEFAULT_PREVIEW_Q,
-			));
-		}
+			);
+		
+		$paramsMap = array(
+			'width' => 'w',
+			'height' => 'h',
+			'quality' => 'q',	
+		);
 		
 		//create thumbs
-		foreach($config['preview'] as $size => $params) {
-			$thumbSource = $attachment['path'];
-			$thumbTarget = $config['thumbDir'] . $this->_getPreviewName($attachment, $size, $config);
+		foreach($preview as $size => $params) {
 			
-			if (!$forceCreate && file_exists($thumbTarget)) {
-				$thumbPath = $thumbTarget;
-			} else {
-				try {
-					$thumbPath = LibPhpThumb::createThumbnail($thumbSource, $thumbTarget, $params);
-				} catch(Exception $e) {
-					$thumbPath = false;
-					$this->log('AttachableBehavior::_createPreview(): '.$e->getMessage(), 'error');
-				}
+			//map preview params
+			$_params = array();
+			foreach($params as $k => $v) {
+				if (array_key_exists($k, $paramsMap))
+					$_params[$paramsMap[$k]] = $v;
+				else
+					$_params[$k] = $v;
 			}
 			
-			$attachment['preview'][$size] = $thumbPath;
+			$path = $url = false;
+			
+			try {
+				list($path, $url) = LibPhpThumb::getThumbnail($attachment['path'], null, $_params);
+			} catch(Exception $e) {
+				debug($e->getMessage());
+				$this->log('AttachableBehavior::_createPreview(): '.$e->getMessage(), 'error');
+			}
+			
+			$attachment['preview'][$size] = compact('path', 'url');
 		}
 		return $attachment;
 	}
-	
-	protected function _getPreviewName($attachment, $size, $config) {
-		
-		list ($filename, $ext, $dotExt) = $this->_splitBasename($attachment['basename']);
-		
-		return $filename . $config['slug'] . $size .$config['slug'] . md5($attachment['path']) . $dotExt;
-	} 
 	
 	/**
 	 * Check attached files should be removed and flag them. 
@@ -710,7 +716,7 @@ class AttachableBehavior extends ModelBehavior {
 			$basename = $file;
 			$path = $this->_getFilePath($file, $config);
 		
-			list($filename, $ext) = $this->_splitBasename($basename);
+			list($filename, $ext) = self::splitBasename($basename);
 		
 			$attachment = compact('path','basename','filename','ext');
 			array_push($attachments, $attachment);
@@ -728,7 +734,10 @@ class AttachableBehavior extends ModelBehavior {
 	 */
 	protected function _getFilePath($filename = null, $config) {
 		if (!$filename)
-			return false;
+			throw new InvalidArgumentException(__("AttachableBehavior: Can not get file path for empty filename"));
+		
+		if (!$config['baseDir'])
+			throw new InvalidArgumentException(__("AttachableBehavior: Basedir can not be empty"));
 		
 		return $config['baseDir'] . $filename;
 	}

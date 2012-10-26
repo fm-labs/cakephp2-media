@@ -1,9 +1,9 @@
 <?php
 
-if (!defined('MEDIA_PHPTHUMB_TEMP_DIR')) define('MEDIA_PHPTHUMB_TEMP_DIR',TMP."phpthumb".DS); 	
-if (!defined('MEDIA_PHPTHUMB_CACHE_DIR')) define('MEDIA_PHPTHUMB_CACHE_DIR',CACHE."phpthumb".DS); 	
-if (!defined('MEDIA_PHPTHUMB_TARGET_DIR')) define('MEDIA_PHPTHUMB_TARGET_DIR',IMAGES."thumbs".DS); 	
-if (!defined('MEDIA_PHPTHUMB_WWW_DIR')) define('MEDIA_PHPTHUMB_WWW_DIR',"thumbs/"); 	
+if (!defined('MEDIA_THUMB_TMP_DIR')) define('MEDIA_THUMB_TMP_DIR',TMP."phpthumb".DS); 	
+if (!defined('MEDIA_THUMB_CACHE_DIR')) define('MEDIA_THUMB_CACHE_DIR',MEDIA_THUMB_TMP_DIR."cache".DS); 	
+
+if (!defined('MEDIA_THUMB_DIR')) define('MEDIA_THUMB_DIR',WWW_ROOT."cache/");
 
 App::import('Vendor','Media.phpthumb', true , array(), 'phpThumb'.DS.'phpthumb.class.php');
 
@@ -14,25 +14,19 @@ class LibPhpThumb {
  * If thumbnail does not exist it will be rendered to file
  * 
  * @param string $source Absolute path to source file
+ * @param string $target Basename of thumbnail. Use NULL (default) is recommendend.
  * @param array $params PhpThumb params
+ * @return array Array list with format: array($path, $url)
  */	
-	static public function getThumbnail($source, $params = array()) {
-		$target = null;
+	static public function getThumbnail($source, $target = null, $params = array(), $force = false) {
 		
-		try {
-			$target = self::target($source,$params);
-			if (!file_exists($target)) {
-				$target = self::createThumbnail($source,$target,$params);
-			}
-		} catch(Exception $e) {
-			CakeLog::write('phpthumb',$e->getMessage());
-			if (Configure::read('debug') > 0)
-				throw new CakeException($e->getMessage());
-			else
-				throw new CakeException(__d('media',"Failed to create image thumbnail"));
-		}
-			
-		return $target;
+		if (!$force && file_exists(self::target($source, $target = null, $params)))
+			return $target;
+		
+		$path = self::createThumbnail($source, $target, $params);
+		$url = self::getThumbnailUrl($path);
+		
+		return array($path, $url);
 	}
 
 /**
@@ -42,25 +36,19 @@ class LibPhpThumb {
  * @param array $params PhpThumb params
  * @param boolean $full Full Url
  */	
-	static public function getThumbnailUrl($source, $params = array(), $full = false) {
-		$thumbnail = self::getThumbnail($source, $params);
-		if (!$thumbnail)
+	static public function getThumbnailUrl($path, $full = false) {
+		
+		if (!$path)
 			return false;
 
-		return self::getThumbnailUrlFromPath($thumbnail, $full);
-	}
-
-/**
- * Returns Thumbnail URL for given Thumbnail Path
- * 
- * @param string $path Path to Thumbnail
- * @param boolean $full Full Url
- */	
-	static public function getThumbnailUrlFromPath($path, $full) {
-		$url = MEDIA_PHPTHUMB_WWW_DIR . basename($path);
-		if ($full) {
-			$url = Router::url('/', true) . IMAGES_URL . $url;
-		}
+		$pattern = '/^'.preg_quote(WWW_ROOT, '/').'(.*)$/i';
+		if (!preg_match($pattern, $path, $matches))
+			return false;
+		
+		$url = '/'.$matches[1];
+		if ($full)
+			$url = Router::url('/',$full) . $matches[1];
+		
 		return $url;
 	}
 
@@ -82,8 +70,8 @@ class LibPhpThumb {
 			'useImageMagick'					=> false,
 			'imageMagickPath'					=> '/usr/bin/convert',
 			//phpthumb params
-			'config_temp_directory' 			=> MEDIA_PHPTHUMB_TEMP_DIR, //config_temp_directory
-			'config_cache_directory'			=> MEDIA_PHPTHUMB_CACHE_DIR, //config_cache_directory
+			'config_temp_directory' 			=> MEDIA_THUMB_TMP_DIR, //config_temp_directory
+			'config_cache_directory'			=> MEDIA_THUMB_CACHE_DIR, //config_cache_directory
 	        'config_output_format'				=> 'jpg', //config_output_format
 			//'config_imagemagick_path'			=> null,
 			//'config_prefer_imagemagick'		=> false,
@@ -111,44 +99,54 @@ class LibPhpThumb {
 		
 		$phpThumb->setSourceFilename($source);
 
-		if (!$target)
-			$target = self::target($source, $params);
+		$target = self::target($source, $target, $params);
 		
 		// Creating thumbnail
 		if ($phpThumb->GenerateThumbnail()) {
 			if (!$phpThumb->RenderToFile($target)) {
 				throw new CakeException('Could not render image to: ' . $target);
-				return false;
 			}
-			@chmod($target, 0644);
+			@chmod($target, 0644); //TODO check if this is necessary
 		}
 		//debug($phpThumb->phpThumbDebug());
 		
 		return $target;
 	}
 
-/**
- * Get Target filepath for given source and params
- * 
- * @param string $source
- * @param mixed $params
- */	
-	static public function target($source, $params = array()) {
-		App::uses('File','Utility');
+	/**
+	 * Get Target filepath for given source and params
+	 * 
+	 * @param string $source
+	 * @param string $target	Name of thumb. Pass NULL (default) is recommendend
+	 * @param mixed $params		Use params to create a unique thumb for each config
+	 */	
+	static public function target($source, $target = null, $params = array()) {
 		
-		$w = (isset($params['w'])) ? $params['w'] : null;
-		$h = (isset($params['h'])) ? $params['h'] : null;
-		$q = (isset($params['q'])) ? $params['q'] : null;
-		
-		if (!file_exists($source))
-			throw new NotFoundException(__d('media',"Source file '%s' does not exist", $source));
+		if (!$target) {
+			$basename = basename($source);
+			list($filename, $ext, $dotExt) = self::splitBasename($basename);
 			
-		$File = new File($source,false);
+			$target = $filename."_".md5(serialize($params)).$dotExt;
+		}
 		
-		return sprintf("%s%s_%s_%s_%s_%s.%s",
-			MEDIA_PHPTHUMB_TARGET_DIR,$File->name(),md5($source),strval($w),strval($h),strval($q),$File->ext());
+		return MEDIA_THUMB_DIR . $target;
 	}
+
+	static public function splitBasename($basename) {
 	
+		if (strrpos($basename,'.') !== false) {
+			$parts = explode('.', $basename);
+			$ext = array_pop($parts);
+			$dotExt = '.'.$ext;
+			$filename = join('.',$parts);
+		} else {
+			$ext = $dotExt = null;
+			$filename = $basename;
+		}
+	
+		return array($filename, $ext, $dotExt);
+	
+	}
 /**
  * Apply Params to phpthumb instance
  * 

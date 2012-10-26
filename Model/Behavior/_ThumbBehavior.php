@@ -153,7 +153,7 @@ class ThumbBehavior extends ModelBehavior {
 				$source_url = Router::url('/',true) . IMAGES_URL . $s['baseDir'] . $file;
 					
 				//thumb-path
-				$thumb = LibPhpThumb::getThumbnail($source, $config);
+				$thumb = LibPhpThumb::getThumbnail($source, null, $config);
 				
 				//thumb-url
 				$url = LibPhpThumb::getThumbnailUrlFromPath($thumb, false);

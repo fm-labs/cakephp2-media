@@ -18,17 +18,15 @@ class MediaUploadsController extends MediaAppController {
 	public function _configureAttachment() {
 		$this->MediaUpload->configureAttachment(array(
 				'file' => array(
-						'baseDir' => $this->attachmentDir,
 						'multiple' => false,
 						'preview' => true,
 						'maxFileSize' => 8*1024*1014
 				),
 				'files' => array(
-						'baseDir' => $this->attachmentDir,
 						'multiple' => true,
 						'preview' => array(
 							'small' => array('width' => 50, 'height' => 50),
-							'big' => array('width' => 50, 'height' => 50),
+							'big' => array('width' => 500, 'height' => 500),
 						)
 				)
 		), true);

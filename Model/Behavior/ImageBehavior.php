@@ -179,7 +179,7 @@ class ImageBehavior extends ModelBehavior {
 				$source_url = Router::url('/',true) . IMAGES_URL . $file;
 					
 				//image-path
-				$image = LibPhpThumb::getThumbnail($source, $config);
+				$image = LibPhpThumb::getThumbnail($source, null, $config);
 				
 				//image-url
 				$url = LibPhpThumb::getThumbnailUrlFromPath($image, false);

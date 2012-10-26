@@ -19,12 +19,15 @@
 		echo $this->Form->input('file',array('readonly'=>true));
 		
 		echo $this->FormUpload->input('MediaUpload.file',array('type'=>'file', 'label'=>'Single File Upload'));
-		echo $this->Attachment->preview('MediaUpload.file');
 		echo $this->Form->error('file');
+		echo $this->Attachment->preview('MediaUpload.file');
 
 		echo $this->Form->input('files',array('readonly'=>true));
 		echo $this->FormUpload->input('MediaUpload.files',array('type'=>'file', 'multiple'=>'multiple', 'label'=>'Multi File Upload'));
 		echo $this->Form->error('files');
+		echo $this->Attachment->preview('MediaUpload.files');
+		echo $this->Attachment->preview('MediaUpload.files',null,'small');
+		echo $this->Attachment->preview('MediaUpload.files',null, 'big');
 	?>
 	</fieldset>
 <?php echo $this->Form->button(__('Submit')); ?>

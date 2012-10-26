@@ -130,7 +130,7 @@ class AttachableBehaviorTest extends CakeTestCase {
 						'multiple' => true,
 						'preview' => array(
 							'small' => array('width' => 50, 'height' => 50),
-							'big' => array('width' => 50, 'height' => 50),
+							'big' => array('width' => 500, 'height' => 500),
 						)
 				)
 		),true);
@@ -880,22 +880,22 @@ class AttachableBehaviorTest extends CakeTestCase {
 		$result = $this->MediaUpload->save($data);
 	
 		$this->assertTrue(isset($result['Attachment']['file'][0]['preview']['default']));
-		$this->assertTrue(file_exists($result['Attachment']['file'][0]['preview']['default']));
+		$this->assertTrue(file_exists($result['Attachment']['file'][0]['preview']['default']['path']));
 		$this->assertTrue(isset($result['Attachment']['files'][0]['preview']['small']));
-		$this->assertTrue(file_exists($result['Attachment']['files'][0]['preview']['small']));
+		$this->assertTrue(file_exists($result['Attachment']['files'][0]['preview']['small']['path']));
 		$this->assertTrue(isset($result['Attachment']['files'][0]['preview']['big']));
-		$this->assertTrue(file_exists($result['Attachment']['files'][0]['preview']['big']));
+		$this->assertTrue(file_exists($result['Attachment']['files'][0]['preview']['big']['path']));
 		
 		//test for preview data after find
 		$result = $this->MediaUpload->read(null,$this->MediaUpload->id);
 		debug($result);
 
 		$this->assertTrue(isset($result['Attachment']['file'][0]['preview']['default']));
-		$this->assertTrue(file_exists($result['Attachment']['file'][0]['preview']['default']));
+		$this->assertTrue(file_exists($result['Attachment']['file'][0]['preview']['default']['path']));
 		$this->assertTrue(isset($result['Attachment']['files'][0]['preview']['small']));
-		$this->assertTrue(file_exists($result['Attachment']['files'][0]['preview']['small']));
+		$this->assertTrue(file_exists($result['Attachment']['files'][0]['preview']['small']['path']));
 		$this->assertTrue(isset($result['Attachment']['files'][0]['preview']['big']));
-		$this->assertTrue(file_exists($result['Attachment']['files'][0]['preview']['big']));
+		$this->assertTrue(file_exists($result['Attachment']['files'][0]['preview']['big']['path']));
 	}	
 	
 	public function tearDown() {
