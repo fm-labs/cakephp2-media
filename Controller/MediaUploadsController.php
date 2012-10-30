@@ -4,10 +4,13 @@ App::uses('MediaAppController', 'Media.Controller');
  * MediaUploads Controller
  *
  * @property MediaUpload $MediaUpload
+ * @property UploaderComponent $Uploader
  */
 class MediaUploadsController extends MediaAppController {
 
 	public $uses = array('Media.MediaUpload');
+	
+	public $components = array('Media.Uploader');
 	
 	public function beforeFilter() {
 		parent::beforeFilter();
@@ -30,6 +33,23 @@ class MediaUploadsController extends MediaAppController {
 						)
 				)
 		), true);
+	}
+	
+	public function admin_upload($id = null) {
+		
+		$additionalData = array(
+			'id' => $id,
+			'primary' => true	
+		);
+		
+		$this->Uploader->setModel($this->MediaUpload);
+		$this->Uploader->setAdditionalData($additionalData);
+		if ($this->Uploader->upload(null,array(),true)) {
+			$this->Session->setFlash('Upload successful');
+		} else {
+			$this->Session->setFlash('Upload failed');
+		}
+		
 	}
 	
 /**

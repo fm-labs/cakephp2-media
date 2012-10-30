@@ -1,8 +1,12 @@
 @CHARSET "UTF-8";
 
-.upload-container {
+form div.input.file {
 	border: 3px dashed #CCC;
 	padding: 10px;
+}
+
+.upload-container {
+	background: #CCC;
 }
 
 .upload-container:HOVER {
@@ -14,8 +18,6 @@
 }
 
 .upload-queue {
-	border: 1px dashed #CCC;
-	padding: 7px;
 }
 
 .upload-file {

@@ -2,7 +2,7 @@ function Uploader() {
 	
 	this.settings = {
 		uploadUrl: 'upload.php',
-		postField: 'file' 
+		postField: 'file',
 		//maxRetry: 3,
 	};
 	
@@ -179,6 +179,7 @@ Uploader.prototype.transferFile = function (queueId, file) {
 		//xhr request
 		var xhr = new XMLHttpRequest();
 		xhr.open('POST', this.settings.uploadUrl);
+		xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest"); // Identify as ajax call
 		jQuery(xhr).on('load', eventData, this.onTransferComplete );
 		jQuery(xhr).on('abort', eventData, this.onTransferCancel );
 		jQuery(xhr).on('error', eventData, this.onTransferFailure );

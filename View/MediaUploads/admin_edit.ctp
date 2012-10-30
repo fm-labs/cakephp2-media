@@ -16,18 +16,34 @@
 	<?php
 		echo $this->Form->input('id');
 		echo $this->Form->input('title');
-		echo $this->Form->input('file',array('readonly'=>true));
+	?>
+	</fieldset>
+	
+	<fieldset>
+		<legend>File</legend>
+		<?php 
+		//echo $this->Form->input('file',array('readonly'=>true, 'type'=>'hidden'));
 		
-		echo $this->FormUpload->input('MediaUpload.file',array('type'=>'file', 'label'=>'Single File Upload'));
-		echo $this->Form->error('file');
 		echo $this->Attachment->preview('MediaUpload.file');
-
+		echo $this->FormUpload->input('MediaUpload.file',array(
+			'type'=>'file', 
+			'label'=>'Single File Upload',
+			//'before' => $this->Attachment->preview('MediaUpload.file'),
+		));
+		echo $this->Form->error('file');
+		?>
+	</fieldset>
+	
+	<fieldset>
+		<legend>Files</legend>
+		<?php 
 		echo $this->Form->input('files',array('readonly'=>true));
 		echo $this->FormUpload->input('MediaUpload.files',array('type'=>'file', 'multiple'=>'multiple', 'label'=>'Multi File Upload'));
 		echo $this->Form->error('files');
 		echo $this->Attachment->preview('MediaUpload.files');
-		echo $this->Attachment->preview('MediaUpload.files',null,'small');
-		echo $this->Attachment->preview('MediaUpload.files',null, 'big');
+		//echo $this->Attachment->preview('MediaUpload.files',null,'small');
+		//echo $this->Attachment->preview('MediaUpload.files',null, 'big');
+		?>
 	?>
 	</fieldset>
 <?php echo $this->Form->button(__('Submit')); ?>

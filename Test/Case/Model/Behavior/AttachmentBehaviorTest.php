@@ -1,9 +1,7 @@
 <?php
-//define Behavior constants
+//TODO this is also in UploaderComponentTest. Keep this DRY
 define('MEDIA_UPLOAD_TMP_DIR', CakePlugin::path('Media') . 'Test/test_app/tmp/uploadtmp/' );
 define('MEDIA_UPLOAD_DIR', CakePlugin::path('Media') . 'Test/test_app/webroot/attachments/' );
-
-//define TestCase constants
 define('MEDIA_UPLOAD_TESTFILES_DIR', CakePlugin::path('Media') . 'Test/test_app/tmp/attachments/' );
 
 App::uses('AttachableBehavior', 'Media.Model/Behavior');

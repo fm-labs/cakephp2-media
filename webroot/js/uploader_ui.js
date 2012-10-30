@@ -5,12 +5,14 @@ function UploaderUi(settings) {
 	this.uploader;
 	
 	this.settings = {
-		'prefix': 'upload-'
+		'prefix': 'upload-',
+		'valueHolder': null
 	};
 	
 	this._objects = {
 		holder: null, // file input
 		container: null, // we put all elements in this container
+		valueHolder: null
 		//queue: null, // file queue container
 		//control: null, // queue control container
 		//handler: null, // triggers file dialog
@@ -64,10 +66,10 @@ UploaderUi.prototype.bindTo =  function (selector) {
 	var container = $('<div>',{ 'class': _prefix+'container'});
 	
 	//queue container
-	var queue = $('<div>',{ 'class': _prefix+'queue'}).html('- QUEUE -');
+	var queue = $('<div>',{ 'class': _prefix+'queue'}).html('');
 
 	// statistics container
-	var stats = $('<div>',{ 'class': _prefix+'stats'}).html('- STATS -');
+	var stats = $('<div>',{ 'class': _prefix+'stats'}).html('');
 	
 	//control container
 	/*
@@ -82,6 +84,7 @@ UploaderUi.prototype.bindTo =  function (selector) {
 	
 	//container
 	container
+		//.append(holder)
 		//.append(control)
 		.append(queue)
 		.append(stats)
@@ -104,13 +107,24 @@ UploaderUi.prototype.bindTo =  function (selector) {
 		
 	//modifiy holder
 	holder.after(container);
+	//container.prepend(holder);
 	
 	//bind callbacks
 	holder.on('change', eventData, this.selectFiles);
 	
+	//valueHolder
+	console.log(this.settings);
+	var valueHolder = null;
+	if (this.settings.valueHolder !== undefined) {
+		valueHolder = $(this.settings.valueHolder);
+	}
+		
+	console.log(valueHolder);
+	
 	//store jQuery objects
 	this._objects.holder = holder;
 	this._objects.container = container;
+	this._objects.valueHolder = valueHolder;
 	
 	//configure uploader
 	this.uploader.settings.postField = holder.attr('name');
@@ -224,8 +238,23 @@ UploaderUi.prototype.onUploaderFileSuccess = function (event, queueId, responseT
 	
 	console.log("UI: onUploaderFileSuccess(event, queueId, responseText) QueueId:"+queueId);
 
+	var response = JSON.parse(responseText);
+	console.log(response);
+	
+	console.log(event.data._this._objects.valueHolder);
+	for(var field in response.files) {
+		console.log(field);
+		for(var idx in response.files[field]) {
+			console.log(idx);
+			var file = response.files[field][idx];
+			console.log(file);
+			console.log(response.files[field][idx]['name']);
+			event.data._this._objects.valueHolder.val(response.files[field][idx]['name']);
+		}
+	}
+	
 	event.data._this.updateFileProgress(queueId, 100);
-	event.data._this.updateFileStatus(queueId, responseText);
+	event.data._this.updateFileStatus(queueId, response);
 	event.data._this.updateStats();
 };
 
@@ -258,13 +287,14 @@ UploaderUi.prototype.updateFileProgress = function (queueId, completed) {
 /**
  * Update file upload status in DOM
  */
-UploaderUi.prototype.updateFileStatus = function (queueId, statusStr) {
+UploaderUi.prototype.updateFileStatus = function (queueId, response) {
 
 	var fileContainer = $('#'+this.settings.prefix+'queue-'+queueId);
 	var fileStatus = fileContainer.find('.'+this.settings.prefix+'file-status');
 	
 	if (typeof fileStatus === 'object') {
-		fileStatus.html(statusStr);
+		//fileStatus.html(statusStr);
+		fileStatus.html(response.message);
 	} else {
 		console.log("UI: File status container not found "+queueId);
 	}
