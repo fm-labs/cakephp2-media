@@ -57,7 +57,8 @@ UploaderUi.prototype.bindTo =  function (selector) {
 	console.log("Bind '"+selector+"'");
 	
 	var _prefix = this.settings.prefix;
-	var eventData = { '_this': this };
+	var _this = this;
+	var eventData = { '_this': _this };
 	
 	// holder
 	var holder = $(selector);
@@ -66,30 +67,43 @@ UploaderUi.prototype.bindTo =  function (selector) {
 	var container = $('<div>',{ 'class': _prefix+'container'});
 	
 	//queue container
-	var queue = $('<div>',{ 'class': _prefix+'queue'}).html('');
+	var queue = $('<div>',{ 'class': _prefix+'queue'});
 
 	// statistics container
-	var stats = $('<div>',{ 'class': _prefix+'stats'}).html('');
+	var stats = $('<div>',{ 'class': _prefix+'stats'});
 	
 	//control container
-	/*
-	var control = $('<div>',{ 'class': 'control'});
-	var select = $('<button>',{ 'class': 'select'}).html('- SELECT FILES -');
-	var upload = $('<button>',{ 'class': 'upload'}).html('- UPLOAD -');
+	var control = $('<div>',{ 'class':  _prefix+'control'});
+	var select = $('<a>',{ 'class':  _prefix+'control-select', 'href':'#'})
+		.html('- SELECT FILES -')
+		.bind('click', function (e) {
+			holder.trigger('click');
+			e.preventDefault();
+			return false;
+		});
+	var upload = $('<a>',{ 'class': _prefix+'control-upload', 'href':'#'})
+		.html('- UPLOAD -')
+		.bind('click', function(e) {
+			_this.uploader.startUpload();
+			e.preventDefault();
+			return false;
+		});
 	
 	control
 		.append(select)
 		.append(upload);
-	*/
 	
 	//container
 	container
-		//.append(holder)
-		//.append(control)
+		.append(control)
 		.append(queue)
 		.append(stats)
 		.on('dragover', eventData, function (e) {
 			$(this).addClass('dragover');
+			return false;
+		})
+		.on('dragleave', eventData, function (e) {
+			$(this).removeClass('dragover');
 			return false;
 		})
 		.on('dragend', eventData, function (e) {
@@ -105,22 +119,21 @@ UploaderUi.prototype.bindTo =  function (selector) {
 		})
 	;
 		
-	//modifiy holder
-	holder.after(container);
-	//container.prepend(holder);
+	//holder
+	holder
+		.addClass(_prefix+'holder')
+		.on('change', eventData, this.selectFiles)
+		.after(container);
 	
-	//bind callbacks
-	holder.on('change', eventData, this.selectFiles);
+	//container
+	container.prepend(holder);
 	
 	//valueHolder
-	console.log(this.settings);
 	var valueHolder = null;
 	if (this.settings.valueHolder !== undefined) {
 		valueHolder = $(this.settings.valueHolder);
 	}
 		
-	console.log(valueHolder);
-	
 	//store jQuery objects
 	this._objects.holder = holder;
 	this._objects.container = container;

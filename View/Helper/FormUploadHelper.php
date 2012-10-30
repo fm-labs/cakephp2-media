@@ -19,21 +19,6 @@ class FormUploadHelper extends AppHelper {
 		$this->Html->css('/media/css/uploader',null, array('inline'=>false));
 	}
 	
-	/*
-	public function input($fieldName, $options = array()) {
-		
-		if (isset($options['type']) && $options['type'] == 'file') {
-			$label = (isset($options['label'])) ? $options['label'] : Inflector::humanize($fieldName);
-			if ($label)
-				$label = $this->Html->tag('label', $label);
-			
-			return $this->Html->div('input file', $label . $this->file($fieldName, $options));
-		}
-		
-		return $this->Form->input($fieldName, $options);
-	}
-	*/
-	
 	public function input($fieldName, $options = array(), $uploaderConfig = array()) {
 
 
@@ -90,7 +75,6 @@ class FormUploadHelper extends AppHelper {
 		$out .= $this->Form->error($fieldName);
 
 		//build uploader script
-		debug($uploaderConfig);
 		$script = 'var uploader = new UploaderUi('.json_encode($uploaderConfig).');';
 		$script .= 'uploader.bindTo("#'.$options['id'].'");';
 		$out .= $this->Html->scriptBlock($script);

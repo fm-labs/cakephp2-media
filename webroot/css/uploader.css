@@ -1,12 +1,9 @@
 @CHARSET "UTF-8";
 
-form div.input.file {
+.upload-container {
 	border: 3px dashed #CCC;
 	padding: 10px;
-}
-
-.upload-container {
-	background: #CCC;
+	margin: 0 0 10px 0;
 }
 
 .upload-container:HOVER {
@@ -15,6 +12,22 @@ form div.input.file {
 
 .upload-container.dragover {
 	border: 5px dashed #FF9966;
+}
+
+.upload-holder {
+	display: none;
+}
+
+.upload-control {
+}
+
+.upload-control > a {
+	display: inline-block;
+	padding: 5px 10px;
+	border: 1px solid #CCC;
+	background: #FFF;
+	color: #000;
+	margin: 0 7px 0 0;
 }
 
 .upload-queue {
@@ -26,6 +39,7 @@ form div.input.file {
 	margin: 0 0 10px;
 	position: relative;
 	background-color: #ff6600;
+	font-weight: normal;
 }
 
 .upload-file > div {
@@ -47,26 +61,17 @@ form div.input.file {
 }
 
 .upload-file .upload-file-progress {
-	display: block;
-	width: 96%;
-	margin: 10px 2% 5px;
+	width: 75px;
 	height: 10px;
 }
 
 .upload-file .upload-file-status {
-	margin-left: 20px;
 }
 
 .upload-file .upload-file-control {
-	top: 5px;
-    right: 2%;
-    display: block;
-    position: absolute;
-    text-align: right;
 }
 
 .upload-file .upload-file-abort {
-	
 }
 
 .upload-file.loading .upload-file-abort {
