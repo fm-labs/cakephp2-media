@@ -2,6 +2,8 @@
 App::uses('ModelBehavior', 'Model');
 App::uses('Cache','Cache');
 App::uses('String', 'Utility');
+App::uses('Folder', 'Utility');
+App::uses('File', 'Utility');
 App::uses('LibPhpThumb','Media.Lib');
 
 defined('MEDIA_CACHE_DIR') or define('MEDIA_CACHE_DIR', CACHE . "media" . DS);
@@ -30,11 +32,13 @@ class AttachableBehavior extends ModelBehavior {
 	const DEFAULT_PREVIEW_Q = 100;
 	
 	public $defaultConfig = array(
-		'uploadField' => 'file_upload',
+		'enabled' => true, // If TRUE attachments get auto attached afterFind
+		'uploadField' => null, // fieldname which holds file upload. Defaults to FIELDNAME_upload.
+		'uploadNameField' => null, // fieldname which holds target file name. Defaults to FIELDNAME_name.
 		'baseDir' => MEDIA_UPLOAD_DIR,
 		'subFolder' => '',
 		'multiple' => false, // If FALSE, only one attachment will be stored. On edit file gets overwritten automatically
-		'preserve' => true, // If 'multiple' is TRUE, 'preserve' (if TRUE) preserves files on edit, otherwise files get overwritten/deleted
+		'append' => true, // If 'multiple' is TRUE, 'append' (if TRUE) appends files on edit, otherwise files get overwritten/deleted
 		'minFileSize' => 0,
 		'maxFileSize' => 2097152, //2MB
 		'allowEmpty' => true, //Allow field to be empty
@@ -44,7 +48,7 @@ class AttachableBehavior extends ModelBehavior {
 		'hashFilename' => false,
 		'slug' => '_',
 		'removeOnDelete' => true, //remove file if row gets deleted
-		'removeOnOverwrite' => false, //remove file if file has been replaced
+		'removeOnOverwrite' => true, //remove file if file has been replaced
 		'preview' => false, //TRUE for standard preview, key/config pairs for custom sizes. Applies only to images. Requires phpThumb
 		'thumbDir' => MEDIA_THUMB_CACHE_DIR
 	);
@@ -78,6 +82,9 @@ class AttachableBehavior extends ModelBehavior {
 			$attachments = (isset($model->attachments)) ? $model->attachments : array();
 			$this->configureAttachment($model, $attachments);
 		}
+		if (!isset($this->_runtime[$model->alias])) {
+			$this->_runtime[$model->alias] = array();
+		}
 	}
 	
 	/**
@@ -97,7 +104,9 @@ class AttachableBehavior extends ModelBehavior {
 		}
 		
 		if ($reset || !$this->_getConfig($model, $field))
-			$config = am($this->defaultConfig, array('uploadField'=>$field.'_upload'), $config);
+			$config = am($this->defaultConfig, array(
+				'uploadField'=>$field.'_upload',
+				'uploadNameField'=>$field.'_name'), $config);
 		else
 			$config = am($this->settings[$model->alias][$field], $config);
 		
@@ -116,11 +125,47 @@ class AttachableBehavior extends ModelBehavior {
 		return $this->settings[$model->alias];
 	}
 	
-	protected function _getConfig(Model $model, $field) {
+	protected function _setRuntimeConfig(Model &$model, $field, $config = array()) {
+
+		if (is_array($field)) {
+			foreach($field as $_field => $_config) {
+				$this->_setRuntimeConfig($model, $_field, $_config);
+			}
+			return;
+		}
+		elseif (is_bool($field)) {
+			foreach($this->_getFields($model) as $_field) {
+				$this->_setRuntimeConfig($model, $_field, array('enabled'=>$field));
+			}
+			return;
+		} 
+		elseif ($config === false) {
+			$config =  array('enabled'=>false);
+		}		
+		
+		$this->_runtime[$model->alias][$field] = $config;		
+		
+	}
+
+	protected function _getRuntimeConfig(Model &$model, $field) {
+		if (!isset($this->_runtime[$model->alias][$field]))
+			return array();
+		
+		$config = $this->_runtime[$model->alias][$field];
+		unset($this->_runtime[$model->alias][$field]);
+		return $config;
+	}
+	
+	protected function _getConfig(Model &$model, $field, $includeRuntimeConfig = true) {
 		if (!isset($this->settings[$model->alias][$field]))
 			return false;
 		
-		return $this->settings[$model->alias][$field];
+		$config = $this->settings[$model->alias][$field];
+		
+		if ($includeRuntimeConfig)
+			$config = am($config, $this->_getRuntimeConfig($model, $field));
+		
+		return $config;
 	}
 	
 	protected function _getFields(Model $model) {
@@ -135,46 +180,19 @@ class AttachableBehavior extends ModelBehavior {
 	 * @param array $config		Runtime config for given $field. If $field is set and $config is FALSE no attachment for given field will be attached
 	 * @return Model
 	 */
-	public function attachment(Model $model, $field, $config = null) {
-		if ($field === false) {
-			$this->_runtime[$model->alias]['attachment'] = false;
-			return $model;
-		}
+	public function attachment(Model $model, $field, $config = array()) {
+			
+		$this->_setRuntimeConfig($model, $field, $config);
 		
-		$this->_runtime[$model->alias]['attachment'][$field] = $config;
 		return $model;
 	}
 	
 	public function beforeFind(Model $model, $query) {
 		
-		$attachRuntime = null;
-		if (isset($this->_runtime[$model->alias]['attachment'])) {
-			$attachRuntime = $this->_runtime[$model->alias]['attachment'];
-		}
-		
-		$attachQuery = null;
 		if (isset($query['attachment'])) {
-			$attachQuery = $query['attachment'];
+			$this->_setRuntimeConfig($model, $query['attachment']);
 			unset($query['attachment']);
 		}
-		
-		$runtime = array();
-		foreach(array($attachRuntime, $attachQuery) as $attachment) {
-			
-			if ($attachment === null) 
-				continue;
-			
-			if ($attachment === false || !is_array($attachment)) {
-				$runtime = false;
-				break;
-			}
-			
-			foreach((array)$attachment as $field => $config) {
-				$runtime[$field] = $config;
-			}
-		}
-		
-		$this->_runtime[$model->alias]['attachment'] = $runtime;
 		
 		return $query;
 	}
@@ -186,15 +204,6 @@ class AttachableBehavior extends ModelBehavior {
 	 */
 	public function afterFind(Model $model, $results, $primary) {
 		
-		$attachment = true;
-		if (isset($this->_runtime[$model->alias]['attachment'])) {
-			$attachment = $this->_runtime[$model->alias]['attachment'];
-			unset($this->_runtime[$model->alias]);
-		}
-
-		if ($attachment === false)
-			return $results;
-		
 		if ($primary) {
 			
 			foreach($results as &$result) {
@@ -202,17 +211,13 @@ class AttachableBehavior extends ModelBehavior {
 				//check if any field is set
 				foreach($this->_getFields($model) as $field) {
 					
-					//check runtime config
-					if (is_array($attachment) && array_key_exists($field, $attachment)) {
-						$runtime = $attachment[$field];
-						if (!$runtime)
-							continue;
-					}
-					
 					if (!isset($result[$model->alias][$field]))
 						continue;
 					
-					$config = $this->_getConfig($model, $field);
+					$config = $this->_getConfig($model, $field, true);
+					
+					if (!$config['enabled'])
+						continue;
 					
 					//TODO read attachment cache for result
 					
@@ -245,10 +250,7 @@ class AttachableBehavior extends ModelBehavior {
 	 */
 	public function beforeValidate(Model $model, $options = array()) {
 		
-		if (isset($options['attachment'])) {
-			$options = $options['attachment'];
-			unset($options['attachment']);
-		}
+		$options = (isset($options['attachment'])) ? $options['attachment'] : array();
 		
 		$this->_uploadTemporary($model, $options);
 		return true;
@@ -278,18 +280,23 @@ class AttachableBehavior extends ModelBehavior {
 		
 		//cacheKey
 		$cacheKey = null;
-		if (is_string($options))
+		if (is_string($options)) {
 			$cacheKey = $options;
-		elseif(isset($options['cacheKey'])) {
+			$options = array();
+		} elseif(isset($options['cacheKey'])) {
 			$cacheKey = $options['cacheKey'];
 			unset($options['cacheKey']);
+		}
+		
+		
+		if ($options) {
+			$this->_setRuntimeConfig($model, $options);
 		}
 		
 		$uploadDetected = false;
 		//check if any field is set
 		foreach($this->_getFields($model) as $field) {
-			$fieldConfig = $this->_getConfig($model, $field);
-			$config = am($fieldConfig, $options);
+			$config = $this->_getConfig($model, $field, true);
 			
 			//detect upload
 			if (isset($model->data[$model->alias][$config['uploadField']])) {
@@ -311,18 +318,8 @@ class AttachableBehavior extends ModelBehavior {
 							}
 							
 							//check upload and upload temporary
-							$this->_upload($upload, $config);
+							$this->_upload($model, $upload, $config);
 							
-							//overwrite field
-							if (isset($model->data[$model->alias][$field])) {
-								if ($config['multiple'] && $config['preserve']) {
-									//we need to preserve the 'old' attachments
-									$upload['__preserve'] = $model->data[$model->alias][$field];
-								} elseif ($config['removeOnOverwrite']) {
-									//overwrite. flag 'old' attachment for removal
-									$this->_flagForRemoval($model, $model->id, $field, $model->data[$model->alias][$field]);
-								}
-							}
 						} catch(Exception $e) {
 							$model->invalidate($field, $upload['name'].': '.$e->getMessage());
 							continue;
@@ -335,12 +332,15 @@ class AttachableBehavior extends ModelBehavior {
 						continue;
 					}
 					
+					//transport current field value in upload as temp var
+					$formFiles['__current__'] = (isset($model->data[$model->alias][$field])) ? trim($model->data[$model->alias][$field]) : '';
+					$formFiles['__append__'] = ($config['multiple'] && $config['append']) ? true : false; 
+					
 					$uploadDetected = true;
 					
 					$cacheKeyString = $this->_writeUploadCache($formFiles, $cacheKey);
 					
 					$model->data[$model->alias][$config['uploadField']] = $cacheKeyString;
-					//TODO preserve field data on edit / delete files on overwrite
 					$model->data[$model->alias][$field] = $cacheKeyString;
 					$model->data['Attachment'][$field] = $formFiles;
 				} else {
@@ -389,7 +389,7 @@ class AttachableBehavior extends ModelBehavior {
 	 * @param array $config Field config
 	 * @throws AttachableUploadException
 	 */
-	protected function _upload(&$upload, $config) {
+	protected function _upload(Model &$model, &$upload, $config) {
 	
 		//validate upload error
 		if ($upload['error'] > 0) {
@@ -417,18 +417,10 @@ class AttachableBehavior extends ModelBehavior {
 		if (!$this->_validateFileExtension($ext, $config['allowedFileExtension']))
 			throw new AttachableUploadException(self::UPLOAD_ERR_FILE_EXT);
 	
-		if ($config['hashFilename'])
-			$filename = sha1($filename);
-		elseif($config['slug'])
-			$filename = Inflector::slug($filename,$config['slug']);
-	
-		//TODO validate filename
-	
-		$upload['name'] = $filename.$dotExt;
-	
 		//safe temporary file path
 		$i = 0;
 		do {
+			//TODO use an object property instead of constant here?! 
 			$tmpTarget = MEDIA_UPLOAD_TMP_DIR . uniqid($filename) . "-". $i++ . $dotExt;
 		} while(file_exists($tmpTarget));
 	
@@ -447,9 +439,13 @@ class AttachableBehavior extends ModelBehavior {
 		$upload['tmp_name'] = $tmpTarget;
 	}
 	
+	/**
+	 * (non-PHPdoc)
+	 * @see ModelBehavior::onError()
+	 * @todo Implement onError() method
+	 */
 	public function onError($model, $error) {
-		
-		debug($error);
+		$this->log($error, LOG_ERR);
 	}
 	
 	public function beforeSave(Model $model, $options = array()) {
@@ -479,23 +475,21 @@ class AttachableBehavior extends ModelBehavior {
 					
 					$tmpUploads = $this->_readUploadCache($cacheKey);
 					//TODO what if cacheKey has expired
+					if (!$tmpUploads)
+						continue;
+					
+					$__current = $tmpUploads['__current__'];
+					$__append = $tmpUploads['__append__'];
+					unset($tmpUploads['__current__'],$tmpUploads['__append__']);
 					
 					$attachments = array();
 					foreach((array)$tmpUploads as $tmpUpload) {
 						
 						try {
 							
-							//check for preserved attachments
-							if (isset($tmpUpload['__preserve'])) {
-								$preserve = $tmpUpload['__preserve'];
-								unset($tmpUpload['__preserve']);
-								
-								$_attachments = $this->_getAttachments($model, $preserve, $config);
-								$attachments += $_attachments;
-							}
-							
 							$attachment = $this->_store($model, $tmpUpload, $config);
 							array_push($attachments, $attachment);
+							
 						} catch(AttachableUploadException $e) {
 							debug($e->getMessage());
 							$model->invalidate($config['uploadField'], $tmpUpload['name'].': '. $e->getMessage());
@@ -507,7 +501,20 @@ class AttachableBehavior extends ModelBehavior {
 						
 					}
 					
+					
+					//preserve or overwrite
+					if ($config['multiple'] && $__append) {
+						$attachments = am($this->_getAttachments($model, $__current, $config), $attachments);
+					} 
+					
+					//extract basenames
 					$basenames = Hash::extract($attachments, '{n}.basename');
+					
+					//check for changes files
+					$fileForRemoval = $this->__getFilesForRemoval($__current, $basenames);
+					foreach($fileForRemoval as $_fileName) {
+						$this->_flagForRemoval($model, $model->id, $field, $_fileName);
+					}
 					
 					//save basenames in $field
 					$fileStr = join(',',$basenames);
@@ -538,7 +545,24 @@ class AttachableBehavior extends ModelBehavior {
 		return true;
 	}
 	
-
+	private function __getFilesForRemoval($current = array(), $new = array()) {
+		
+		if (is_string($current))
+			$current = explode(',',$current);
+		
+		if (is_string($new))
+			$current = explode(',',$new);
+		
+		$diff = array_diff($current, $new);
+		
+		for($i=0;$i<count($diff);$i++) {
+			if (!$diff[$i])
+				unset($diff[$i]);
+		}
+		
+		return $diff;
+	}
+	
 	/**
 	 * Move temporary upload to destination
 	 *
@@ -548,24 +572,37 @@ class AttachableBehavior extends ModelBehavior {
 	 */
 	protected function _store(Model &$model, $tmpUpload, $config) {
 	
-	
-		//safe target
-		$path = $this->_getBasePath($model, $config);
-		
 		//create subfolders if needed
+		$path = $this->_getBasePath($model, $config);
 		$Folder = new Folder($path, true);
 		if (!$Folder->cd($path))
 			throw new AttachableUploadException(self::UPLOAD_ERR_STORE_UPLOAD);
 		unset($Folder);
 		
-		$basename = $tmpUpload['name'];
-		list($filename, $ext, $dotExt) = self::splitBasename($basename);
+		 //build filename
+		list($filename, $ext, $dotExt) = self::splitBasename($tmpUpload['name']);
+		
+		if (isset($model->data[$model->alias][$config['uploadNameField']]) 
+			&& !empty($model->data[$model->alias][$config['uploadNameField']])) {
+			
+			//TODO validate filename
+			$filename = trim($model->data[$model->alias][$config['uploadNameField']]);
+		}
+		
+		if ($config['hashFilename'])
+			$filename = sha1($filename);
+		elseif($config['slug'])
+			$filename = Inflector::slug($filename,$config['slug']);
+		
+		$basename = $filename.$dotExt;
+		
+		//build targetname
 		$targetPath = $path . $basename;
 		if (file_exists($targetPath) && $config['allowOverwrite'] == false) {
 			$i = 0;
 			$_filename = $filename;
 			do {
-				$filename = $_filename.$config['slug'].++$i;
+				$filename = $_filename.'_'.++$i;
 				$basename = $filename.$dotExt;
 				$targetPath = $path.$basename;
 			} while(file_exists($targetPath) == true);
@@ -669,28 +706,27 @@ class AttachableBehavior extends ModelBehavior {
 	 */
 	public function beforeDelete($model) {
 		
-		$settings = $this->settings[$model->alias];
-		$fields = array_keys($settings);
-		
-		$data = $model->read($fields,$model->id);
+		$fields = array_keys($this->settings[$model->alias]);
+		$model->data = $model->read($fields,$model->id);
 		
 		foreach($fields as $field) {
-			$config = $settings[$field];
+			$config = $this->settings[$model->alias][$field];
 			
 			//do not remove files
 			if (!$config['removeOnDelete'])
 				continue;
 			
-			if (!isset($data['Attachment']))
+			if (!isset($model->data['Attachment']))
 				//throw new Exception("Attachment data missing");
 				continue;
 			
 			//flag attachments for removal
-			if (isset($data['Attachment'][$field])) 
+			if (isset($model->data['Attachment'][$field])) 
 			{
 				
-				foreach($data['Attachment'][$field] as $idx => $attachment) {
+				foreach($model->data['Attachment'][$field] as $idx => $attachment) {
 					$this->_flagForRemoval($model, $model->id, $field, $attachment['basename']);
+					//unset($model->data['Attachment'][$field][$idx]);
 				}
 			}
 		}
@@ -793,7 +829,7 @@ class AttachableBehavior extends ModelBehavior {
 		$config = $this->settings[$model->alias][$field];
 		
 		foreach($this->_getAttachments($model, $fileStr, $config) as $_attachment) {
-			$this->_flaggedForRemoval[$model->alias][$id][] = $_attachment['path'];
+			$this->_flaggedForRemoval[$model->alias][$id][$field][] = $_attachment['path'];
 		}
 	}
 	
@@ -812,17 +848,32 @@ class AttachableBehavior extends ModelBehavior {
 			return; 
 		}
 		
-		foreach($this->_flaggedForRemoval[$model->alias][$model->id] as $idx => $filepath) {
-			if (!file_exists($filepath) || !is_file($filepath)) {
-				$this->log(__("Skip Delete for attachment for Model %s [%s] (File not found): %s", $model->alias, $model->id, $filepath),'debug');
-				unset($this->_flaggedForRemoval[$model->alias][$model->id][$idx]);
-			}
-			elseif (@unlink($filepath)) {
-				$this->log(__("Deleted attachment for Model %s [%s]: %s", $model->alias, $model->id, $filepath),'debug');
-				unset($this->_flaggedForRemoval[$model->alias][$model->id][$idx]);
-			} 
-			else {
-				$this->log(__("Failed to delete attachment for Model %s [%s]: %s", $model->alias, $model->id, $filepath),'error');
+		foreach($this->_flaggedForRemoval[$model->alias][$model->id] as $field => $filepaths) {
+			
+			//if 'allowOverwrite' and 'removeOnOverwrite' are ON and the file name has NOT change the file should not be deleted!
+			$paths = Hash::extract($model->data, "Attachment.$field.{n}.path");
+			//debug($paths);
+			
+			foreach ($filepaths as $idx => $filepath) {
+				/*
+				if (in_array($filepath, $paths)) {
+					debug("do not remove path $filepath");
+					unset($this->_flaggedForRemoval[$model->alias][$model->id][$field][$idx]);
+					continue;
+				}
+				*/
+				
+				if (!file_exists($filepath) || !is_file($filepath)) {
+					$this->log(__("Skip Delete for attachment for Model %s [%s] (File not found): %s", $model->alias, $model->id, $filepath),'debug');
+					unset($this->_flaggedForRemoval[$model->alias][$model->id][$field][$idx]);
+				}
+				elseif (@unlink($filepath)) {
+					$this->log(__("Deleted attachment for Model %s [%s]: %s", $model->alias, $model->id, $filepath),'debug');
+					unset($this->_flaggedForRemoval[$model->alias][$model->id][$field][$idx]);
+				} 
+				else {
+					$this->log(__("Failed to delete attachment for Model %s [%s]: %s", $model->alias, $model->id, $filepath),'error');
+				}
 			}
 		}
 	}
