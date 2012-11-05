@@ -795,7 +795,16 @@ class AttachableBehavior extends ModelBehavior {
 			$path = $this->_getBasePath($model, $config) . $basename;
 			list($filename, $ext) = self::splitBasename($basename);
 		
-			$attachment = compact('path','basename','filename','ext');
+			$url = Router::url(array(
+				'plugin'=>'media',
+				'controller'=>'attachments',
+				'action'=>'view',
+				'model'=>Inflector::underscore($model->alias),
+				'id'=>$model->id,
+				'basename' => $basename
+			));
+			
+			$attachment = compact('path','basename','filename','ext','url');
 			array_push($attachments, $attachment);
 		}
 		

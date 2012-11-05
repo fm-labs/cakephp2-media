@@ -60,7 +60,8 @@ class AttachmentHelper extends AppHelper {
 		foreach($attachments as $attachment) {
 			$_out = $_actions = "";
 			//thumb
-			$_out .= $this->Html->div('attachment-form-preview-thumb', $this->previewImage($attachment, $options['size']));
+			$_out .= $this->Html->div('attachment-form-preview-thumb', 
+					$this->previewImage($attachment, array(), $options['size']));
 			//name
 			$_out .= $this->Html->div('attachment-form-preview-basename', 
 					$this->Html->link(String::truncate($attachment['basename'], 45), array(), array('title'=>$attachment['basename']))
@@ -87,16 +88,18 @@ class AttachmentHelper extends AppHelper {
 		return $this->Html->div('attachment-form-container',$label.$out . '<div style="clear:both;"></div>');
 	}
 	
-	public function previewImage($attachment, $size = 'default') {
-		if (!isset($attachment['preview']) 
-			|| !isset($attachment['preview'][$size])
-			|| !$attachment['preview'][$size]) 
-		{
+	public function previewImage($attachment, $options = array(), $size = 'default') {
+		if (!isset($attachment['preview'])) {
 			$_extIcon =  ($attachment['ext']) ? $attachment['ext'] : 'file';
 			return $this->Html->image('/media/img/icons/files/'.$_extIcon.'.png');
 		}
 		
-		return $this->Html->image($attachment['preview'][$size]['url']);
+		if (isset($options['size'])) {
+			$size = $options['size'];
+			unset($options['size']);
+		}
+
+		return $this->Html->image($attachment['preview'][$size]['url'], $options);
 	}
 	
 	/**

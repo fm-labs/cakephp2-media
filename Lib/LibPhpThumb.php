@@ -18,19 +18,19 @@ class LibPhpThumb {
  * @param array $params PhpThumb params
  * @return array Array list with format: array($path, $url)
  */	
-	static public function getThumbnail($source, $target = null, $params = array(), $force = false) {
+	static public function getThumbnail($source, $target = null, $params = array(), $fullUrl = false, $force = false) {
 		
 		if (!$force && file_exists(self::target($source, $target = null, $params)))
 			return $target;
 		
 		$path = self::createThumbnail($source, $target, $params);
-		$url = self::getThumbnailUrl($path);
+		$url = self::getThumbnailUrl($path, $fullUrl);
 		
 		return array($path, $url);
 	}
 
 /**
- * Get Thumbnail URL for given source and params
+ * Get Thumbnail URL for given source
  * 
  * @param string $source Absolute path to source file
  * @param array $params PhpThumb params
