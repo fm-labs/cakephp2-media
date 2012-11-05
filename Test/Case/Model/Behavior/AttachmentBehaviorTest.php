@@ -105,10 +105,12 @@ class AttachableBehaviorTest extends CakeTestCase {
 			'file' => array(
 					'baseDir' => $this->attachmentDir,
 					'multiple' => false,
+					'removeOnOverwrite' => true,
 			),
 			'files' => array(
 					'baseDir' => $this->attachmentDir,
 					'multiple' => true,
+					'removeOnOverwrite' => true,
 			)
 		),true);
 		$this->MediaUpload->validate = array();
@@ -168,6 +170,7 @@ class AttachableBehaviorTest extends CakeTestCase {
 			'file' => array(
 				'uploadField' => 'file_upload',
 				'baseDir' => MEDIA_UPLOAD_DIR,
+				'subFolder' => '',
 				'multiple' => false,
 				'preserve' => true,
 				'minFileSize' => (int) 0,
@@ -179,11 +182,31 @@ class AttachableBehaviorTest extends CakeTestCase {
 				'hashFilename' => false,
 				'slug' => '_',
 				'removeOnDelete' => true,
+				'removeOnOverwrite' => false,
 				'preview' => false,
 				'thumbDir' => MEDIA_THUMB_CACHE_DIR
 			)
 		);
 		$this->assertEqual($result, $expected);
+	}
+	
+
+	public function testReplacePathTokens() {
+		$Behavior = new TestAttachableBehavior();
+		
+		$this->MediaUpload->id = 3;
+		$result = $Behavior->_replacePathTokens($this->MediaUpload, '{MODEL}{DS}{MODELID}{DS}');
+		$expected = 'MediaUpload'.DS.'3'.DS;
+		
+		$this->assertEqual($result, $expected);
+	}
+	
+	public function testGetBasePath() {
+		$Behavior = new TestAttachableBehavior();
+	}
+	
+	public function testGetFilePath() {
+		$Behavior = new TestAttachableBehavior();
 	}
 	
 	public function testSplitBasename() {
@@ -364,7 +387,7 @@ class AttachableBehaviorTest extends CakeTestCase {
 	}
 	
 	/**
-	 * TODO clean this up. split up in separate test methods
+	 * todo clean this up. split up in separate test methods
 	 */
 	public function testAttachTemporary() {
 	
@@ -565,6 +588,44 @@ class AttachableBehaviorTest extends CakeTestCase {
 		$this->assertEqual($result, $expected);
 		$this->assertTrue(file_exists($result['Attachment']['file'][0]['path']));
 		
+		//delete
+		$deleted = $this->MediaUpload->delete($this->MediaUpload->id);
+		$this->assertTrue($deleted);
+		$this->assertTrue(!file_exists($result['Attachment']['file'][0]['path']));
+	}
+	
+	public function testSingleUploadSaveDeleteWithSubfolder() {
+		
+		$this->_setupDefault();
+		$this->MediaUpload->configureAttachment('file', array('subFolder'=>'{MODEL}{DS}{MODELID}{DS}'));
+		
+		$data = array(
+				'MediaUpload' => array(
+						'title' => 'My Upload',
+						'file_upload' => $this->upload1
+				)
+		);
+	
+		$this->MediaUpload->create();
+		$result = $this->MediaUpload->save($data);
+		
+		$expectedAttachment = $this->_getExpectedAttachment($this->upload1, 'Upload_File_1.txt');
+		$expectedAttachment['path'] = $this->attachmentDir.'MediaUpload'.DS.$this->MediaUpload->id.DS.$expectedAttachment['basename'];
+		$expected = array(
+				'MediaUpload' => array(
+						'id' => $this->MediaUpload->id,
+						'title' => 'My Upload',
+						'file' => 'Upload_File_1.txt'
+				),
+				'Attachment' => array(
+						'file' => array(
+								0 => $expectedAttachment
+						)
+				),
+		);
+		$this->assertEqual($result, $expected);
+		$this->assertTrue(file_exists($result['Attachment']['file'][0]['path']));
+	
 		//delete
 		$deleted = $this->MediaUpload->delete($this->MediaUpload->id);
 		$this->assertTrue($deleted);
@@ -886,7 +947,6 @@ class AttachableBehaviorTest extends CakeTestCase {
 		
 		//test for preview data after find
 		$result = $this->MediaUpload->read(null,$this->MediaUpload->id);
-		debug($result);
 
 		$this->assertTrue(isset($result['Attachment']['file'][0]['preview']['default']));
 		$this->assertTrue(file_exists($result['Attachment']['file'][0]['preview']['default']['path']));
@@ -914,6 +974,18 @@ class TestAttachableBehavior extends AttachableBehavior {
 	
 	public function _createPreview($attachment, $config) {
 		return parent::_createPreview($attachment, $config);
+	}
+	
+	public function _replacePathTokens(Model &$model, $path) {
+		return parent::_replacePathTokens($model, $path);
+	}
+
+	public function _getBasePath($model, $config = array()) {
+		return parent::_getBasePath($model, $config);
+	}
+	
+	public function _getFilePath(Model &$model, $filename, $config) {
+		return parent::_getFilePath($model, $filename, $config);
 	}
 	
 	public function _splitBasename($basename) {

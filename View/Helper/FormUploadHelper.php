@@ -2,84 +2,22 @@
 App::uses('AppHelper', 'View/Helper');
 
 /**
+ * FormUpload Helper
  * 
+ * @deprecated Use AttachmentHelper instead
  * @author flow
- * @property HtmlHelper $Html
- * @property FormHelper $Form
+ * 
+ * @property AttachmentHelper $Attachment
  */
 class FormUploadHelper extends AppHelper {
 
-	public $helpers = array('Html', 'Form');
-	
-	public function __construct($View, $settings = array()) {
-		parent::__construct($View, $settings);
-		
-		$this->Html->script('/media/js/uploader',array('inline'=>false));
-		$this->Html->script('/media/js/uploader_ui',array('inline'=>false));
-		$this->Html->css('/media/css/uploader',null, array('inline'=>false));
-	}
-	
+	public $helpers = array('Media.Attachment');
+
 	public function input($fieldName, $options = array(), $uploaderConfig = array()) {
-
-
-		$this->setEntity($fieldName);
-		$modelKey = $this->model();
-		$fieldKey = $this->field();
-
-		//TODO make this configurable
-		$uploaderUrl = am(array(
-			'plugin' => $this->request->params['plugin'],
-			'controller' => $this->request->params['controller'],
-			'action' => 'upload',
-		),$this->request->params['named'],$this->request->params['pass']);
-		
-		/*
-		$uploaderUrl = am(array(
-			'plugin' => 'media',
-			'controller' => 'attachments',
-			'action' => 'upload',
-			'model' => $modelKey,
-			'field' => $fieldKey
-		), $this->request->params['named'],$this->request->params['pass'] );
-		*/
-		$uploaderUrl = Router::url($uploaderUrl);
-		
-		$options = am(array(
-			'holder' => $fieldName.'_upload',
-			'multiple' => false,
-			'type' => 'file',
-			'id' => uniqid('fileinput')
-		),$options);
-		
-		$_uploaderConfig = array();
-		if (isset($options['uploader'])) {
-			$_uploaderConfig = $options['uploader'];
-			unset($options['uploader']);
+		if (Configure::read('debug') > 0) {
+			trigger_error('FormUploadHelper is DEPRECATED. Use AttachmentHelper instead',E_USER_NOTICE);
 		}
-		
-		$uploaderConfig = am($_uploaderConfig, array(
-			'uploadUrl' => $uploaderUrl,
-			'valueHolder' => '#'.$options['id'].'_vh',
-		),$uploaderConfig);
-		
-		//output form field
-		$uploadFieldName = $options['holder'];
-		unset($options['holder']);
-		
-		if ($options['multiple'])
-			$uploadFieldName .= '.';
-		
-		$out = $this->Form->input($uploadFieldName, $options);
-		//$out .= $this->Form->error($uploadFieldName);
-		$out .= $this->Form->hidden($fieldName,array('id'=>$uploaderConfig['valueHolder']));
-		$out .= $this->Form->error($fieldName);
-
-		//build uploader script
-		$script = 'var uploader = new UploaderUi('.json_encode($uploaderConfig).');';
-		$script .= 'uploader.bindTo("#'.$options['id'].'");';
-		$out .= $this->Html->scriptBlock($script);
-		
-		return $out;
+		return $this->Attachment->uploadField($fieldName, $options, $uploaderConfig);
 	}
 	
 }

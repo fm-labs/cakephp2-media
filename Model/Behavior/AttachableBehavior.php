@@ -32,6 +32,7 @@ class AttachableBehavior extends ModelBehavior {
 	public $defaultConfig = array(
 		'uploadField' => 'file_upload',
 		'baseDir' => MEDIA_UPLOAD_DIR,
+		'subFolder' => '',
 		'multiple' => false, // If FALSE, only one attachment will be stored. On edit file gets overwritten automatically
 		'preserve' => true, // If 'multiple' is TRUE, 'preserve' (if TRUE) preserves files on edit, otherwise files get overwritten/deleted
 		'minFileSize' => 0,
@@ -43,6 +44,7 @@ class AttachableBehavior extends ModelBehavior {
 		'hashFilename' => false,
 		'slug' => '_',
 		'removeOnDelete' => true, //remove file if row gets deleted
+		'removeOnOverwrite' => false, //remove file if file has been replaced
 		'preview' => false, //TRUE for standard preview, key/config pairs for custom sizes. Applies only to images. Requires phpThumb
 		'thumbDir' => MEDIA_THUMB_CACHE_DIR
 	);
@@ -104,6 +106,12 @@ class AttachableBehavior extends ModelBehavior {
 		$this->settings[$model->alias][$field] = $config;
 	}
 	
+	/**
+	 * @param unknown_type $model
+	 * @return multitype:
+	 * 
+	 * @deprecated
+	 */
 	public function getConfig($model) {
 		return $this->settings[$model->alias];
 	}
@@ -209,7 +217,7 @@ class AttachableBehavior extends ModelBehavior {
 					//TODO read attachment cache for result
 					
 					//parse attachments
-					$attachments = $this->_getAttachments($result[$model->alias][$field], $config);
+					$attachments = $this->_getAttachments($model, $result[$model->alias][$field], $config);
 					
 					//attach preview
 					foreach($attachments as &$attachment)
@@ -305,12 +313,12 @@ class AttachableBehavior extends ModelBehavior {
 							//check upload and upload temporary
 							$this->_upload($upload, $config);
 							
-							//overwrite field. need to 
+							//overwrite field
 							if (isset($model->data[$model->alias][$field])) {
 								if ($config['multiple'] && $config['preserve']) {
-									//we need to preserve to 'old' attachments
+									//we need to preserve the 'old' attachments
 									$upload['__preserve'] = $model->data[$model->alias][$field];
-								} else {
+								} elseif ($config['removeOnOverwrite']) {
 									//overwrite. flag 'old' attachment for removal
 									$this->_flagForRemoval($model, $model->id, $field, $model->data[$model->alias][$field]);
 								}
@@ -482,11 +490,11 @@ class AttachableBehavior extends ModelBehavior {
 								$preserve = $tmpUpload['__preserve'];
 								unset($tmpUpload['__preserve']);
 								
-								$_attachments = $this->_getAttachments($preserve, $config);
+								$_attachments = $this->_getAttachments($model, $preserve, $config);
 								$attachments += $_attachments;
 							}
 							
-							$attachment = $this->_store($tmpUpload, $config);
+							$attachment = $this->_store($model, $tmpUpload, $config);
 							array_push($attachments, $attachment);
 						} catch(AttachableUploadException $e) {
 							debug($e->getMessage());
@@ -538,33 +546,45 @@ class AttachableBehavior extends ModelBehavior {
 	 * @param string $dest Filepath to destination
 	 * @throws AttachableUploadException
 	 */
-	protected function _store($tmpUpload, $config) {
+	protected function _store(Model &$model, $tmpUpload, $config) {
 	
-		$basename = $tmpUpload['name'];
-		list($filename, $ext, $dotExt) = self::splitBasename($basename);
 	
 		//safe target
-		$path = $config['baseDir'] . $basename;
-		if (file_exists($path) && !$config['allowOverwrite']) {
-			$_filename = $filename;
+		$path = $this->_getBasePath($model, $config);
+		
+		//create subfolders if needed
+		$Folder = new Folder($path, true);
+		if (!$Folder->cd($path))
+			throw new AttachableUploadException(self::UPLOAD_ERR_STORE_UPLOAD);
+		unset($Folder);
+		
+		$basename = $tmpUpload['name'];
+		list($filename, $ext, $dotExt) = self::splitBasename($basename);
+		$targetPath = $path . $basename;
+		if (file_exists($targetPath) && $config['allowOverwrite'] == false) {
 			$i = 0;
+			$_filename = $filename;
 			do {
 				$filename = $_filename.$config['slug'].++$i;
 				$basename = $filename.$dotExt;
-				$path = $config['baseDir'].$basename;
-			} while(file_exists($path) == true);
+				$targetPath = $path.$basename;
+			} while(file_exists($targetPath) == true);
 		}
 	
 		//move temporary file
-		$tmpPath = $tmpUpload['tmp_name'];
-		if (!copy($tmpUpload['tmp_name'], $path))
-			throw new AttachableUploadException(self::UPLOAD_ERR_STORE_UPLOAD);
+		$TmpFile = new File($tmpUpload['tmp_name'],false);
+		$File = new File($targetPath, true);
 		
-		unlink($tmpPath);
-	
+		if (!$File->write($TmpFile->read()))
+			throw new AttachableUploadException(self::UPLOAD_ERR_STORE_UPLOAD);
+		$File->close();
+		
+		if (!$TmpFile->delete())
+			$this->log(__('Failed to delete temporary upload file %s', basename($tmpUpload['tmp_name'])));
+		
 		//attachment data
 		$attachment = array(
-				'path' => $path,
+				'path' => $targetPath,
 				'basename' => $basename,
 				'filename' => $filename,
 				'ext' => $ext,
@@ -697,7 +717,7 @@ class AttachableBehavior extends ModelBehavior {
 	 * @param array $config Field config
 	 * @return array
 	 */
-	protected function _getAttachments($valueList = '', $config) {
+	protected function _getAttachments(Model &$model, $valueList = '', $config) {
 		
 		$attachments = array();
 		$path = $filename = $basename = $ext = $url = null;
@@ -714,7 +734,7 @@ class AttachableBehavior extends ModelBehavior {
 				continue;
 		
 			$basename = $file;
-			$path = $this->_getFilePath($file, $config);
+			$path = $this->_getFilePath($model, $file, $config);
 		
 			list($filename, $ext) = self::splitBasename($basename);
 		
@@ -732,14 +752,34 @@ class AttachableBehavior extends ModelBehavior {
 	 * @param array $config
 	 * @return boolean|string
 	 */
-	protected function _getFilePath($filename = null, $config) {
+	protected function _getFilePath(Model &$model, $filename = null, $config) {
 		if (!$filename)
 			throw new InvalidArgumentException(__("AttachableBehavior: Can not get file path for empty filename"));
 		
+		
+		return $this->_getBasePath($model, $config) . $filename;
+	}
+	
+	protected function _getBasePath(Model &$model, $config) {
 		if (!$config['baseDir'])
 			throw new InvalidArgumentException(__("AttachableBehavior: Basedir can not be empty"));
 		
-		return $config['baseDir'] . $filename;
+		if (!is_dir($config['baseDir']) || !is_writeable($config['baseDir']))
+			throw new InvalidArgumentException(__("AttachableBehavior: Basedir does not exist or is not writeable"));
+		
+		return $config['baseDir'] . $this->_replacePathTokens($model, $config['subFolder']);
+	}
+	
+	protected function _replacePathTokens(Model &$model, $path) {
+		
+		$modelAlias = Inflector::underscore($model->alias);
+		$modelId = ($model->id) ? $model->id : 0;
+		
+		return preg_replace(
+			array('/\{DS\}/','/\{MODEL\}/','/\{MODELID\}/'), 
+			array(DS, $modelAlias , $modelId),
+			$path
+		);
 	}
 	
 	/**
@@ -749,10 +789,10 @@ class AttachableBehavior extends ModelBehavior {
 	 * @param string $filepath
 	 * @return void
 	 */
-	protected function _flagForRemoval(Model $model, $id, $field, $fileStr = null) {
+	protected function _flagForRemoval(Model &$model, $id, $field, $fileStr = null) {
 		$config = $this->settings[$model->alias][$field];
 		
-		foreach($this->_getAttachments($fileStr, $config) as $_attachment) {
+		foreach($this->_getAttachments($model, $fileStr, $config) as $_attachment) {
 			$this->_flaggedForRemoval[$model->alias][$id][] = $_attachment['path'];
 		}
 	}
@@ -763,7 +803,7 @@ class AttachableBehavior extends ModelBehavior {
 	 * @param Model $model
 	 * @return void
 	 */
-	protected function _removeFiles(Model $model) {
+	protected function _removeFiles(Model &$model) {
 		
 		if (!isset($this->_flaggedForRemoval[$model->alias]) 
 			|| !isset($this->_flaggedForRemoval[$model->alias][$model->id])
