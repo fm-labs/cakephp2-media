@@ -186,6 +186,7 @@ class AttachableBehaviorTest extends CakeTestCase {
 				'removeOnDelete' => true,
 				'removeOnOverwrite' => true,
 				'preview' => false,
+				'defaultImage' => null,
 				'thumbDir' => MEDIA_THUMB_CACHE_DIR
 			)
 		);
@@ -510,6 +511,41 @@ class AttachableBehaviorTest extends CakeTestCase {
 		$this->assertEqual($data, $expectedBare);
 	}	
 	
+	public function testReadSingleWithDefaultImage() {
+	
+		$this->_setupDefault();
+		$this->MediaUpload->configureAttachment('file',array(
+				'defaultImage' => $this->tmpDir.'default.jpg',
+				'preview' => true,
+		));
+	
+		$expected = array(
+				'MediaUpload' => array('id' => 2, 'title' => 'No File', 'file' => null, 'files' => null),
+				'Attachment' => array(
+						'file' => array(
+								0 => array(
+										'path' => $this->tmpDir . 'default.jpg',
+										'basename' => 'default.jpg',
+										'filename' => 'default',
+										'ext' => 'jpg',
+										'preview' => array(
+											'default' => array(
+												'path' => '',
+												'url' => ''		
+											)		
+										)
+								)
+						)
+				)
+		);
+		$data = $this->MediaUpload->read(null, 2);
+		$this->assertTrue(isset($data['Attachment']['file'][0]['preview']['default']));
+		$this->assertTrue(file_exists($data['Attachment']['file'][0]['preview']['default']['path']));
+		$data['Attachment']['file'][0]['preview']['default']['path'] = '';
+		$data['Attachment']['file'][0]['preview']['default']['url'] = '';
+		$this->assertEqual($data, $expected);
+	}	
+	
 	public function testCreateSingleFromFileName() {
 		$this->_setupDefault();
 		$data = array(
@@ -534,7 +570,6 @@ class AttachableBehaviorTest extends CakeTestCase {
 				)
 		);
 		$this->assertEqual($result,$expected);
-		
 		$this->assertTrue($this->MediaUpload->delete($this->MediaUpload->id,true));
 	}
 	
@@ -1076,14 +1111,6 @@ class TestAttachableBehavior extends AttachableBehavior {
 		return parent::_replacePathTokens($model, $path);
 	}
 
-	public function _getBasePath($model, $config = array()) {
-		return parent::_getBasePath($model, $config);
-	}
-	
-	public function _getFilePath(Model &$model, $filename, $config) {
-		return parent::_getFilePath($model, $filename, $config);
-	}
-	
 	public function _splitBasename($basename) {
 		return parent::_splitBasename($basename);
 	}

@@ -123,10 +123,8 @@ class LibPhpThumb {
 	static public function target($source, $target = null, $params = array()) {
 		
 		if (!$target) {
-			$basename = basename($source);
-			list($filename, $ext, $dotExt) = self::splitBasename($basename);
-			
-			$target = $filename."_".md5(serialize($params)).$dotExt;
+			list($filename, $ext, $dotExt) = self::splitBasename(basename($source));
+			$target = $filename."_".md5(serialize(array($source,$params))).$dotExt;
 		}
 		
 		return MEDIA_THUMB_DIR . $target;

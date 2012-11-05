@@ -50,6 +50,7 @@ class AttachableBehavior extends ModelBehavior {
 		'removeOnDelete' => true, //remove file if row gets deleted
 		'removeOnOverwrite' => true, //remove file if file has been replaced
 		'preview' => false, //TRUE for standard preview, key/config pairs for custom sizes. Applies only to images. Requires phpThumb
+		'defaultImage' => null,
 		'thumbDir' => MEDIA_THUMB_CACHE_DIR
 	);
 	
@@ -103,13 +104,19 @@ class AttachableBehavior extends ModelBehavior {
 			return; 
 		}
 		
-		if ($reset || !$this->_getConfig($model, $field))
+		if ($reset || !$this->_getConfig($model, $field)) {
 			$config = am($this->defaultConfig, array(
 				'uploadField'=>$field.'_upload',
 				'uploadNameField'=>$field.'_name'), $config);
-		else
-			$config = am($this->settings[$model->alias][$field], $config);
 		
+			if (!$config['baseDir'])
+				throw new InvalidArgumentException(__("AttachableBehavior: Basedir can not be empty"));
+			
+			if (!is_dir($config['baseDir']) || !is_writeable($config['baseDir']))
+				throw new InvalidArgumentException(__("AttachableBehavior: Basedir does not exist or is not writeable"));
+		} else {
+			$config = am($this->settings[$model->alias][$field], $config);
+		}
 		//TODO check if directories exist and are writeable
 		
 		$this->settings[$model->alias][$field] = $config;
@@ -156,7 +163,10 @@ class AttachableBehavior extends ModelBehavior {
 		return $config;
 	}
 	
-	protected function _getConfig(Model &$model, $field, $includeRuntimeConfig = true) {
+	protected function _getConfig(Model &$model, $field = null, $includeRuntimeConfig = true) {
+		if ($field === null)
+			return $this->settings[$model->alias];
+		
 		if (!isset($this->settings[$model->alias][$field]))
 			return false;
 		
@@ -206,36 +216,55 @@ class AttachableBehavior extends ModelBehavior {
 		
 		if ($primary) {
 			
+			$clone = clone $model;
+			
 			foreach($results as &$result) {
+				
+				if (!isset($result[$model->alias]))
+					continue; 
+				
+				//TODO read attachment cache for result
 				
 				//check if any field is set
 				foreach($this->_getFields($model) as $field) {
 					
-					if (!isset($result[$model->alias][$field]))
-						continue;
-					
 					$config = $this->_getConfig($model, $field, true);
 					
-					if (!$config['enabled'])
+					if (!$config['enabled'] || !array_key_exists($field, $result[$model->alias]))
 						continue;
 					
-					//TODO read attachment cache for result
-					
-					//parse attachments
-					$attachments = $this->_getAttachments($model, $result[$model->alias][$field], $config);
+					if (strlen($result[$model->alias][$field]) > 0) {
+						
+						$clone->id = $result[$model->alias][$model->primaryKey];
+						$attachments = $this->_parseAttachments($clone, $result[$model->alias][$field], $config);
+						
+					} elseif ($config['defaultImage']) {
+						$defaultImagePath = $config['defaultImage'];
+						list($filename, $ext) = self::splitBasename(basename($defaultImagePath));
+						$attachments = array(0 => array(
+							'path' => $defaultImagePath,
+							'basename' => basename($config['defaultImage']),
+							'filename' => $filename,
+							'ext' => $ext
+						));
+					} else {
+						continue;
+					}
 					
 					//attach preview
 					foreach($attachments as &$attachment)
 						$attachment = $this->_attachPreview($attachment, $config);
 					
-					//TODO write attachment cache
 					
 					$data = $attachments;
 					
 					$result['Attachment'][$field] = $data;
 				}
 				
+				//TODO write attachment cache
 			}
+			
+			unset($clone);
 		} else {
 			//TODO afterFind non-primary results
 		}
@@ -504,7 +533,7 @@ class AttachableBehavior extends ModelBehavior {
 					
 					//preserve or overwrite
 					if ($config['multiple'] && $__append) {
-						$attachments = am($this->_getAttachments($model, $__current, $config), $attachments);
+						$attachments = am($this->_parseAttachments($model, $__current, $config), $attachments);
 					} 
 					
 					//extract basenames
@@ -707,10 +736,12 @@ class AttachableBehavior extends ModelBehavior {
 	public function beforeDelete($model) {
 		
 		$fields = array_keys($this->settings[$model->alias]);
-		$model->data = $model->read($fields,$model->id);
+		$readFields = am(array($model->primaryKey), $fields);
+		
+		$model->read($readFields,$model->id);
 		
 		foreach($fields as $field) {
-			$config = $this->settings[$model->alias][$field];
+			$config = $this->_getConfig($model, $field, false);
 			
 			//do not remove files
 			if (!$config['removeOnDelete'])
@@ -723,10 +754,8 @@ class AttachableBehavior extends ModelBehavior {
 			//flag attachments for removal
 			if (isset($model->data['Attachment'][$field])) 
 			{
-				
 				foreach($model->data['Attachment'][$field] as $idx => $attachment) {
 					$this->_flagForRemoval($model, $model->id, $field, $attachment['basename']);
-					//unset($model->data['Attachment'][$field][$idx]);
 				}
 			}
 		}
@@ -753,25 +782,17 @@ class AttachableBehavior extends ModelBehavior {
 	 * @param array $config Field config
 	 * @return array
 	 */
-	protected function _getAttachments(Model &$model, $valueList = '', $config) {
+	protected function _parseAttachments(Model &$model, $basenames = array(), $config) {
+		
+		if (is_string($basenames))
+			$basenames = explode(',',$basenames);
 		
 		$attachments = array();
-		$path = $filename = $basename = $ext = $url = null;
-		if (is_string($valueList))
-			$files = explode(',',$valueList);
-		elseif(is_array($valueList))
-			$files = $valueList;
-		else
-			throw new InvalidArgumentException("Invalid value list of type ".gettype($valueList));
-		
-		foreach($files as $file) {
-			$file = trim($file);
-			if (!$file)
+		foreach((array)$basenames as $basename) {
+			if (strlen(trim($basename)) == 0)
 				continue;
-		
-			$basename = $file;
-			$path = $this->_getFilePath($model, $file, $config);
-		
+			
+			$path = $this->_getBasePath($model, $config) . $basename;
 			list($filename, $ext) = self::splitBasename($basename);
 		
 			$attachment = compact('path','basename','filename','ext');
@@ -779,31 +800,6 @@ class AttachableBehavior extends ModelBehavior {
 		}
 		
 		return $attachments;
-	}
-	
-	/**
-	 * Get full file path from filename and field config
-	 * 
-	 * @param string $filename
-	 * @param array $config
-	 * @return boolean|string
-	 */
-	protected function _getFilePath(Model &$model, $filename = null, $config) {
-		if (!$filename)
-			throw new InvalidArgumentException(__("AttachableBehavior: Can not get file path for empty filename"));
-		
-		
-		return $this->_getBasePath($model, $config) . $filename;
-	}
-	
-	protected function _getBasePath(Model &$model, $config) {
-		if (!$config['baseDir'])
-			throw new InvalidArgumentException(__("AttachableBehavior: Basedir can not be empty"));
-		
-		if (!is_dir($config['baseDir']) || !is_writeable($config['baseDir']))
-			throw new InvalidArgumentException(__("AttachableBehavior: Basedir does not exist or is not writeable"));
-		
-		return $config['baseDir'] . $this->_replacePathTokens($model, $config['subFolder']);
 	}
 	
 	protected function _replacePathTokens(Model &$model, $path) {
@@ -818,6 +814,10 @@ class AttachableBehavior extends ModelBehavior {
 		);
 	}
 	
+	protected function _getBasePath(Model &$model, $config) {
+		return $config['baseDir'] . $this->_replacePathTokens($model, $config['subFolder']);
+	}
+	
 	/**
 	 * Flag $filepath to be removed afterDelete
 	 * 
@@ -825,10 +825,10 @@ class AttachableBehavior extends ModelBehavior {
 	 * @param string $filepath
 	 * @return void
 	 */
-	protected function _flagForRemoval(Model &$model, $id, $field, $fileStr = null) {
+	protected function _flagForRemoval(Model &$model, $id, $field, $fileStr = '') {
 		$config = $this->settings[$model->alias][$field];
 		
-		foreach($this->_getAttachments($model, $fileStr, $config) as $_attachment) {
+		foreach($this->_parseAttachments($model, $fileStr, $config) as $_attachment) {
 			$this->_flaggedForRemoval[$model->alias][$id][$field][] = $_attachment['path'];
 		}
 	}

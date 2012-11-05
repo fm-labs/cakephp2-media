@@ -37,8 +37,8 @@ class AttachmentHelper extends AppHelper {
 		$options = am(array(
 			'label' => Inflector::humanize($fieldKey),
 			'size' => 'default',
-			'actionEdit' => true,
-			'actionDelete' => true,
+			'actionEdit' => false,
+			'actionDelete' => false,
 		),$options);
 		
 		//TODO make actionUrl configurable 
