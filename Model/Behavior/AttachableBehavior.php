@@ -4,6 +4,7 @@ App::uses('Cache','Cache');
 App::uses('String', 'Utility');
 App::uses('Folder', 'Utility');
 App::uses('File', 'Utility');
+App::uses('Router', 'Routing');
 App::uses('LibPhpThumb','Media.Lib');
 
 defined('MEDIA_CACHE_DIR') or define('MEDIA_CACHE_DIR', CACHE . "media" . DS);

@@ -35,6 +35,10 @@ class MediaUploadsController extends MediaAppController {
 		), true);
 	}
 	
+	public function admin_test() {
+		
+	}
+	
 	public function admin_upload($id = null) {
 		
 		$additionalData = array(
@@ -49,7 +53,6 @@ class MediaUploadsController extends MediaAppController {
 		} else {
 			$this->Session->setFlash('Upload failed');
 		}
-		
 	}
 	
 /**
