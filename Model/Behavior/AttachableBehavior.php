@@ -729,7 +729,7 @@ class AttachableBehavior extends ModelBehavior {
 	}
 	
 	/**
-	 * Check attached files should be removed and flag them. 
+	 * Check if attached files should be removed and flag them. 
 	 * After table row deletion was successful, the attached files will be removed.
 	 * 
 	 * @see ModelBehavior::beforeDelete()
@@ -796,6 +796,7 @@ class AttachableBehavior extends ModelBehavior {
 			$path = $this->_getBasePath($model, $config) . $basename;
 			list($filename, $ext) = self::splitBasename($basename);
 		
+			//TODO do not hardcode view/download url
 			$url = Router::url(array(
 				'plugin'=>'media',
 				'controller'=>'attachments',

@@ -1,0 +1,12 @@
+/**
+ * backend.css
+ *
+ * Styles that apply to the backend layout views for the media plugin
+ */
+
+/* 
+ * vmenu icons for backend (be-vmenu uses the twitter bootstrap iconsprite by default) 
+ */
+.be-vmenu .menu-item-media > a:before {
+	background-position: -120px -48px !important; /* icon-camera */
+}

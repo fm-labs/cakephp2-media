@@ -1,4 +1,4 @@
-<?php $this->Js->loadPlugin('JqueryColorbox.JqueryColorbox'); ?>
+
 <div class="index">
 	<h1>Media</h1>
 	
@@ -17,10 +17,17 @@
 			<dd><?php echo $this->Html->link(Router::url($urlResume),$urlResume,array('rel'=>'colorbox')); ?></dd>
 		</dl>
 	<?php endforeach; ?>
-	<?php $this->Js->get("a[rel='colorbox']")->plugin('JqueryColorbox')->colorbox(array(
-		'width' => '90%',
-		'height' => '90%',
-		'iframe' => true	
-	),true); ?>
+	
+	<?php 
+	// jquery plugin is deprecated
+	if (CakePlugin::loaded('Jquery')):
+		$this->Js->loadPlugin('JqueryColorbox.JqueryColorbox'); 
+		$this->Js->get("a[rel='colorbox']")->plugin('JqueryColorbox')->colorbox(array(
+			'width' => '90%',
+			'height' => '90%',
+			'iframe' => true	
+		),true); 
+	endif;
+?>
 </div>
 <?php echo $this->Js->writeBuffer(); ?>

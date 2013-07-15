@@ -20,10 +20,10 @@ class LibPhpThumb {
  */	
 	static public function getThumbnail($source, $target = null, $params = array(), $fullUrl = false, $force = false) {
 		
-		if (!$force && file_exists(self::target($source, $target = null, $params)))
-			return $target;
-		
-		$path = self::createThumbnail($source, $target, $params);
+		$path = self::target($source, $target, $params);
+		if ($force || !file_exists($path)) {
+			$path = self::createThumbnail($source, $path, $params);
+		}
 		$url = self::getThumbnailUrl($path, $fullUrl);
 		
 		return array($path, $url);
@@ -32,7 +32,7 @@ class LibPhpThumb {
 /**
  * Get Thumbnail URL for given source
  * 
- * @param string $source Absolute path to source file
+ * @param string $path Absolute path to thumbfile
  * @param array $params PhpThumb params
  * @param boolean $full Full Url
  */	
@@ -56,13 +56,15 @@ class LibPhpThumb {
  * Renders the Thumbnail for given source
  * 
  * 
- * @param unknown_type $source
- * @param unknown_type $target
- * @param unknown_type $params
+ * @param string $source Absolute path to source imagefile
+ * @param string $target Absolute thumbnail filepath
+ * @param array $params Phpthumb params
  * @throws NotFoundException
  * @throws CakeException
  */	
 	static public function createThumbnail($source, $target = null, $params = array()) {
+
+		$target = self::target($source, $target, $params);
 		
 		$params = array_merge(array(
 			//custom params
@@ -98,8 +100,6 @@ class LibPhpThumb {
 		self::_applyParams($phpThumb, $params);
 		
 		$phpThumb->setSourceFilename($source);
-
-		$target = self::target($source, $target, $params);
 		
 		// Creating thumbnail
 		if ($phpThumb->GenerateThumbnail()) {
@@ -124,10 +124,10 @@ class LibPhpThumb {
 		
 		if (!$target) {
 			list($filename, $ext, $dotExt) = self::splitBasename(basename($source));
-			$target = $filename."_".md5(serialize(array($source,$params))).$dotExt;
+			$target = MEDIA_THUMB_DIR . $filename."_".md5(serialize(array($source,$params))).$dotExt;
 		}
 		
-		return MEDIA_THUMB_DIR . $target;
+		return $target;
 	}
 
 	static public function splitBasename($basename) {
