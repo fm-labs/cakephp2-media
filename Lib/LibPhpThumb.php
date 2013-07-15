@@ -1,9 +1,7 @@
 <?php
-
-if (!defined('MEDIA_THUMB_TMP_DIR')) define('MEDIA_THUMB_TMP_DIR',TMP."phpthumb".DS); 	
-if (!defined('MEDIA_THUMB_CACHE_DIR')) define('MEDIA_THUMB_CACHE_DIR',MEDIA_THUMB_TMP_DIR."cache".DS); 	
-
-if (!defined('MEDIA_THUMB_DIR')) define('MEDIA_THUMB_DIR',WWW_ROOT."cache/");
+defined('MEDIA_THUMB_TMP_DIR') or define('MEDIA_THUMB_TMP_DIR',TMP."phpthumb".DS); 	
+defined('MEDIA_THUMB_CACHE_DIR') or define('MEDIA_THUMB_CACHE_DIR',MEDIA_THUMB_TMP_DIR."cache".DS); 	
+defined('MEDIA_THUMB_DIR') or define('MEDIA_THUMB_DIR',WWW_ROOT."cache/");
 
 App::import('Vendor','Media.phpthumb', true , array(), 'phpThumb'.DS.'phpthumb.class.php');
 
@@ -20,6 +18,7 @@ class LibPhpThumb {
  */	
 	static public function getThumbnail($source, $target = null, $params = array(), $fullUrl = false, $force = false) {
 		
+		//@todo Duplicate code. See createThumbnail()
 		$path = self::target($source, $target, $params);
 		if ($force || !file_exists($path)) {
 			$path = self::createThumbnail($source, $path, $params);
@@ -64,13 +63,18 @@ class LibPhpThumb {
  */	
 	static public function createThumbnail($source, $target = null, $params = array()) {
 
-		$target = self::target($source, $target, $params);
+		if (!file_exists($source))
+			throw new NotFoundException(__d('media',"File %s not found",$source));
+
+		//@todo use dependency injection
+		$phpThumb = new phpthumb();
 		
 		$params = array_merge(array(
 			//custom params
 			'watermark'							=> null,
 			'useImageMagick'					=> false,
 			'imageMagickPath'					=> '/usr/bin/convert',
+				
 			//phpthumb params
 			'config_temp_directory' 			=> MEDIA_THUMB_TMP_DIR, //config_temp_directory
 			'config_cache_directory'			=> MEDIA_THUMB_CACHE_DIR, //config_cache_directory
@@ -79,7 +83,7 @@ class LibPhpThumb {
 			//'config_prefer_imagemagick'		=> false,
 			'config_error_die_on_error'			=> false,
 			'config_document_root'				=> ROOT,
-			'config_allow_src_above_docroot'	=> true, //IMPORTANT!
+			'config_allow_src_above_docroot'	=> true, //IMPORTANT! //@todo make this optional
 			#'config_cache_disable_warning'		=> !Configure::read('debug'),
 			'config_cache_disable_warning'		=> true,
 			#'config_disable_debug'				=> !Configure::read('debug'),
@@ -91,18 +95,18 @@ class LibPhpThumb {
 			'sia'								=> "thumbnail"		
 		),$params);		
 		
-		
-		if (!file_exists($source))
-			throw new NotFoundException(__d('media',"File %s not found",$source));
-		
 		// Configuring thumbnail settings
-		$phpThumb = new phpthumb;
 		self::_applyParams($phpThumb, $params);
 		
+		// Set source path
 		$phpThumb->setSourceFilename($source);
 		
 		// Creating thumbnail
 		if ($phpThumb->GenerateThumbnail()) {
+
+			//@todo Duplicate code. See getThumbnail()
+			$target = self::target($source, $target, $params);
+			
 			if (!$phpThumb->RenderToFile($target)) {
 				throw new CakeException('Could not render image to: ' . $target);
 			}

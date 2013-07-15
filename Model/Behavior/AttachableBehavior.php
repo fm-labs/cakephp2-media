@@ -689,6 +689,7 @@ class AttachableBehavior extends ModelBehavior {
 			$preview = array();
 		}
 		
+		//TODO do we need really this?
 		if (!isset($preview['default']))
 			$preview['default'] = array(
 				'width'=>self::DEFAULT_PREVIEW_W,
@@ -696,16 +697,17 @@ class AttachableBehavior extends ModelBehavior {
 				'quality'=>self::DEFAULT_PREVIEW_Q,
 			);
 		
+		// phpThumb-specific params mapping
 		$paramsMap = array(
 			'width' => 'w',
 			'height' => 'h',
 			'quality' => 'q',	
 		);
 		
-		//create thumbs
+		// create thumbs
 		foreach($preview as $size => $params) {
 			
-			//map preview params
+			// map preview params
 			$_params = array();
 			foreach($params as $k => $v) {
 				if (array_key_exists($k, $paramsMap))
@@ -714,12 +716,19 @@ class AttachableBehavior extends ModelBehavior {
 					$_params[$k] = $v;
 			}
 			
-			$path = $url = false;
+			// reset values
+			$path = $url = null;
 			
+			// get thumb
 			try {
-				list($path, $url) = LibPhpThumb::getThumbnail($attachment['path'], null, $_params);
+				$sourcePath = $attachment['path'];
+				//TODO make the default image optional
+				if (!file_exists($sourcePath)) {
+					$sourcePath = str_replace("{DS}", DS, App::pluginPath('Media').'{DS}webroot{DS}img{DS}attachments{DS}default.jpg');
+				}
+				list($path, $url) = LibPhpThumb::getThumbnail($sourcePath, null, $_params);
 			} catch(Exception $e) {
-				debug($e->getMessage());
+				#debug($e->getMessage());
 				$this->log('AttachableBehavior::_createPreview(): '.$e->getMessage(), 'error');
 			}
 			
