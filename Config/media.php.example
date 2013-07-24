@@ -1,6 +1,6 @@
 <?php
 /**
- * Default Config
+ * Media Plugin Config Example
  */
 $config = array(
 	'Media' => array(
@@ -11,4 +11,3 @@ $config = array(
 		)	
 	),
 );
-?>

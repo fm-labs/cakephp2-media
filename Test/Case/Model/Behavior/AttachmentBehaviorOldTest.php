@@ -1,7 +1,4 @@
 <?php
-//TODO this is also in UploaderComponentTest. Keep this DRY
-define('MEDIA_UPLOAD_TMP_DIR', CakePlugin::path('Media') . 'Test/test_app/tmp/uploadtmp/' );
-define('MEDIA_UPLOAD_DIR', CakePlugin::path('Media') . 'Test/test_app/webroot/attachments/' );
 define('MEDIA_UPLOAD_TESTFILES_DIR', CakePlugin::path('Media') . 'Test/test_app/tmp/attachments/' );
 
 App::uses('AttachableBehavior', 'Media.Model/Behavior');
@@ -12,7 +9,7 @@ App::uses('Folder','Utility');
  * @author flow
  * @todo Test with/without validation options for file input
  */
-class AttachableBehaviorTest extends CakeTestCase {
+class AttachableBehaviorOldTest extends CakeTestCase {
 	
 	/**
 	 * @var array
@@ -42,11 +39,11 @@ class AttachableBehaviorTest extends CakeTestCase {
 		parent::setUp();
 
 		if (!is_dir(MEDIA_UPLOAD_TMP_DIR) || !is_writeable(MEDIA_UPLOAD_TMP_DIR)) {
-			throw new Exception('Test Tmp dir not found or not writeable');
+			throw new Exception('Test Tmp dir '.MEDIA_UPLOAD_TMP_DIR.' not found or not writeable');
 		}
 		
 		if (!is_dir(MEDIA_UPLOAD_DIR) || !is_writeable(MEDIA_UPLOAD_DIR)) {
-			throw new Exception('Test upload dir not found or not writeable');
+			throw new Exception('Test upload dir '.MEDIA_UPLOAD_DIR.'not found or not writeable');
 		}
 		
 		$this->upload1 = array(
@@ -212,136 +209,6 @@ class AttachableBehaviorTest extends CakeTestCase {
 		$Behavior = new TestAttachableBehavior();
 	}
 	
-	public function testSplitBasename() {
-		$Behavior = new TestAttachableBehavior();
-		
-		$result = $Behavior->_splitBasename('file.txt');
-		$this->assertEqual($result, array('file','txt','.txt'));
-		
-		$result = $Behavior->_splitBasename('.htaccess');
-		$this->assertEqual($result, array('','htaccess','.htaccess'));
-
-		$result = $Behavior->_splitBasename('file');
-		$this->assertEqual($result, array('file',null,null));
-	}
-	
-	
-	public function testValidateMimeType() {
-		$Behavior = new TestAttachableBehavior();
-
-		$result = $Behavior->_validateMimeType('image/png','*');
-		$this->assertTrue($result);
-		
-		$result = $Behavior->_validateMimeType('image/png',array('image/png','image/jpg'));
-		$this->assertTrue($result);
-
-		$result = $Behavior->_validateMimeType('image/png',array('image/*'));
-		$this->assertTrue($result);
-
-		$result = $Behavior->_validateMimeType('image/gif',array('image/png','image/jpg'));
-		$this->assertFalse($result);
-		
-		$result = $Behavior->_validateMimeType('image/gif',array());
-		$this->assertFalse($result);
-	}
-	
-
-	public function testValidateFileExtension() {
-		$Behavior = new TestAttachableBehavior();
-
-		$result = $Behavior->_validateFileExtension('png','*');
-		$this->assertTrue($result);
-
-		$result = $Behavior->_validateFileExtension('png','png');
-		$this->assertTrue($result);
-		
-		$result = $Behavior->_validateFileExtension('png',array('png','jpg'));
-		$this->assertTrue($result);
-	
-		$result = $Behavior->_validateFileExtension('gif',array('png','jpg'));
-		$this->assertFalse($result);
-	
-		$result = $Behavior->_validateFileExtension('png',array());
-		$this->assertFalse($result);
-	}
-	
-	public function testValidateFileName() {
-		//TODO testValidateFileName()
-	}
-	
-	public function testUploadWithFormSizeExceededUploadError() {
-
-		$Behavior = new TestAttachableBehavior();
-		
-		$upload = array(
-			'error' => UPLOAD_ERR_FORM_SIZE,
-		);
-		$this->expectException('AttachableUploadException','Maximum form file size exceeded');
-		$result = $Behavior->_upload($this->MediaUpload,$upload, array());
-	}
-	
-	public function testUploadWithNoFileUploadError() {
-
-		$Behavior = new TestAttachableBehavior();
-		
-		$upload = array(
-			'error' => UPLOAD_ERR_NO_FILE,
-		);
-		$this->expectException('AttachableUploadException','No file uploaded');
-		$result = $Behavior->_upload($this->MediaUpload,$upload, $Behavior->defaultConfig);
-	}
-	
-	public function testUploadWithPartialUploadError() {
-
-		$Behavior = new TestAttachableBehavior();
-		
-		$upload = array(
-			'error' => UPLOAD_ERR_PARTIAL,
-		);
-		$this->expectException('AttachableUploadException','File only partially uploaded');
-		$result = $Behavior->_upload($this->MediaUpload,$upload, $Behavior->defaultConfig);
-	}
-
-	public function testUploadWithMinFileSizeError() {
-	
-		$Behavior = new TestAttachableBehavior();
-	
-		$upload = am($this->upload1,array( 'size' => 0 ));
-		$config = am($Behavior->defaultConfig, array('minFileSize' => 1));
-		$this->expectException('AttachableUploadException','Minimum file size error');
-		$result = $Behavior->_upload($this->MediaUpload,$upload, $config);
-	}
-
-	public function testUploadWithMaxFileSizeError() {
-	
-		$Behavior = new TestAttachableBehavior();
-	
-		$upload = am($this->upload1,array( 'size' => 2 ));
-		$config = am($Behavior->defaultConfig, array('maxFileSize' => 1));
-		$this->expectException('AttachableUploadException','Maximum file size exceeded');
-		$result = $Behavior->_upload($this->MediaUpload,$upload, $config);
-	}	
-
-	public function testUploadWithMimeTypeError() {
-	
-		$Behavior = new TestAttachableBehavior();
-
-		$upload = am($this->upload1,array( 'type' => 'text/plain' ));
-		$config = am($Behavior->defaultConfig, array('allowedMimeType' => 'image/jpg'));
-		$this->expectException('AttachableUploadException','Invalid mime type');
-		$result = $Behavior->_upload($this->MediaUpload,$upload, $config);
-	}
-
-	public function testUploadWithFileExtensionError() {
-	
-		$Behavior = new TestAttachableBehavior();
-	
-		$upload = $this->upload1;
-		$config = am($Behavior->defaultConfig, array('allowedFileExtension' => 'jpg'));
-		$this->expectException('AttachableUploadException','Invalid file extension');
-		$result = $Behavior->_upload($this->MediaUpload,$upload, $config);
-	}	
-
 
 	public function testValidateWithNoFileSubmitted() {
 

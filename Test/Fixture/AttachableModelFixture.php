@@ -1,10 +1,15 @@
 <?php
-class MediaUploadFixture extends CakeTestFixture {
+class AttachableModelFixture extends CakeTestFixture {
 
 	public $useDbConfig = "test";
 	
-      //public $import = array('model'=>'Media.MediaUpload');
-      
+	public $fields = array(
+		'id' => array('type' => 'integer', 'key' => 'primary'),
+		'title' => array('type' => 'string', 'length' => 255, 'null' => false),
+		'file' => array('type'=>'text',null => true),
+		'files' => array('type'=>'text',null => true),
+	);
+	
       public $records = array(
           array('id' => 1, 'title' => 'Single File', 'file' => 'file1.txt', 'files' => null ),
           array('id' => 2, 'title' => 'No File', 'file' => null, 'files' => null ),

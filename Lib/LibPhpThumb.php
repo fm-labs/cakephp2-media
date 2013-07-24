@@ -1,8 +1,4 @@
 <?php
-defined('MEDIA_THUMB_TMP_DIR') or define('MEDIA_THUMB_TMP_DIR',TMP."phpthumb".DS); 	
-defined('MEDIA_THUMB_CACHE_DIR') or define('MEDIA_THUMB_CACHE_DIR',MEDIA_THUMB_TMP_DIR."cache".DS); 	
-defined('MEDIA_THUMB_DIR') or define('MEDIA_THUMB_DIR',WWW_ROOT."cache/");
-
 App::import('Vendor','Media.phpthumb', true , array(), 'phpThumb'.DS.'phpthumb.class.php');
 
 class LibPhpThumb {

@@ -25,9 +25,13 @@ class PhpThumbHelper extends AppHelper {
 		if ($path[0] != "/" && !preg_match('/^[A-Z]\:\\\/', $path))
 			$path = IMAGES . $path;
 
-		$thumbUrl = LibPhpThumb::getThumbnailUrl($path, $params);
-		
-		return $thumbUrl;
+		try {
+			list($thumbPath, $thumbUrl) = LibPhpThumb::getThumbnail($path, null, $params);
+			return $thumbUrl;
+		} catch(Exception $e) {
+			debug($e->getMessage());
+		}
+		return false;
 	}
 
 /**
@@ -61,7 +65,7 @@ class PhpThumbHelper extends AppHelper {
 		if (!$thumbUrl)
 			return false;
 			
-		
+		/*
 		if (isset($options['url'])) {
 			if($options['url'] == '{source}') {
 				$options['url'] = Router::url('/',true).IMAGES_URL.$path;
@@ -70,6 +74,7 @@ class PhpThumbHelper extends AppHelper {
 				$options['url'] = Router::url('/',true).IMAGES_URL.$thumbUrl;
 			}
 		}
+		*/
 		
 		return $this->Html->image($thumbUrl, $options);
 	}
