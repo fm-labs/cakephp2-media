@@ -125,6 +125,7 @@ class MediaUploader {
 		// check upload dir
 		if (!is_dir($config['uploadDir']) || !is_writeable($config['uploadDir'])) {
 			//$upload['error'] = UPLOAD_ERR_CANT_WRITE;
+			debug('MediaUploader: Upload directory is not writeable ('.$config['uploadDir'].')');
 			throw new UploadException(UPLOAD_ERR_CANT_WRITE);
 		}
 		

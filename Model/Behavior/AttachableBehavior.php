@@ -28,7 +28,7 @@ class AttachableBehavior extends ModelBehavior {
 		'removeOnOverwrite' => true, //remove file if file has been replaced
 		#'minFileSize' => 0,
 		#'maxFileSize' => 2097152, //2MB
-		#'allowEmpty' => true, //Allow field to be empty
+		'allowEmpty' => true, //Allow field to be empty
 		#'allowOverwrite' => false,
 		#'allowedMimeType' => '*', //"*" for all or array('image/*,text/plain).
 		#'allowedFileExtension' => '*', //"*" for all or array('jpg','jpeg')
@@ -87,8 +87,8 @@ class AttachableBehavior extends ModelBehavior {
 	
 		if ($reset || !$this->_getConfig($model, $field)) {
 			$config = am($this->defaultConfig, array(
-					'uploadField'=>$field.'_upload',
-					#'uploadNameField'=>$field.'_name'
+				'uploadField'=>$field.'_upload',
+				#'uploadNameField'=>$field.'_name'
 			), $config);
 	
 			/*
@@ -177,9 +177,9 @@ class AttachableBehavior extends ModelBehavior {
 	 * @see ModelBehavior::afterValidate()
 	 */
 	public function afterValidate(Model $model) {
-		debug($model->data);
+		#debug($model->data);
 		$this->_validateUpload($model);
-		debug($model->data);
+		#debug($model->data);
 		
 		return true;
 	}
@@ -276,8 +276,8 @@ class AttachableBehavior extends ModelBehavior {
 	 */
 	protected function _upload(Model &$model, $upload, $config) {
 	
-		debug($config);
-		debug($upload);
+		#debug($config);
+		#debug($upload);
 	
 		$Uploader = new MediaUploader($upload);
 		//$Uploader->setUploadDir($attachmentUploadDir);
@@ -308,8 +308,8 @@ class AttachableBehavior extends ModelBehavior {
 	
 	protected function _storeUpload($model) {
 
-		debug("store upload");
-		debug($model->data);
+		#debug("store upload");
+		#debug($model->data);
 		
 		if (isset($model->data['AttachmentUpload'])) {
 			$clone = clone $model;
@@ -318,7 +318,7 @@ class AttachableBehavior extends ModelBehavior {
 				$config = $this->_getConfig($model, $field);
 				
 				$attachmentUploadDir = self::getPath($model, $config);
-				debug($attachmentUploadDir);
+				#debug($attachmentUploadDir);
 				
 				if (!is_dir($attachmentUploadDir)) {
 					$Folder = new Folder($attachmentUploadDir, true, 0777);
@@ -603,7 +603,7 @@ class AttachableBehavior extends ModelBehavior {
 	}	
 	
 	public function log($msg) {
-		debug($msg);
+		#debug($msg);
 		parent::log($msg);
 	}
 	

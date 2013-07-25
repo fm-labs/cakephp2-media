@@ -18,6 +18,41 @@ class AttachmentHelper extends AppHelper {
 		
 		$this->Html->css('/media/css/attachments',null, array('inline'=>false));
 	}
+
+
+	public function uploadField($fieldName, $options = array(), $uploaderConfig = array()) {
+		
+		$this->setEntity($fieldName);
+		$modelKey = $this->model();
+		$fieldKey = $this->field();
+
+		$options = am(array(
+			'holder' => $fieldName.'_upload',
+			'multiple' => false,
+			'type' => 'file',
+			'id' => uniqid('fileinput')
+		),$options);
+		
+		$valueHolderId = $options['id'].'_vh';
+		
+		//output form field
+		$uploadFieldName = $options['holder'];
+		unset($options['holder']);
+		
+		if ($options['multiple'])
+			$uploadFieldName .= '.';
+		
+		$out = $this->Form->input($uploadFieldName, $options);
+		//$out .= $this->Form->error($uploadFieldName);
+		$out .= $this->Form->hidden($fieldName,array('id'=>$valueHolderId));
+		$out .= $this->Form->error($fieldName);
+
+		return $out;
+	}
+		
+	
+	/*** DEPRECATED ***/
+	
 	
 	/**
 	 * Display attachment preview for given $field
@@ -124,27 +159,17 @@ class AttachmentHelper extends AppHelper {
 		
 	}
 	
-	public function uploadField($fieldName, $options = array(), $uploaderConfig = array()) {
+	public function _uploadField($fieldName, $options = array(), $uploaderConfig = array()) {
 	
 		$this->setEntity($fieldName);
 		$modelKey = $this->model();
 		$fieldKey = $this->field();
 	
-		/*
-			$uploaderUrl = am(array(
-					'plugin' => 'media',
-					'controller' => 'attachments',
-					'action' => 'upload',
-					'model' => $modelKey,
-					'field' => $fieldKey
-			), $this->request->params['named'],$this->request->params['pass'] );
-		*/
-	
 		$options = am(array(
-				'holder' => $fieldName.'_upload',
-				'multiple' => false,
-				'type' => 'file',
-				'id' => uniqid('fileinput')
+			'holder' => $fieldName.'_upload',
+			'multiple' => false,
+			'type' => 'file',
+			'id' => uniqid('fileinput')
 		),$options);
 	
 		$valueHolderId = $options['id'].'_vh';

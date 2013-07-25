@@ -36,15 +36,17 @@ class LibPhpThumb {
 		if (!$path)
 			return false;
 
+		/*
 		$pattern = '/^'.preg_quote(WWW_ROOT, '/').'(.*)$/i';
 		if (!preg_match($pattern, $path, $matches))
-			return false;
+			return false;pa
 		
 		$url = '/'.$matches[1];
 		if ($full)
 			$url = Router::url('/',$full) . $matches[1];
-		
-		return $url;
+		*/
+		$url = MEDIA_THUMB_URL . basename($path);
+		return Router::url($url, $full);
 	}
 
 /**
@@ -72,8 +74,8 @@ class LibPhpThumb {
 			'imageMagickPath'					=> '/usr/bin/convert',
 				
 			//phpthumb params
-			'config_temp_directory' 			=> MEDIA_THUMB_TMP_DIR, //config_temp_directory
-			'config_cache_directory'			=> MEDIA_THUMB_CACHE_DIR, //config_cache_directory
+			'config_temp_directory' 			=> MEDIA_CACHE_DIR, //config_temp_directory
+			'config_cache_directory'			=> MEDIA_CACHE_DIR, //config_cache_directory
 	        'config_output_format'				=> 'jpg', //config_output_format
 			//'config_imagemagick_path'			=> null,
 			//'config_prefer_imagemagick'		=> false,
@@ -84,7 +86,7 @@ class LibPhpThumb {
 			'config_cache_disable_warning'		=> true,
 			#'config_disable_debug'				=> !Configure::read('debug'),
 			'config_disable_debug'				=> true,
-			'config_cache_prefix'				=> 'cache_'	,
+			'config_cache_prefix'				=> 'phpthumb_',
 			//'config_cache_maxage'               => null,
 			//'config_cache_maxsize'              => null,
 			//'config_cache_maxfiles'             => null,
