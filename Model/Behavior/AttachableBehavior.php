@@ -8,6 +8,7 @@ App::uses('Folder', 'Utility');
 #App::uses('File', 'Utility');
 #App::uses('Router', 'Routing');
 #App::uses('LibPhpThumb','Media.Lib');
+App::uses('Debugger','Utility');
 
 class AttachableBehavior extends ModelBehavior {
 	
@@ -177,10 +178,8 @@ class AttachableBehavior extends ModelBehavior {
 	 * @see ModelBehavior::afterValidate()
 	 */
 	public function afterValidate(Model $model) {
-		#debug($model->data);
-		$this->_validateUpload($model);
-		#debug($model->data);
 		
+		$this->_validateUpload($model);
 		return true;
 	}
 	
@@ -302,7 +301,6 @@ class AttachableBehavior extends ModelBehavior {
 	}
 		
 	public function afterSave(Model $model, $created) {
-		
 		$this->_storeUpload($model);
 	}
 	
@@ -495,8 +493,7 @@ class AttachableBehavior extends ModelBehavior {
 	 *
 	 * @see ModelBehavior::beforeDelete()
 	 */
-	public function beforeDelete(Model $model) {
-	
+	public function beforeDelete(Model $model, $cascade = true) {
 		$fields = array_keys($this->settings[$model->alias]);
 		$readFields = am(array($model->primaryKey), $fields);
 	
@@ -551,7 +548,6 @@ class AttachableBehavior extends ModelBehavior {
 	 * @see ModelBehavior::afterDelete()
 	 */
 	public function afterDelete(Model $model) {
-	
 		$this->_removeFiles($model);
 		return true;
 	}
@@ -602,9 +598,9 @@ class AttachableBehavior extends ModelBehavior {
 		}
 	}	
 	
-	public function log($msg) {
+	public function log($msg, $type = 'debug') {
 		#debug($msg);
-		parent::log($msg);
+		return parent::log($msg, $type);
 	}
 	
 }
