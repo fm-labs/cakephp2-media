@@ -155,7 +155,7 @@ class AttachableBehaviorTest extends MediaPluginTestCase {
 				'removeOnOverwrite' => true,
 				#'minFileSize' => (int) 0,
 				#'maxFileSize' => 2 * 1024 * 1024,
-				#'allowEmpty' => true,
+				'allowEmpty' => true,
 				#'allowOverwrite' => false,
 				#'allowedMimeType' => '*',
 				#'allowedFileExtension' => '*',

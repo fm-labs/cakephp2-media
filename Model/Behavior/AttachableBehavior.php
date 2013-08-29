@@ -602,8 +602,9 @@ class AttachableBehavior extends ModelBehavior {
 		}
 	}	
 	
-	public function log($msg, $type = 'debug') {
-		parent::log($msg, $type);
+	public function log($msg) {
+		#debug($msg);
+		parent::log($msg);
 	}
 	
 }
