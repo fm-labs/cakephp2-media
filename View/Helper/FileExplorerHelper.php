@@ -22,7 +22,7 @@ class FileExplorerHelper extends AppHelper {
 		return $this;
 	}
 	
-	public function url($action, $dir = null, $file = null, $full = false) {
+	public function actionUrl($action, $dir = null, $file = null, $full = false) {
 		
 		$url = array(
 			'plugin' => 'media',

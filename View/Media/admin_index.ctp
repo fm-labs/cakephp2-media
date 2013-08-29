@@ -13,9 +13,9 @@
 				<dd><?php echo h($v); ?>&nbsp;</dd>
 				<?php endforeach; ?>
 				<dt><?php echo __('Open'); ?>&nbsp;</dt>
-				<dd><?php echo $this->Html->link($this->FileExplorer->url('open','/')); ?>&nbsp;</dd>
+				<dd><?php echo $this->Html->link($this->FileExplorer->actionUrl('open','/')); ?>&nbsp;</dd>
 				<dt><?php echo __('Resume'); ?>&nbsp;</dt>
-				<dd><?php echo $this->Html->link($this->FileExplorer->url('open')); ?>&nbsp;</dd>
+				<dd><?php echo $this->Html->link($this->FileExplorer->actionUrl('open')); ?>&nbsp;</dd>
 			</dl>
 		<?php endforeach; ?>
 	<?php else: ?>

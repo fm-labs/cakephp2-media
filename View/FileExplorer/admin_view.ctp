@@ -1,6 +1,6 @@
 <?php 
 $file = $this->get('file');
-$dirUrl = $this->FileExplorer->url('open', $file['dir']);
+$dirUrl = $this->FileExplorer->actionUrl('open', $file['dir']);
 ?>
 <?php $this->Html->addCrumb(__('Media'), array('plugin'=>'media','controller'=>'media','action'=>'index')); ?>
 <?php $this->Html->addCrumb(__('File Explorer'), array('action'=>'index')); ?>
