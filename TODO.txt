@@ -1,0 +1,2 @@
+* Localization
+* Ensure FileExplorer basePaths have a trailing slash
