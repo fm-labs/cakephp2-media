@@ -58,7 +58,7 @@ class AttachableBehavior extends ModelBehavior {
 	 * @see ModelBehavior::setup()
 	 * @param $settings
 	 */
-	public function setup(Model $model, $settings = array()) {
+	public function setup(Model $model, $config = array()) {
 		
 		if (!isset($this->settings[$model->alias])) {
 			$attachments = (isset($model->attachments)) ? $model->attachments : array();
@@ -484,7 +484,7 @@ class AttachableBehavior extends ModelBehavior {
 	 * @see ModelBehavior::onError()
 	 * @todo Implement onError() method
 	 */
-	public function onError($model, $error) {
+	public function onError(Model $model, $error) {
 		$this->log($error, LOG_ERR);
 	}
 	
@@ -495,7 +495,7 @@ class AttachableBehavior extends ModelBehavior {
 	 *
 	 * @see ModelBehavior::beforeDelete()
 	 */
-	public function beforeDelete($model) {
+	public function beforeDelete(Model $model) {
 	
 		$fields = array_keys($this->settings[$model->alias]);
 		$readFields = am(array($model->primaryKey), $fields);
@@ -550,7 +550,7 @@ class AttachableBehavior extends ModelBehavior {
 	 *
 	 * @see ModelBehavior::afterDelete()
 	 */
-	public function afterDelete($model) {
+	public function afterDelete(Model $model) {
 	
 		$this->_removeFiles($model);
 		return true;
@@ -602,9 +602,8 @@ class AttachableBehavior extends ModelBehavior {
 		}
 	}	
 	
-	public function log($msg) {
-		#debug($msg);
-		parent::log($msg);
+	public function log($msg, $type = 'debug') {
+		parent::log($msg, $type);
 	}
 	
 }
