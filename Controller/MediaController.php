@@ -20,9 +20,9 @@ class MediaController extends MediaAppController {
 			if (defined($dir)) {
 				$defined = true;
 				$path = constant($dir);
-				if (is_dir($dir)) {
+				if (is_dir($path)) {
 					$exists = true;
-					if (is_writable($dir)) {
+					if (is_writable($path)) {
 						$writeable = true;
 					}
 				}
