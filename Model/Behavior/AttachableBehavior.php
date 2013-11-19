@@ -465,10 +465,16 @@ class AttachableBehavior extends ModelBehavior {
 		foreach((array)$basenames as $basename) {
 			if (strlen(trim($basename)) == 0)
 				continue;
-				
-			$path = self::getPath($model, $config) . $basename;
-			list($filename, $ext, $dotExt) = MediaTools::splitBasename($basename);
-	
+			
+			// ignore urls
+			if(preg_match('@\:\/\/@', $basename)) {
+				$path = $basename;
+				$ext = $dotExt = $filename = $basename = null;
+			} else {
+				$path = self::getPath($model, $config) . $basename;
+				list($filename, $ext, $dotExt) = MediaTools::splitBasename($basename);
+			}
+			
 			$attachment = compact('basename','filename','path','ext','dotExt');
 			array_push($attachments, $attachment);
 		}
