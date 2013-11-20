@@ -1,4 +1,5 @@
-/.settings
+/.idea/
+/.settings/
 /.buildpath
 /.project
 /Test/test_app/tmp/uploadtmp/*
