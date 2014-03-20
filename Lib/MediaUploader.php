@@ -129,13 +129,14 @@ class MediaUploader {
 			throw new UploadException(UPLOAD_ERR_CANT_WRITE);
 		}
 
-		// validate size
+		// validate size limits and mime type
 		if ($upload['size'] < $config['minFileSize']) {
 			throw new UploadException(self::UPLOAD_ERR_MIN_FILE_SIZE);
+
 		} elseif ($upload['size'] > $config['maxFileSize']) {
 			throw new UploadException(self::UPLOAD_ERR_MAX_FILE_SIZE);
+
 		} elseif (!MediaUtil::validateMimeType($upload['type'], $config['allowedMimeType'])) {
-			// validate mime
 			throw new UploadException(self::UPLOAD_ERR_MIME_TYPE);
 		}
 
@@ -182,14 +183,14 @@ class MediaUploader {
 		}
 
 		return array(
-			'name' => $upload['name'],
-			'type' => $upload['type'],
-			'size' => $upload['size'],
-			'path' => $target,
-			'basename' => $basename,
-			'filename' => $filename,
-			'ext' => $ext,
-			'dotExt' => $dotExt,
+			'name' => $upload['name'], // file.txt
+			'type' => $upload['type'], // text/plain
+			'size' => $upload['size'], // 1234
+			'path' => $target, // /path/to/upload-dir
+			'basename' => $basename, // file.txt
+			'filename' => $filename, // file
+			'ext' => $ext, // txt
+			'dotExt' => $dotExt, // .txt
 		);
 	}
 
