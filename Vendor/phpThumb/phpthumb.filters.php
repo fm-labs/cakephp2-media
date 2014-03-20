@@ -86,7 +86,7 @@ class phpthumb_filters {
 
 
 	function Blur(&$gdimg, $radius=0.5) {
-		// Taken from Torstein Hønsi's phpUnsharpMask (see phpthumb.unsharp.php)
+		// Taken from Torstein Hï¿½nsi's phpUnsharpMask (see phpthumb.unsharp.php)
 
 		$radius = round(max(0, min($radius, 50)) * 2);
 		if (!$radius) {
@@ -540,7 +540,7 @@ class phpthumb_filters {
 		// method 0 stretches according to RGB colors. Gives a more conservative stretch.
 		// method 1 band stretches according to grayscale which is color-biased (59% green, 30% red, 11% blue). May give a punchier / more aggressive stretch, possibly appearing over-saturated
 		$Analysis = phpthumb_filters::HistogramAnalysis($gdimg, true);
-		$keys = array('r'=>'red', 'g'=>'green', 'b'=>'blue', 'a'=>'alpha', '*'=>(($method == 0) ? 'all' : 'gray'));
+		$keys = array('r' => 'red', 'g' => 'green', 'b' => 'blue', 'a' => 'alpha', '*'=>(($method == 0) ? 'all' : 'gray'));
 		$band = substr($band, 0, 1);
 		if (!isset($keys[$band])) {
 			return false;
@@ -636,10 +636,10 @@ class phpthumb_filters {
 				ImageSaveAlpha($gdHistTemp, true);
 				ImageFilledRectangle($gdHistTemp, 0, 0, ImageSX($gdHistTemp), ImageSY($gdHistTemp), $color_back_temp);
 
-				$DefaultColors = array('r'=>'FF0000', 'g'=>'00FF00', 'b'=>'0000FF', 'a'=>'999999', '*'=>'FFFFFF');
+				$DefaultColors = array('r' => 'FF0000', 'g' => '00FF00', 'b' => '0000FF', 'a' => '999999', '*' => 'FFFFFF');
 				$Colors = explode(';', $colors);
 				$BandsToGraph = array_unique(preg_split('##', $bands));
-				$keys = array('r'=>'red', 'g'=>'green', 'b'=>'blue', 'a'=>'alpha', '*'=>'gray');
+				$keys = array('r' => 'red', 'g' => 'green', 'b' => 'blue', 'a' => 'alpha', '*' => 'gray');
 				foreach ($BandsToGraph as $key => $band) {
 					if (!isset($keys[$band])) {
 						continue;

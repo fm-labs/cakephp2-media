@@ -1,5 +1,5 @@
 <?php
-require_once(dirname(dirname(__DIR__)).DS.'MediaPluginTestCase.php');
+require_once(dirname(dirname(__DIR__)) . DS . 'MediaPluginTestCase.php');
 
 App::uses('AttachableBehavior', 'Media.Model/Behavior');
 App::uses('Folder','Utility');

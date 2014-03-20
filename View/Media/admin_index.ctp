@@ -1,4 +1,4 @@
-<?php $this->Html->addCrumb(__('Media'),array('plugin'=>'media','controller'=>'media','action'=>'index'))?>
+<?php $this->Html->addCrumb(__('Media'),array('plugin' => 'media','controller' => 'media','action' => 'index'))?>
 <div class="index">
 	<h2><?php echo __('Media');?></h2>
 	

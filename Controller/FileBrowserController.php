@@ -88,13 +88,13 @@ class FileBrowserController extends MediaAppController {
 	
 	public function admin_parent() {
 		$this->FileBrowser->set('..', null);
-		$this->redirect(array('action'=>'index'));
+		$this->redirect(array('action' => 'index'));
 	}
 	
 	public function admin_reset($config) {
 		$this->_config = $config;
 		$this->Session->delete('Media.FileBrowser');
-		$this->redirect(array('action'=>'index'));
+		$this->redirect(array('action' => 'index'));
 	}
 	
 	public function admin_view() {
@@ -111,7 +111,7 @@ class FileBrowserController extends MediaAppController {
 		} else {
 			$this->Session->setFlash(__('File %s could not be deleted',$this->file));
 		}
-		$this->redirect(array('action'=>'index'));
+		$this->redirect(array('action' => 'index'));
 	}
 	
 	public function admin_copy() {
@@ -122,7 +122,7 @@ class FileBrowserController extends MediaAppController {
 		} else {
 			$this->Session->setFlash(__('File %s could not be copied',$this->file));
 		}
-		$this->redirect(array('action'=>'index'));
+		$this->redirect(array('action' => 'index'));
 	}
 	
 	public function admin_rename() {
@@ -134,7 +134,7 @@ class FileBrowserController extends MediaAppController {
 			try {
 				$this->FileBrowser->renameFile($fileNew);
 				$this->Session->setFlash(__('File %s has been renamed to %s',$this->file, $fileNew));
-				$this->redirect(array('action'=>'index','file'=>$fileNew)+$this->FileBrowser->getPath());
+				$this->redirect(array('action' => 'index','file'=>$fileNew)+$this->FileBrowser->getPath());
 			} catch(Exception $e) {
 				$this->Session->setFlash($e->getMessage());
 			}

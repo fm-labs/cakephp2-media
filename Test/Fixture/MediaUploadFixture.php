@@ -3,7 +3,7 @@ class MediaUploadFixture extends CakeTestFixture {
 
 	public $useDbConfig = "test";
 	
-      //public $import = array('model'=>'Media.MediaUpload');
+      //public $import = array('model' => 'Media.MediaUpload');
       
       public $records = array(
           array('id' => 1, 'title' => 'Single File', 'file' => 'file1.txt', 'files' => null ),

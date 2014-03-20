@@ -13,7 +13,7 @@
 					<li class="dir"><?php 
 						echo $this->Html->tag(
 							'span',
-						$this->Html->link('..',array('action'=>$this->params['action'],'dir'=>base64_encode(dirname($fileBrowser['dir'])))),array('class'=>'dir-name')); 
+						$this->Html->link('..',array('action'=>$this->params['action'],'dir'=>base64_encode(dirname($fileBrowser['dir'])))),array('class' => 'dir-name'));
 					?></li>
 					<?php foreach($fileBrowser['folders'] as $folder):?>
 					<?php if ($fileBrowser['dir']):?>
@@ -21,7 +21,7 @@
 					<li class="dir"><?php 
 						echo $this->Html->tag(
 							'span',
-							$this->Html->link($folder,array('action'=>$this->params['action'],'dir'=>base64_encode($fileBrowser['dir'].$folder.'/'))),array('class'=>'dir-name')); 
+							$this->Html->link($folder,array('action'=>$this->params['action'],'dir'=>base64_encode($fileBrowser['dir'].$folder.'/'))),array('class' => 'dir-name'));
 					?></li>
 					<?php endforeach;?>
 					
@@ -34,23 +34,23 @@
 							$this->FileBrowser->previewImage($file),
 							array('class' => 'file-thumb')
 						);
-						echo $this->Html->tag('span',$file,array('class'=>'file-name','title'=>$__fileUrl)); 
+						echo $this->Html->tag('span',$file,array('class' => 'file-name','title'=>$__fileUrl));
 						echo $this->Html->tag('span',
 							$this->Html->link(__d('media',"Rename"),
-								array('action'=>$this->params['action'],'cmd'=>'file_rename','dir'=>base64_encode($fileBrowser['dir']),'file'=>base64_encode($file)),
-								array('class'=>'file-action file-rename','data-url'=>$__fileUrl)
+								array('action'=>$this->params['action'],'cmd' => 'file_rename','dir'=>base64_encode($fileBrowser['dir']),'file'=>base64_encode($file)),
+								array('class' => 'file-action file-rename','data-url'=>$__fileUrl)
 							)
 						);
 						echo $this->Html->tag('span',
 							$this->Html->link(__d('media',"Delete"),
-								array('action'=>$this->params['action'],'cmd'=>'file_delete','dir'=>base64_encode($fileBrowser['dir']),'file'=>base64_encode($file)),
-								array('class'=>'file-action file-delete','data-url'=>$__fileUrl),
+								array('action'=>$this->params['action'],'cmd' => 'file_delete','dir'=>base64_encode($fileBrowser['dir']),'file'=>base64_encode($file)),
+								array('class' => 'file-action file-delete','data-url'=>$__fileUrl),
 								__d('media',"Sure, that you want to delete the file '%s'",h($file))
 							)
 						);
 						echo $this->Html->tag('span',
 							$this->Html->link(__d('media',"Select"),'#',
-								array('class'=>'file-action file-select','data-url'=>$__fileUrl)));
+								array('class' => 'file-action file-select','data-url'=>$__fileUrl)));
 					?></li>
 					<?php endforeach;?>
 				</ul>
@@ -65,9 +65,9 @@
 						'id' => 'file-browser-preview-image',
 						'alt' => 'Preview',
 					));?><br /><br />
-					<?php echo $this->Html->link(__d('media',"Large Preview"),'#',array('class'=>'file-browser-btn-preview-large'));?>
-					<?php #echo $this->Html->link(__d('media',"Source"),'#',array('class'=>'file-browser-btn-source'));?>
-					<?php #echo $this->Html->link(__d('media',"Download"),'#',array('class'=>'file-browser-btn-download'));?>
+					<?php echo $this->Html->link(__d('media',"Large Preview"),'#',array('class' => 'file-browser-btn-preview-large'));?>
+					<?php #echo $this->Html->link(__d('media',"Source"),'#',array('class' => 'file-browser-btn-source'));?>
+					<?php #echo $this->Html->link(__d('media',"Download"),'#',array('class' => 'file-browser-btn-download'));?>
 				</div>
 				<?php 
 				$this->Js->get('.__file-browser-btn-preview-large')->colorbox(array(
@@ -86,13 +86,13 @@
 					    echo $this->Form->create('FileBrowserUpload', array('type' => 'file','url'=>array(
 					    	'controller'=>$this->params->controller, 
 					    	'action'=>$this->params->action, 
-					    	'cmd'=>'upload', 
+					    	'cmd' => 'upload',
 					    	'dir'=>$fileBrowser['dir_encoded'])
 					    ));
 					    //html5 multiple file upload - not supported by meio upload yet
-					    //echo $this->Form->input('upload_file.', array('type' => 'file', 'multiple'=>'multiple'));
-					    echo $this->Form->input('upload_file', array('type' => 'file', 'multiple'=>'multiple'));
-					    #echo $this->Form->input('filename', array('type' => 'text','default'=>'test'));
+					    //echo $this->Form->input('upload_file.', array('type' => 'file', 'multiple' => 'multiple'));
+					    echo $this->Form->input('upload_file', array('type' => 'file', 'multiple' => 'multiple'));
+					    #echo $this->Form->input('filename', array('type' => 'text','default' => 'test'));
 					    #echo $this->Form->input('dir', array('type' => 'text'));
 					    #echo $this->Form->input('mimetype', array('type' => 'text'));
 					    #echo $this->Form->input('filesize', array('type' => 'text'));

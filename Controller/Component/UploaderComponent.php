@@ -54,7 +54,7 @@ class UploaderComponent extends Component {
 			throw new InvalidArgumentException('UploaderComponent::upload(): No model set');
 
 		if (!$this->model->Behaviors->attached('Attachable'))
-			throw new MissingBehaviorException(array('class'=>'AttachableBehavior')); 
+			throw new MissingBehaviorException(array('class' => 'AttachableBehavior'));
 		
 		$result = $this->_upload($temporary);
 

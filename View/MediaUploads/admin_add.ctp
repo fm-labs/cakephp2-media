@@ -8,17 +8,17 @@
 		</ul>
 	</div>
 
-<?php echo $this->Form->create('MediaUpload',array('type'=>'file','id'=>'UploadSingleInline')); ?>
+<?php echo $this->Form->create('MediaUpload',array('type' => 'file','id' => 'UploadSingleInline')); ?>
 	<fieldset>
 		<legend><?php echo __('Single %s Inline', __('Media Upload')); ?></legend>
 	<?php
-		echo $this->Form->input('title', array('default'=>'Upload'));
+		echo $this->Form->input('title', array('default' => 'Upload'));
 	?>
 		<?php 
 		echo $this->FormUpload->input('MediaUpload.file',array(
 			'multiple' => true
 		),array(
-			'uploadUrl' => Router::url(array('action'=>'upload_html5')),
+			'uploadUrl' => Router::url(array('action' => 'upload_html5')),
 		));
 		?>
 	</fieldset>
@@ -27,12 +27,12 @@
 <?php debug($this->Form->data);?>
 
 	<br /> <br />
-<?php echo $this->Form->create('MediaUpload',array('type'=>'file','id'=>'UploadSingle')); ?>
+<?php echo $this->Form->create('MediaUpload',array('type' => 'file','id' => 'UploadSingle')); ?>
 	<fieldset>
 		<legend><?php echo __('Single %s', __('Media Upload')); ?></legend>
 	<?php
-		echo $this->Form->input('title', array('default'=>'Upload'));
-		echo $this->Form->input('file_upload',array('type'=>'file', 'label'=>'Single File Upload'));
+		echo $this->Form->input('title', array('default' => 'Upload'));
+		echo $this->Form->input('file_upload',array('type' => 'file', 'label' => 'Single File Upload'));
 		echo $this->Form->error('file_upload');
 		echo $this->Form->error('file');
 	?>
@@ -42,12 +42,12 @@
 
 
 <br /> <br />
-<?php echo $this->Form->create('MediaUpload',array('type'=>'file','id'=>'UploadMulti')); ?>
+<?php echo $this->Form->create('MediaUpload',array('type' => 'file','id' => 'UploadMulti')); ?>
 	<fieldset>
 		<legend><?php echo __('Multi %s', __('Media Upload')); ?></legend>
 	<?php
-		echo $this->Form->input('title', array('default'=>'Upload'));
-		echo $this->Form->input('files_upload.',array('type'=>'file', 'label'=>'Multi File Upload', 'multiple'=>'multiple'));
+		echo $this->Form->input('title', array('default' => 'Upload'));
+		echo $this->Form->input('files_upload.',array('type' => 'file', 'label' => 'Multi File Upload', 'multiple' => 'multiple'));
 		echo $this->Form->error('files_upload');
 		echo $this->Form->error('file');
 	?>
@@ -57,16 +57,16 @@
 
 
 <br /> <br />
-<?php echo $this->Form->create('MediaUpload',array('type'=>'file','id'=>'UploadCombined')); ?>
+<?php echo $this->Form->create('MediaUpload',array('type' => 'file','id' => 'UploadCombined')); ?>
 	<fieldset>
 		<legend><?php echo __('Combined %s', __('Media Upload')); ?></legend>
 	<?php
-		echo $this->Form->input('title', array('default'=>'Upload'));
-		echo $this->Form->input('file_upload',array('type'=>'file', 'label'=>'Single File Upload'));
+		echo $this->Form->input('title', array('default' => 'Upload'));
+		echo $this->Form->input('file_upload',array('type' => 'file', 'label' => 'Single File Upload'));
 		echo $this->Form->error('file_upload');
 		echo $this->Form->error('file');
 		
-		echo $this->Form->input('files_upload.',array('type'=>'file', 'label'=>'Multi File Upload', 'multiple'=>'multiple'));
+		echo $this->Form->input('files_upload.',array('type' => 'file', 'label' => 'Multi File Upload', 'multiple' => 'multiple'));
 		echo $this->Form->error('files_upload');
 		echo $this->Form->error('files');
 	?>

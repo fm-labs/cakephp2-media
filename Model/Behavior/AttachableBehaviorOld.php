@@ -800,9 +800,9 @@ class AttachableBehavior extends ModelBehavior {
 		
 			//TODO do not hardcode view/download url
 			$url = Router::url(array(
-				'plugin'=>'media',
-				'controller'=>'attachments',
-				'action'=>'view',
+				'plugin' => 'media',
+				'controller' => 'attachments',
+				'action' => 'view',
 				'model'=>Inflector::underscore($model->alias),
 				'id'=>$model->id,
 				'basename' => $basename

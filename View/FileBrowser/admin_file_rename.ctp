@@ -16,7 +16,7 @@
 			echo $this->Form->submit(__d('media',"Rename"));
 			?>
 			<?php echo $this->Html->link(__d('media',"Back to '/%s'", strval($this->Form->value('dir'))),
-					array('action'=>'open','dir'=>$fileBrowser['FileBrowser']['dir']) );?>
+					array('action' => 'open','dir'=>$fileBrowser['FileBrowser']['dir']) );?>
 			</fieldset>
 			<?php $this->Form->end();?>
 	</div>

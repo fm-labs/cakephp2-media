@@ -4,8 +4,8 @@
  * @property HtmlHelper $HtmlHelper
  */
 ?>
-<?php $this->Html->addCrumb(__('Media'), array('plugin'=>'media','controller'=>'media','action'=>'index')); ?>
-<?php $this->Html->addCrumb(__('File Explorer'), array('action'=>'index'),array('class'=>'active')); ?>
+<?php $this->Html->addCrumb(__('Media'), array('plugin' => 'media','controller' => 'media','action' => 'index')); ?>
+<?php $this->Html->addCrumb(__('File Explorer'), array('action' => 'index'),array('class' => 'active')); ?>
 <?php $this->Html->css('/media/css/fileexplorer',null,array('inline'=>true)); ?>
 
 <?php 
@@ -68,7 +68,7 @@ $_parentDir = $fe['parent_dir'];
 							<td class="actions">
 								<?php echo $this->Html->link(__('Open'),
 										$this->FileExplorer->actionUrl('open',$_dir.$folder['name']),
-										array('class'=>'btn-primary'));?>
+										array('class' => 'btn-primary'));?>
 								<?php echo $this->Html->link(__('Move'),$this->FileExplorer->actionUrl('move',$_dir.$folder['name']));?>
 							</td>
 						</tr>

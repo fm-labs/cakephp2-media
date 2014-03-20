@@ -8,7 +8,7 @@ Okay, pick a file then...
 <button id="selectFileButton">Select File</button>
 <br /><br />
 .. or use the upload form
-<form enctype="multipart/form-data" method="post" action="<?php echo Router::url(array('action'=>'test')); ?>">
+<form enctype="multipart/form-data" method="post" action="<?php echo Router::url(array('action' => 'test')); ?>">
 	<input type="file" id="selectFileForm" />
 </form>
 
