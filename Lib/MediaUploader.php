@@ -1,5 +1,5 @@
 <?php
-App::uses('MediaTools','Media.Lib');
+App::uses('MediaUtil','Media.Lib');
 
 class MediaUploader {
 	
@@ -136,14 +136,14 @@ class MediaUploader {
 			throw new UploadException(self::UPLOAD_ERR_MAX_FILE_SIZE);
 	
 		// validate mime
-		elseif (!MediaTools::validateMimeType($upload['type'], $config['allowedMimeType']))
+		elseif (!MediaUtil::validateMimeType($upload['type'], $config['allowedMimeType']))
 			throw new UploadException(self::UPLOAD_ERR_MIME_TYPE);
 	
 		// split basename
-		list($filename,$ext, $dotExt) = MediaTools::splitBasename(trim($upload['name']));
+		list($filename,$ext, $dotExt) = MediaUtil::splitBasename(trim($upload['name']));
 	
 		//validate extension
-		if (!MediaTools::validateFileExtension($ext, $config['allowedFileExtension']))
+		if (!MediaUtil::validateFileExtension($ext, $config['allowedFileExtension']))
 			throw new UploadException(self::UPLOAD_ERR_FILE_EXT);
 	
 		// filename

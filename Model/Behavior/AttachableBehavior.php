@@ -1,7 +1,7 @@
 <?php
 App::uses('ModelBehavior', 'Model');
 App::uses('MediaUploader', 'Media.Lib');
-App::uses('MediaTools', 'Media.Lib');
+App::uses('MediaUtil', 'Media.Lib');
 App::uses('Folder', 'Utility');
 #App::uses('Cache','Cache');
 ##App::uses('String', 'Utility');
@@ -326,7 +326,7 @@ class AttachableBehavior extends ModelBehavior {
 				foreach($uploads as $upload) {
 
 					// split basename
-					list($filename,$ext, $dotExt) = MediaTools::splitBasename(trim($upload['name']));
+					list($filename,$ext, $dotExt) = MediaUtil::splitBasename(trim($upload['name']));
 					
 					// filename
 					$filename = Inflector::slug($filename,'_');
@@ -472,7 +472,7 @@ class AttachableBehavior extends ModelBehavior {
 				$ext = $dotExt = $filename = $basename = null;
 			} else {
 				$path = self::getPath($model, $config) . $basename;
-				list($filename, $ext, $dotExt) = MediaTools::splitBasename($basename);
+				list($filename, $ext, $dotExt) = MediaUtil::splitBasename($basename);
 			}
 			
 			$attachment = compact('basename','filename','path','ext','dotExt');
