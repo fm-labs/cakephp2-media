@@ -6,7 +6,7 @@ $config = array(
 	'Media' => array(
 		'FileExplorer' => array(
 			'default' => array(
-				'basePath' => IMAGES		
+				'basePath' => IMAGES // absolute path WITH trailing slash	
 			)		
 		)	
 	),

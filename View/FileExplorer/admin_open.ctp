@@ -4,8 +4,8 @@
  * @property HtmlHelper $HtmlHelper
  */
 ?>
-<?php $this->Html->addCrumb(__('Media'), array('plugin'=>'media','controller'=>'media','action'=>'index')); ?>
-<?php $this->Html->addCrumb(__('File Explorer'), array('action'=>'index'),array('class'=>'active')); ?>
+<?php $this->Html->addCrumb(__('Media'), array('plugin' => 'media','controller' => 'media','action' => 'index')); ?>
+<?php $this->Html->addCrumb(__('File Explorer'), array('action' => 'index'),array('class' => 'active')); ?>
 <?php $this->Html->css('/media/css/fileexplorer',null,array('inline'=>true)); ?>
 
 <?php 
@@ -23,13 +23,13 @@ $_parentDir = $fe['parent_dir'];
 		<div class="file-browser-col1">
 		<div class="inner">
 			<h4><?php echo __d('media',"Current Folder: %s",$_dir);?>&nbsp;
-			<small><?php echo $this->Html->link(__d('media',"Reload"),$this->FileExplorer->url('open',$_dir));?></small>
+			<small><?php echo $this->Html->link(__d('media',"Reload"),$this->FileExplorer->actionUrl('open',$_dir));?></small>
 			</h4>
 			<p><?php echo ($fe['writeable']) ? __("Writeable") : __("Not writeable"); ?></p>
 			<div class="actions">
 				<ul>
-					<li><?php echo $this->Html->link(__('New %s',__('Folder')),$this->FileExplorer->url('create',$_dir)); ?></li>
-					<li><?php echo $this->Html->link(__('New %s',__('File')),$this->FileExplorer->url('add',$_dir)); ?></li>
+					<li><?php echo $this->Html->link(__('New %s',__('Folder')),$this->FileExplorer->actionUrl('create',$_dir)); ?></li>
+					<li><?php echo $this->Html->link(__('New %s',__('File')),$this->FileExplorer->actionUrl('add',$_dir)); ?></li>
 				</ul>
 			</div>
 	
@@ -45,7 +45,7 @@ $_parentDir = $fe['parent_dir'];
 						<!-- CURRENT DIR -->
 						<tr class="folder current">
 							<td class="name"><?php 
-								echo $this->Html->link('.',$this->FileExplorer->url('open',$_dir)); 
+								echo $this->Html->link('.',$this->FileExplorer->actionUrl('open',$_dir)); 
 							?></td>
 							<td>&nbsp;</td>
 							<td>&nbsp;</td>
@@ -53,7 +53,7 @@ $_parentDir = $fe['parent_dir'];
 						<!-- PARENT DIR -->
 						<tr class="folder parent">
 							<td class="name"><?php 
-								echo $this->Html->link('..', $this->FileExplorer->url('open',$_parentDir));?></td>
+								echo $this->Html->link('..', $this->FileExplorer->actionUrl('open',$_parentDir));?></td>
 							<td>&nbsp;</td>
 							<td>&nbsp;</td>
 						</tr>
@@ -61,15 +61,15 @@ $_parentDir = $fe['parent_dir'];
 						<?php foreach($_contents['Folder'] as $folder):?>
 						<tr class="folder">
 							<td class="name"><?php 
-									echo $this->Html->link($folder['name'], $this->FileExplorer->url('open',$_dir.$folder['name']));
+									echo $this->Html->link($folder['name'], $this->FileExplorer->actionUrl('open',$_dir.$folder['name']));
 							?>
 							</td>
 							<td><?php echo ($folder['writeable']) ? "yes" : "no"; ?></td>
 							<td class="actions">
 								<?php echo $this->Html->link(__('Open'),
-										$this->FileExplorer->url('open',$_dir.$folder['name']),
-										array('class'=>'btn-primary'));?>
-								<?php echo $this->Html->link(__('Move'),$this->FileExplorer->url('move',$_dir.$folder['name']));?>
+										$this->FileExplorer->actionUrl('open',$_dir.$folder['name']),
+										array('class' => 'btn-primary'));?>
+								<?php echo $this->Html->link(__('Move'),$this->FileExplorer->actionUrl('move',$_dir.$folder['name']));?>
 							</td>
 						</tr>
 						<?php endforeach;?>
@@ -83,23 +83,23 @@ $_parentDir = $fe['parent_dir'];
 							<td><?php echo ($file['writeable']) ? "yes" : "no"; ?></td>
 							<td class="actions">
 								<?php echo $this->Html->link(__d('media',"View"),
-										$this->FileExplorer->url('view',$_dir,$file['basename']),
+										$this->FileExplorer->actionUrl('view',$_dir,$file['basename']),
 										array()
 									); ?>
 								<?php echo $this->Html->link(__d('media',"Edit"),
-										$this->FileExplorer->url('edit',$_dir,$file['basename']),
+										$this->FileExplorer->actionUrl('edit',$_dir,$file['basename']),
 										array()
 									); ?>
 									<?php echo $this->Html->link(__d('media',"Rename"),
-										$this->FileExplorer->url('rename',$_dir,$file['basename']),
+										$this->FileExplorer->actionUrl('rename',$_dir,$file['basename']),
 										array()
 									); ?>
 									<?php echo $this->Html->link(__d('media',"Copy"),
-										$this->FileExplorer->url('copy',$_dir,$file['basename']),
+										$this->FileExplorer->actionUrl('copy',$_dir,$file['basename']),
 										array()
 									); ?>
 									<?php echo $this->Html->link(__d('media',"Delete"),
-										$this->FileExplorer->url('delete',$_dir,$file['basename']),
+										$this->FileExplorer->actionUrl('delete',$_dir,$file['basename']),
 										array(),
 										__d('media',"Sure, that you want to delete the file '%s'",h($file['basename']))
 									); ?>

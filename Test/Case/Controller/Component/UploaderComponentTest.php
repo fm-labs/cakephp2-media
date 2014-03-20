@@ -142,7 +142,7 @@ class UploaderTestController extends Controller {
 	 * @return void
 	 */
 	public function __construct($request, $response) {
-		$request->addParams(array('controller'=>'uploader_test','action'=>'upload','plugin'=>'media'));
+		$request->addParams(array('controller' => 'uploader_test','action' => 'upload','plugin' => 'media'));
 		$request->here = 'media/uploader_test/upload';
 		$request->webroot = '/';
 		Router::setRequestInfo($request);

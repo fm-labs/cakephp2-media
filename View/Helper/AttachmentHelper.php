@@ -103,13 +103,13 @@ class AttachmentHelper extends AppHelper {
 			);
 			//actionEdit
 			if ($options['actionEdit']) {
-				$editUrl = am($actionUrl, array('cmd'=>'edit'));
-				$_actions .= $this->Html->link(__('Edit'), $editUrl, array('class'=>'attachment-edit'));
+				$editUrl = am($actionUrl, array('cmd' => 'edit'));
+				$_actions .= $this->Html->link(__('Edit'), $editUrl, array('class' => 'attachment-edit'));
 			}
 			//actionDelete
 			if ($options['actionDelete']) {
-				$deleteUrl = am($actionUrl, array('cmd'=>'delete'));
-				$_actions .= $this->Html->link(__('Delete'), $deleteUrl, array('class'=>'attachment-delete'),__("Do you really want to delete the attachment '%s'",$attachment['basename']));
+				$deleteUrl = am($actionUrl, array('cmd' => 'delete'));
+				$_actions .= $this->Html->link(__('Delete'), $deleteUrl, array('class' => 'attachment-delete'),__("Do you really want to delete the attachment '%s'",$attachment['basename']));
 			}
 			$_out .= $this->Html->div('attachment-form-preview-actions', $_actions);
 			

@@ -22,7 +22,7 @@ class FileBrowserTest extends CakeTestCase {
 		
 		$FileBrowser = new TestFileBrowser();
 		//array
-		$config = array('basePath'=>ROOT,'baseUrl'=>'/');
+		$config = array('basePath'=>ROOT,'baseUrl' => '/');
 		$FileBrowser->config($config);
 		
 		$this->assertEqual($FileBrowser->config(), $config);

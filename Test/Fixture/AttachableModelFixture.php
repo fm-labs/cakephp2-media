@@ -6,8 +6,8 @@ class AttachableModelFixture extends CakeTestFixture {
 	public $fields = array(
 		'id' => array('type' => 'integer', 'key' => 'primary'),
 		'title' => array('type' => 'string', 'length' => 255, 'null' => false),
-		'file' => array('type'=>'text',null => true),
-		'files' => array('type'=>'text',null => true),
+		'file' => array('type' => 'text',null => true),
+		'files' => array('type' => 'text',null => true),
 	);
 	
       public $records = array(

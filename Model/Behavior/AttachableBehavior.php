@@ -8,6 +8,7 @@ App::uses('Folder', 'Utility');
 #App::uses('File', 'Utility');
 #App::uses('Router', 'Routing');
 #App::uses('LibPhpThumb','Media.Lib');
+App::uses('Debugger','Utility');
 
 class AttachableBehavior extends ModelBehavior {
 	
@@ -58,7 +59,7 @@ class AttachableBehavior extends ModelBehavior {
 	 * @see ModelBehavior::setup()
 	 * @param $settings
 	 */
-	public function setup(Model $model, $settings = array()) {
+	public function setup(Model $model, $config = array()) {
 		
 		if (!isset($this->settings[$model->alias])) {
 			$attachments = (isset($model->attachments)) ? $model->attachments : array();
@@ -177,10 +178,8 @@ class AttachableBehavior extends ModelBehavior {
 	 * @see ModelBehavior::afterValidate()
 	 */
 	public function afterValidate(Model $model) {
-		#debug($model->data);
-		$this->_validateUpload($model);
-		#debug($model->data);
 		
+		$this->_validateUpload($model);
 		return true;
 	}
 	
@@ -302,7 +301,6 @@ class AttachableBehavior extends ModelBehavior {
 	}
 		
 	public function afterSave(Model $model, $created) {
-		
 		$this->_storeUpload($model);
 	}
 	
@@ -467,10 +465,16 @@ class AttachableBehavior extends ModelBehavior {
 		foreach((array)$basenames as $basename) {
 			if (strlen(trim($basename)) == 0)
 				continue;
-				
-			$path = self::getPath($model, $config) . $basename;
-			list($filename, $ext, $dotExt) = MediaTools::splitBasename($basename);
-	
+			
+			// ignore urls
+			if(preg_match('@\:\/\/@', $basename)) {
+				$path = $basename;
+				$ext = $dotExt = $filename = $basename = null;
+			} else {
+				$path = self::getPath($model, $config) . $basename;
+				list($filename, $ext, $dotExt) = MediaTools::splitBasename($basename);
+			}
+			
 			$attachment = compact('basename','filename','path','ext','dotExt');
 			array_push($attachments, $attachment);
 		}
@@ -484,7 +488,7 @@ class AttachableBehavior extends ModelBehavior {
 	 * @see ModelBehavior::onError()
 	 * @todo Implement onError() method
 	 */
-	public function onError($model, $error) {
+	public function onError(Model $model, $error) {
 		$this->log($error, LOG_ERR);
 	}
 	
@@ -495,8 +499,7 @@ class AttachableBehavior extends ModelBehavior {
 	 *
 	 * @see ModelBehavior::beforeDelete()
 	 */
-	public function beforeDelete($model) {
-	
+	public function beforeDelete(Model $model, $cascade = true) {
 		$fields = array_keys($this->settings[$model->alias]);
 		$readFields = am(array($model->primaryKey), $fields);
 	
@@ -550,8 +553,7 @@ class AttachableBehavior extends ModelBehavior {
 	 *
 	 * @see ModelBehavior::afterDelete()
 	 */
-	public function afterDelete($model) {
-	
+	public function afterDelete(Model $model) {
 		$this->_removeFiles($model);
 		return true;
 	}
@@ -602,9 +604,9 @@ class AttachableBehavior extends ModelBehavior {
 		}
 	}	
 	
-	public function log($msg) {
+	public function log($msg, $type = 'debug') {
 		#debug($msg);
-		parent::log($msg);
+		return parent::log($msg, $type);
 	}
 	
 }

@@ -10,7 +10,7 @@
 				<li><?php echo $this->Html->link(__('List %s',__('Media Uploads')), array('action' => 'index')); ?></li>
 			</ul>
 	</div>
-<?php echo $this->Form->create('MediaUpload',array('type'=>'file')); ?>
+<?php echo $this->Form->create('MediaUpload',array('type' => 'file')); ?>
 	<fieldset>
 		<legend><?php echo __('Admin Edit %s', __('Media Upload')); ?></legend>
 	<?php
@@ -22,12 +22,12 @@
 	<fieldset>
 		<legend>File</legend>
 		<?php 
-		//echo $this->Form->input('file',array('readonly'=>true, 'type'=>'hidden'));
+		//echo $this->Form->input('file',array('readonly'=>true, 'type' => 'hidden'));
 		
 		echo $this->Attachment->preview('MediaUpload.file');
 		echo $this->FormUpload->input('MediaUpload.file',array(
-			'type'=>'file', 
-			'label'=>'Single File Upload',
+			'type' => 'file',
+			'label' => 'Single File Upload',
 			//'before' => $this->Attachment->preview('MediaUpload.file'),
 		));
 		echo $this->Form->error('file');
@@ -38,7 +38,7 @@
 		<legend>Files</legend>
 		<?php 
 		echo $this->Form->input('files',array('readonly'=>true));
-		echo $this->FormUpload->input('MediaUpload.files',array('type'=>'file', 'multiple'=>'multiple', 'label'=>'Multi File Upload'));
+		echo $this->FormUpload->input('MediaUpload.files',array('type' => 'file', 'multiple' => 'multiple', 'label' => 'Multi File Upload'));
 		echo $this->Form->error('files');
 		echo $this->Attachment->preview('MediaUpload.files');
 		//echo $this->Attachment->preview('MediaUpload.files',null,'small');

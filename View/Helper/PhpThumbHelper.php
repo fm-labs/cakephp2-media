@@ -22,16 +22,23 @@ class PhpThumbHelper extends AppHelper {
  */	
 	public function imageUrl($path, $params = array()) {
 
-		if ($path[0] != "/" && !preg_match('/^[A-Z]\:\\\/', $path))
+		if(preg_match('@\:\/\/@', $path)) {
+			return $path;
+		}
+		
+		if ($path[0] != "/" && !preg_match('/^[A-Z]\:\\\/', $path)) {
 			$path = IMAGES . $path;
+		}
 
 		try {
 			list($thumbPath, $thumbUrl) = LibPhpThumb::getThumbnail($path, null, $params);
 			return $thumbUrl;
 		} catch(Exception $e) {
 			debug($e->getMessage());
+			return false;
 		}
-		return false;
+		
+		return $path;
 	}
 
 /**

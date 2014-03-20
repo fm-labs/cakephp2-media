@@ -20,26 +20,26 @@ $_id = uniqid('file-browser-tabs');
 			<div>
 				<ul class="file-browser-list">
 					<li class="dir"><?php 
-						echo $this->Html->tag('span',$this->Html->link('..',array('action'=>$this->params['action'],'dir'=>base64_encode(dirname($fileBrowser['dir'])))),array('class'=>'dir-name')); 
+						echo $this->Html->tag('span',$this->Html->link('..',array('action'=>$this->params['action'],'dir'=>base64_encode(dirname($fileBrowser['dir'])))),array('class' => 'dir-name'));
 					?></li>
 					<?php foreach($fileBrowser['directory_list'] as $folder):?>
 					<?php if ($fileBrowser['dir']):?>
 					<?php endif; ?>
 					<li class="dir"><?php 
-						echo $this->Html->tag('span',$this->Html->link($folder,array('action'=>$this->params['action'],'dir'=>base64_encode($fileBrowser['dir'].$folder.'/'))),array('class'=>'dir-name')); 
+						echo $this->Html->tag('span',$this->Html->link($folder,array('action'=>$this->params['action'],'dir'=>base64_encode($fileBrowser['dir'].$folder.'/'))),array('class' => 'dir-name'));
 					?></li>
 					<?php endforeach;?>
 					
 					<?php foreach($fileBrowser['file_list'] as $file):?>
 					<li class="file"><?php
 						$__fileUrl = $fileBrowser['dir'].$file; 
-						echo $this->Html->tag('span',$file,array('class'=>'file-name','title'=>$__fileUrl)); 
+						echo $this->Html->tag('span',$file,array('class' => 'file-name','title'=>$__fileUrl));
 						echo $this->Html->tag('span',
 							$this->Html->link(__d('media',"View"),'#',
-								array('class'=>'file-action file-view','data-url'=>$__fileUrl)));
+								array('class' => 'file-action file-view','data-url'=>$__fileUrl)));
 						echo $this->Html->tag('span',
 							$this->Html->link(__d('media',"Select"),'#',
-								array('class'=>'file-action file-select','data-url'=>$__fileUrl)));
+								array('class' => 'file-action file-select','data-url'=>$__fileUrl)));
 					?></li>
 					<?php endforeach;?>
 				</ul>
@@ -62,13 +62,13 @@ $_id = uniqid('file-browser-tabs');
 					    echo $this->Form->create('FileBrowserUpload', array('type' => 'file','url'=>array(
 					    	'controller'=>$this->params->controller, 
 					    	'action'=>$this->params->action, 
-					    	'cmd'=>'upload', 
+					    	'cmd' => 'upload',
 					    	'dir'=>$fileBrowser['dir_encoded'])
 					    ));
 					    //html5 multiple file upload - not supported by meio upload yet
-					    //echo $this->Form->input('upload_file.', array('type' => 'file', 'multiple'=>'multiple'));
-					    echo $this->Form->input('upload_file', array('type' => 'file', 'multiple'=>'multiple'));
-					    #echo $this->Form->input('filename', array('type' => 'text','default'=>'test'));
+					    //echo $this->Form->input('upload_file.', array('type' => 'file', 'multiple' => 'multiple'));
+					    echo $this->Form->input('upload_file', array('type' => 'file', 'multiple' => 'multiple'));
+					    #echo $this->Form->input('filename', array('type' => 'text','default' => 'test'));
 					    #echo $this->Form->input('dir', array('type' => 'text'));
 					    #echo $this->Form->input('mimetype', array('type' => 'text'));
 					    #echo $this->Form->input('filesize', array('type' => 'text'));
@@ -89,13 +89,13 @@ $_id = uniqid('file-browser-tabs');
 			    echo $this->Form->create('FileBrowserUpload', array('type' => 'file','url'=>array(
 			    	'controller'=>$this->params->controller, 
 			    	'action'=>$this->params->action, 
-			    	'cmd'=>'upload', 
+			    	'cmd' => 'upload',
 			    	'dir'=>$fileBrowser['dir_encoded'])
 			    ));
 			    //html5 multiple file upload - not supported by meio upload yet
-			    //echo $this->Form->input('upload_file.', array('type' => 'file', 'multiple'=>'multiple'));
-			    echo $this->Form->input('upload_file', array('type' => 'file', 'multiple'=>'multiple'));
-			    #echo $this->Form->input('filename', array('type' => 'text','default'=>'test'));
+			    //echo $this->Form->input('upload_file.', array('type' => 'file', 'multiple' => 'multiple'));
+			    echo $this->Form->input('upload_file', array('type' => 'file', 'multiple' => 'multiple'));
+			    #echo $this->Form->input('filename', array('type' => 'text','default' => 'test'));
 			    #echo $this->Form->input('dir', array('type' => 'text'));
 			    #echo $this->Form->input('mimetype', array('type' => 'text'));
 			    #echo $this->Form->input('filesize', array('type' => 'text'));

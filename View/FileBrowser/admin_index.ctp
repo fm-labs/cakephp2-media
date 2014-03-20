@@ -44,19 +44,19 @@
 						<tr class="folder parent">
 							<td class="type">&nbsp;</td>
 							<td class="name"><?php 
-								echo $this->Html->link('..', $this->FileBrowser->url(array('action'=>'parent')));?></td>
+								echo $this->Html->link('..', $this->FileBrowser->url(array('action' => 'parent')));?></td>
 							<td>&nbsp;</td>
 						</tr>
 						<?php foreach($fileBrowser['Folder'] as $folder):?>
 						<tr class="folder">
 							<td class="type">&nbsp;</td>
 							<td class="name"><?php 
-									echo $this->Html->link($folder, $this->FileBrowser->dirUrl(array('action'=>'open'),$folder));
+									echo $this->Html->link($folder, $this->FileBrowser->dirUrl(array('action' => 'open'),$folder));
 							?>
 							</td>
 							<td class="actions">
 								<ul class="actions">
-									<li><?php echo $this->Html->link(__('Open'),$this->FileBrowser->dirUrl(array('action'=>'open'),$folder));?></li>
+									<li><?php echo $this->Html->link(__('Open'),$this->FileBrowser->dirUrl(array('action' => 'open'),$folder));?></li>
 								</ul>
 							</td>
 						</tr>
@@ -70,19 +70,19 @@
 							<td class="actions">
 								<ul class="actions">
 									<li><?php echo $this->Html->link(__d('media',"View"),
-										$this->FileBrowser->fileUrl(array('action'=>'view'),$file),
+										$this->FileBrowser->fileUrl(array('action' => 'view'),$file),
 										array()
 									); ?></li>
 									<li><?php echo $this->Html->link(__d('media',"Rename"),
-										$this->FileBrowser->fileUrl(array('action'=>'rename'),$file),
+										$this->FileBrowser->fileUrl(array('action' => 'rename'),$file),
 										array()
 									); ?></li>
 									<li><?php echo $this->Html->link(__d('media',"Copy"),
-										$this->FileBrowser->fileUrl(array('action'=>'copy'),$file),
+										$this->FileBrowser->fileUrl(array('action' => 'copy'),$file),
 										array()
 									); ?></li>
 									<li><?php echo $this->Html->link(__d('media',"Delete"),
-										$this->FileBrowser->fileUrl(array('action'=>'delete'),$file),
+										$this->FileBrowser->fileUrl(array('action' => 'delete'),$file),
 										array(),
 										__d('media',"Sure, that you want to delete the file '%s'",h($file))
 									); ?></li>
@@ -134,9 +134,9 @@
 						'id' => 'file-browser-preview-image',
 						'alt' => 'Preview',
 					));?><br /><br />
-					<?php echo $this->Html->link(__d('media',"Large Preview"),'#',array('class'=>'file-browser-btn-preview-large'));?>
-					<?php #echo $this->Html->link(__d('media',"Source"),'#',array('class'=>'file-browser-btn-source'));?>
-					<?php #echo $this->Html->link(__d('media',"Download"),'#',array('class'=>'file-browser-btn-download'));?>
+					<?php echo $this->Html->link(__d('media',"Large Preview"),'#',array('class' => 'file-browser-btn-preview-large'));?>
+					<?php #echo $this->Html->link(__d('media',"Source"),'#',array('class' => 'file-browser-btn-source'));?>
+					<?php #echo $this->Html->link(__d('media',"Download"),'#',array('class' => 'file-browser-btn-download'));?>
 					<?php else :?>
 					<?php echo $this->Html->image('/media/img/filebrowser/_default.jpg', array(
 						'id' => 'file-browser-preview-image',
@@ -165,9 +165,9 @@
 					    	'url'=>$this->FileBrowser->url('upload')
 					    ));
 					    //html5 multiple file upload - not supported by meio upload yet
-					    //echo $this->Form->input('upload_file.', array('type' => 'file', 'multiple'=>'multiple'));
-					    echo $this->Form->input('upload_file', array('type' => 'file', 'multiple'=>'multiple'));
-					    #echo $this->Form->input('filename', array('type' => 'text','default'=>'test'));
+					    //echo $this->Form->input('upload_file.', array('type' => 'file', 'multiple' => 'multiple'));
+					    echo $this->Form->input('upload_file', array('type' => 'file', 'multiple' => 'multiple'));
+					    #echo $this->Form->input('filename', array('type' => 'text','default' => 'test'));
 					    #echo $this->Form->input('dir', array('type' => 'text'));
 					    #echo $this->Form->input('mimetype', array('type' => 'text'));
 					    #echo $this->Form->input('filesize', array('type' => 'text'));

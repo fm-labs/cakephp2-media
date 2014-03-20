@@ -1,0 +1,6 @@
+* Localization
+* [fe] Ensure FileExplorer basePaths have a trailing slash
+* [fe] File view/edit/copy/delete functions
+* [fe] Directory rename/move/delete/delete-resursive functions
+* [fe] Load directory contents async
+* 

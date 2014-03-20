@@ -1,4 +1,32 @@
-<?php
+*** MEDIA PLUGIN ***
+
+1. INSTALL
+2. CONFIGURE
+3. USAGE
+
+
+*** 1. INSTALL ***
+
+git submodule add [url_to_repo] [path/to/plugins/]Media
+
+or 
+
+- create a new folder 'Media' in your application's plugin directory
+- copy all files to that 'Media' directory
+
+*** 2. CONFIGURE ***
+
+
+2.1 Enable the plugin
+
+To enable the Media plugin in your application
+add this to your app/Config/bootstrap.php
+
+CakePlugin::load('Media')
+
+
+2.2 Paths
+
 /**
  * Media Data directory
  */
@@ -30,26 +58,18 @@ defined('MEDIA_UPLOAD_DIR') or define('MEDIA_UPLOAD_DIR', TMP . "uploads" . DS);
 defined('MEDIA_THUMB_DIR') or define('MEDIA_THUMB_DIR',WWW_ROOT."cache".DS);
 defined('MEDIA_THUMB_URL') or define('MEDIA_THUMB_URL', '/cache/');
 
-/**
- * @deprecated
- */
-#defined('MEDIA_THUMB_TMP_DIR') or define('MEDIA_THUMB_TMP_DIR',TMP."phpthumb".DS);
-/**
- * @deprecated
- */ 	
-#defined('MEDIA_THUMB_CACHE_DIR') or define('MEDIA_THUMB_CACHE_DIR', IMAGES . "cache" . DS);
-#defined('MEDIA_THUMB_CACHE_DIR') or define('MEDIA_THUMB_CACHE_DIR',MEDIA_THUMB_TMP_DIR."cache".DS); 	
 
 
-/**
- * Temporary upload directory for attachments
- * @deprecated
- */
-#defined('MEDIA_UPLOAD_TMP_DIR') or define('MEDIA_UPLOAD_TMP_DIR', TMP . "media" . DS);
+*** 3. USAGE ***
 
-/**
- * Media bootstrap flag
- */
-@define('MEDIA_BOOTSTRAPED',true); //TODO check if this is still needed
+3.1 FileExplorer
 
-?>
+
+3.2 Uploads
+
+
+3.3 Attachments
+
+
+3.4 Thumbnails
+

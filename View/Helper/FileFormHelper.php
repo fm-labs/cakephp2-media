@@ -56,8 +56,8 @@ class FileFormHelper extends AppHelper {
 		
 		//input field
 		$inputParams = array_merge(array(
-			//'type'=>'hidden',
-			'type'=>'text',
+			//'type' => 'hidden',
+			'type' => 'text',
 			'id'=>uniqid(),
 			'value' => $__value
 		),$inputParams);
@@ -78,7 +78,7 @@ class FileFormHelper extends AppHelper {
 			$_baseUrl = preg_replace('/^(img\/)/','',$_baseUrl);
 			$_preview = $this->Html->image(
 				$_baseUrl . $__value,
-				array('class'=>'image-preview', 'id'=>$__previewImgId)
+				array('class' => 'image-preview', 'id'=>$__previewImgId)
 			);
 			$out .= $this->Html->div('image-input-preview',$_preview,array('id'=>$__previewId));
 			unset($_preview);
@@ -93,8 +93,8 @@ class FileFormHelper extends AppHelper {
 		$_input .= $this->Form->input($field,$inputParams);
 		
 		$_actions = "";
-		$_actions .= $this->Html->link(__d('media',"Change"),'#',array('class'=>'image-input-action', 'id'=>$__openerId,'data-target'=>$__id));
-		//$_actions .= $this->Html->link(__d('media',"Remove"),'#',array('class'=>'image-input-action'));
+		$_actions .= $this->Html->link(__d('media',"Change"),'#',array('class' => 'image-input-action', 'id'=>$__openerId,'data-target'=>$__id));
+		//$_actions .= $this->Html->link(__d('media',"Remove"),'#',array('class' => 'image-input-action'));
 		$_input .= $this->Html->div('image-input-actions',$_actions);
 		unset($_actions);
 		

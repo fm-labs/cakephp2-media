@@ -1,5 +1,5 @@
 <?php
-require_once(dirname(__DIR__).DS.'MediaPluginTestCase.php');
+require_once(dirname(__DIR__) . DS . 'MediaPluginTestCase.php');
 
 App::uses('MediaUploader','Media.Lib');
 App::uses('Folder','Utility');

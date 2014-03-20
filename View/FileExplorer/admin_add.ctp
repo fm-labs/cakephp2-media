@@ -1,6 +1,6 @@
-<?php $this->Html->addCrumb(__('Media'), array('plugin'=>'media','controller'=>'media','action'=>'index')); ?>
-<?php $this->Html->addCrumb(__('File Explorer'), array('action'=>'index'),array('class'=>'active')); ?>
-<?php $this->Html->addCrumb($this->Form->value('config'), array('action'=>'open','config'=>$this->Form->value('config')),array('class'=>'active')); ?>
+<?php $this->Html->addCrumb(__('Media'), array('plugin' => 'media','controller' => 'media','action' => 'index')); ?>
+<?php $this->Html->addCrumb(__('File Explorer'), array('action' => 'index'),array('class' => 'active')); ?>
+<?php $this->Html->addCrumb($this->Form->value('config'), array('action' => 'open','config'=>$this->Form->value('config')),array('class' => 'active')); ?>
 <div class="file-browser">
 	<div class="file-browser-cmd">
 		<?php 

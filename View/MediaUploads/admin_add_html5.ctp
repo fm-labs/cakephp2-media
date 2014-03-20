@@ -86,7 +86,7 @@ function readfiles(files) {
     // now post a new XHR request
     if (tests.formdata) {
       var xhr = new XMLHttpRequest();
-      xhr.open('POST', '<?php echo Router::url(array('action'=>'upload_html5'));?>');
+      xhr.open('POST', '<?php echo Router::url(array('action' => 'upload_html5'));?>');
       xhr.onload = function() {
         progress.value = progress.innerHTML = 100;
         

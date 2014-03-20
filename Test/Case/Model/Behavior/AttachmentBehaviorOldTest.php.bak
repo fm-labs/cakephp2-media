@@ -501,7 +501,7 @@ class AttachableBehaviorOldTest extends CakeTestCase {
 	public function testSingleUploadSaveDeleteWithSubfolder() {
 		
 		$this->_setupDefault();
-		$this->MediaUpload->configureAttachment('file', array('subFolder'=>'{MODEL}{DS}{MODELID}{DS}'));
+		$this->MediaUpload->configureAttachment('file', array('subFolder' => '{MODEL}{DS}{MODELID}{DS}'));
 		
 		$data = array(
 				'MediaUpload' => array(
@@ -540,7 +540,7 @@ class AttachableBehaviorOldTest extends CakeTestCase {
 	public function testSingleUploadSaveDeleteWithCustomUploadName() {
 	
 		$this->_setupDefault();
-		$this->MediaUpload->configureAttachment('file', array('uploadNameField'=>'custom_upload_name'));
+		$this->MediaUpload->configureAttachment('file', array('uploadNameField' => 'custom_upload_name'));
 	
 		$data = array(
 				'MediaUpload' => array(
@@ -627,7 +627,7 @@ class AttachableBehaviorOldTest extends CakeTestCase {
 	public function testSingleUploadSaveWithOtherValidationError() {
 	
 		$this->_setupDefault();
-		$this->MediaUpload->validator()->add('title', 'notempty',array('rule'=>'notEmpty'));
+		$this->MediaUpload->validator()->add('title', 'notempty',array('rule' => 'notEmpty'));
 		
 		//try to submit data where an other field won't pass validation
 		$data = array(
