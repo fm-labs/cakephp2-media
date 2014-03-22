@@ -7,7 +7,7 @@ App::uses('File', 'Utility');
 App::uses('Router', 'Routing');
 App::uses('LibPhpThumb','Media.Lib');
 
-class AttachableBehavior extends ModelBehavior {
+class AttachableBehaviorOld extends ModelBehavior {
 
 	const UPLOAD_ERR_MIN_FILE_SIZE = 100;
 	const UPLOAD_ERR_MAX_FILE_SIZE = 101;

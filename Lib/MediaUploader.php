@@ -29,7 +29,7 @@ class MediaUploader {
 			'allowedMimeTypes' => '*',
 			'allowedFileExtensions' => '*',
 			'allowMultiple' => false,
-			'filenamePattern' => false,
+			'filenamePattern' => false, // @todo Implement me
 			'filenameSlug' => "_",
 			'hashFilename' => false,
 			'uniqueFilename' => false,
