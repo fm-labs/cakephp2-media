@@ -15,9 +15,9 @@ class AttachableBehavior extends ModelBehavior {
 	protected $_defaultConig = array(
 		'enabled' => true, // If TRUE attachments get auto attached afterFind
 		'uploadField' => null, // fieldname which holds file upload. Defaults to FIELDNAME_upload.
-		#'uploadNameField' => null, // fieldname which holds target file name. Defaults to FIELDNAME_name.
 		'baseDir' => MEDIA_UPLOAD_DIR,
-		'subFolder' => '',
+		'subDir' => '',
+		'baseUrl' => false,
 		'multiple' => false, // If FALSE, only one attachment will be stored. On edit file gets overwritten automatically
 		#'append' => true, // If 'multiple' is TRUE, 'append' (if TRUE) appends files on edit, otherwise files get overwritten/deleted
 		'removeOnDelete' => true, //remove file if row gets deleted
@@ -123,7 +123,6 @@ class AttachableBehavior extends ModelBehavior {
 		return true;
 	}
 
-
 /**
  * Upload to temporary location and validate upload
  *
@@ -145,7 +144,12 @@ class AttachableBehavior extends ModelBehavior {
 
 				$value = $model->data[$model->alias][$config['uploadField']];
 
-				if (is_array($value)) {
+				if (empty($value)) {
+					// drop upload field with empty value
+					unset($model->data[$model->alias][$config['uploadField']]);
+					continue;
+
+				} elseif (is_array($value)) {
 					$uploadData = $value;
 					if (!isset($uploadData[0])) {
 						$uploadData = array($uploadData);
@@ -190,14 +194,10 @@ class AttachableBehavior extends ModelBehavior {
 					// $model->data[$model->alias][$field] = $attachmentsString;
 
 				} else {
-					//ignore non array values
+					// ignore non array values
+					continue;
 				}
-
-			} else {
-				//upload field not set
-				continue;
 			}
-
 		}
 	}
 
@@ -219,17 +219,26 @@ class AttachableBehavior extends ModelBehavior {
 		return $Uploader->upload();
 	}
 
-	static public function getPath(Model &$model, $config) {
-		return $config['baseDir'] . self::replacePathTokens($model, $config['subFolder']);
+	static public function getPath(Model &$model, $config, $basename = '') {
+		return $config['baseDir'] . self::replacePathTokens($model, $config['subDir']) . $basename;
 	}
 
-	static public function replacePathTokens(Model &$model, $path) {
+	static public function getUrl(Model &$model, $config, $basename = '', $full = false) {
+		if (!$config['baseUrl']) {
+			return false;
+		}
+
+		$url = $config['baseUrl'] . self::replacePathTokens($model, $config['subDir'], '/') . $basename;
+		return Router::url($url, $full);
+	}
+
+	static public function replacePathTokens(Model &$model, $path, $ds = DS) {
 		$modelAlias = Inflector::underscore($model->alias);
 		$modelId = ($model->id) ? $model->id : 0;
 
 		return preg_replace(
 			array('/\{DS\}/', '/\{MODEL\}/', '/\{MODELID\}/'),
-			array(DS, $modelAlias, $modelId),
+			array($ds, $modelAlias, $modelId),
 			$path
 		);
 	}
@@ -405,7 +414,9 @@ class AttachableBehavior extends ModelBehavior {
 				list($filename, $ext, $dotExt) = MediaUtil::splitBasename($basename);
 			}
 
-			$attachment = compact('basename', 'filename', 'path', 'ext', 'dotExt');
+			$url = self::getUrl($model, $config, $basename);
+
+			$attachment = compact('basename', 'filename', 'path', 'url', 'ext', 'dotExt');
 			array_push($attachments, $attachment);
 		}
 
