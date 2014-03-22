@@ -1,5 +1,5 @@
 <?php
-App::uses('MediaUtil','Media.Lib');
+App::uses('MediaUtil', 'Media.Lib');
 
 class MediaUploader {
 
@@ -10,74 +10,149 @@ class MediaUploader {
 	const UPLOAD_ERR_FILE_EXISTS = 104;
 	const UPLOAD_ERR_STORE_UPLOAD = 105;
 
+	protected $_config = array();
+
 	protected $_data;
 
-	protected $_uploadDir = MEDIA_UPLOAD_DIR;
+/**
+ * Constructor
+ *
+ * @param array $config
+ * @param null  $data
+ */
+	public function __construct($data = null, $config = array()) {
+		// Setup default config
+		$defaultConfig = array(
+			'uploadDir' => TMP . 'uploads' . DS,
+			'minFileSize' => 1,
+			'maxFileSize' => 2 * 1024 * 1024, // 2MB
+			'allowedMimeTypes' => '*',
+			'allowedFileExtensions' => '*',
+			'allowMultiple' => false,
+			'filenamePattern' => false,
+			'filenameSlug' => "_",
+			'hashFilename' => false,
+			'uniqueFilename' => false,
+			'allowOverwrite' => true,
+			'filename' => null, // filename override
+		);
+		$this->set($defaultConfig);
 
-	protected $_minFileSize = 1;
+		// Apply config
+		if (is_string($config)) {
+			$config = Configure::read('Media.Upload.' . $config);
+		}
+		$this->set($config);
 
-	protected $_maxFileSize = 2000000;
-
-	protected $_allowedMimeTypes = '*';
-
-	protected $_allowedFileExtensions = '*';
-
-	protected $_allowMultiple = false;
-
-	protected $_filenamePattern = false;
-
-	protected $_filenameSlug = "_";
-
-	public function __construct($data = array()) {
 		$this->setData($data);
 	}
 
-	public function setData($data) {
-		$this->_data = $data;
+/**
+ * Config setter
+ *
+ * @param      $key
+ * @param null $val
+ * @return $this
+ * @throws InvalidArgumentException
+ */
+	public function set($key, $val = null) {
+		if (is_array($key)) {
+			foreach ($key as $_k => $_v) {
+				$this->set($_k, $_v);
+			}
+			return $this;
+		} elseif (!is_string($key)) {
+			throw new InvalidArgumentException('MediaUploader::set() - Given key is not a valid string');
+		}
+
+		$this->_config[$key] = $val;
+		return $this;
 	}
 
+/**
+ * Upload data setter
+ *
+ * @param $data
+ * @return $this
+ */
+	public function setData($data) {
+		$this->_data = $data;
+		return $this;
+	}
+
+/**
+ * Upload dir setter
+ *
+ * @param $path
+ * @return $this
+ * @throws UploadException
+ */
 	public function setUploadDir($path) {
 		if (!is_dir($path) || !is_writeable($path)) {
 			throw new UploadException(UPLOAD_ERR_CANT_WRITE);
 		}
 
-		$this->_uploadDir = $path;
+		return $this->set('uploadDir', $path);
 	}
 
 /**
  * Minimum upload file size in bytes
  *
  * @param int $size File size in bytes
+ * @return $this
  */
 	public function setMinFileSize($size) {
-		$this->_minFileSize = (int)$size;
+		return $this->set('minFileSize', (int)$size);
 	}
 
 /**
  * Maximum upload file size in bytes
  *
  * @param int $size File size in bytes
+ * @return $this
  */
 	public function setMaxFileSize($size) {
-		$this->_maxFileSize = (int)$size;
+		return $this->set('maxFileSize', (int)$size);
 	}
 
 /**
  * Allowed upload file mime type(s)
  *
  * @param string|array $type
+ * @return $this
  */
 	public function setAllowedMimeType($type) {
-		$this->_allowedMimeTypes = $type;
+		$this->set('allowedMimeTypes', $type);
 	}
 
 /**
  * Allowed upload file extension(s)
  *
  * @param string|array $ext
+ * @return $this
  */
 	public function setAllowedFileExtension($ext) {
-		$this->_allowedFileExtensions = $ext;
+		return $this->set('allowedFileExtensions', $ext);
+	}
+
+/**
+ * Enable/Disable filename hashing
+ *
+ * @param $enable
+ * @return $this
+ */
+	public function hashFilename($enable) {
+		return $this->set('hashFilename', (bool)$enable);
+	}
+
+/**
+ * Enable/Disable unique filename
+ *
+ * @param $enable
+ * @return $this
+ */
+	public function uniqueFilename($enable) {
+		return $this->set('uniqueFilename', (bool)$enable);
 	}
 
 /**
@@ -86,26 +161,14 @@ class MediaUploader {
  * @return array
  */
 	public function getConfig() {
-		return array(
-			'uploadDir' => $this->_uploadDir,
-			'multiple' => $this->_allowMultiple,
-			'minFileSize' => $this->_minFileSize,
-			'maxFileSize' => $this->_maxFileSize,
-			'allowedMimeType' => $this->_allowedMimeTypes,
-			'allowedFileExtension' => $this->_allowedFileExtensions,
-			'slug' => $this->_filenameSlug,
-			'hashFilename' => false,
-			'allowOverwrite' => false,
-			// 'allowEmpty' => true,
-		);
+		return $this->_config;
 	}
 
 /**
  * Perform upload
  */
 	public function upload() {
-		$config = $this->getConfig();
-		return $this->_upload($this->_data, $config);
+		return $this->_upload($this->_data, $this->_config);
 	}
 
 /**
@@ -117,7 +180,12 @@ class MediaUploader {
  * @return array
  */
 	protected function _upload($upload, $config) {
-		// validate upload error
+		// validate upload
+		if (!$upload || !is_array($upload)) {
+			throw new UploadException(UPLOAD_ERR_NO_FILE);
+		}
+
+		// check upload error
 		if ($upload['error'] > 0) {
 			throw new UploadException($upload['error']);
 		}
@@ -136,29 +204,40 @@ class MediaUploader {
 		} elseif ($upload['size'] > $config['maxFileSize']) {
 			throw new UploadException(self::UPLOAD_ERR_MAX_FILE_SIZE);
 
-		} elseif (!MediaUtil::validateMimeType($upload['type'], $config['allowedMimeType'])) {
+		} elseif (!MediaUtil::validateMimeType($upload['type'], $config['allowedMimeTypes'])) {
 			throw new UploadException(self::UPLOAD_ERR_MIME_TYPE);
 		}
 
 		// split basename
 		list($filename, $ext, $dotExt) = MediaUtil::splitBasename(trim($upload['name']));
 
-		//validate extension
-		if (!MediaUtil::validateFileExtension($ext, $config['allowedFileExtension'])) {
+		// validate extension
+		if (!MediaUtil::validateFileExtension($ext, $config['allowedFileExtensions'])) {
 			throw new UploadException(self::UPLOAD_ERR_FILE_EXT);
 		}
 
 		// filename
-		$filename = Inflector::slug($filename, $config['slug']);
+		$filename = Inflector::slug($filename, $config['filenameSlug']);
+
+		// filename override
+		if ($config['filename']) {
+			$filename = basename($config['filename']);
+		}
+
+		// hash filename
 		if ($config['hashFilename']) {
 			$filename = sha1($filename);
 		}
-		$filename = uniqid($filename . '_');
+
+		// unique filename
+		if ($config['uniqueFilename']) {
+			$filename = uniqid($filename . $config['filenameSlug']);
+		}
 
 		$basename = $filename . $dotExt;
 		$path = $config['uploadDir'];
 
-		//build targetname
+		// build target file path
 		$target = $path . $basename;
 		if (file_exists($target) && $config['allowOverwrite'] == false) {
 			$i = 0;
@@ -172,12 +251,13 @@ class MediaUploader {
 
 		debug("Uploading file to " . $target);
 
-		//move uploaded file to tmp upload dir
-		//TODO use a file engine here. Something like $this->_engine->storeTemporaryUpload($upload);
+		//move uploaded file to upload dir
+		//TODO StorageEngine
 		if (is_uploaded_file($upload['tmp_name'])) {
 			if (!move_uploaded_file($upload['tmp_name'], $target)) {
 				throw new UploadException(self::UPLOAD_ERR_STORE_UPLOAD);
 			}
+
 		} elseif (!copy($upload['tmp_name'], $target)) {
 			throw new UploadException(self::UPLOAD_ERR_STORE_UPLOAD);
 		}
@@ -186,11 +266,12 @@ class MediaUploader {
 			'name' => $upload['name'], // file.txt
 			'type' => $upload['type'], // text/plain
 			'size' => $upload['size'], // 1234
-			'path' => $target, // /path/to/upload-dir
+			'path' => $target, // /path/to/uploaded/file
 			'basename' => $basename, // file.txt
 			'filename' => $filename, // file
 			'ext' => $ext, // txt
 			'dotExt' => $dotExt, // .txt
+			'ts' => time(),
 		);
 	}
 
