@@ -217,7 +217,9 @@ class AttachableBehavior extends ModelBehavior {
 					if (!isset($uploadData[0])) {
 						$uploadData = array($uploadData);
 					}
-	
+
+					debug($uploadData);
+
 					foreach($uploadData as $idx => $upload) {
 						try {
 							//no upload
@@ -233,6 +235,7 @@ class AttachableBehavior extends ModelBehavior {
 						} catch(Exception $e) {
 							debug($e);
 							$model->invalidate($field, $upload['name'].': '.$e->getMessage());
+							$model->invalidate($config['uploadField'], $upload['name'].': '.$e->getMessage());
 							continue;
 						}
 					}
