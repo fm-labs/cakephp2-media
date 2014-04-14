@@ -4,10 +4,14 @@
  */
 $config = array(
 	'Media' => array(
+		'Thumb' => array(
+        	'baseDir' => WWW_ROOT . "thumbs" . DS, // Thumbnail storage path
+        	'baseUrl' => '/thumbs/', // Thumbnail url
+		),
 		'FileExplorer' => array(
 			'default' => array(
 				'basePath' => IMAGES // absolute path WITH trailing slash	
 			)		
-		)	
+		)
 	),
 );
