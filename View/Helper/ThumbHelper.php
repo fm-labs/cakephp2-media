@@ -47,10 +47,17 @@ class ThumbHelper extends AppHelper {
 			unset($options['thumb']);
 		}
 
-		$thumbUrl = $this->imageUrl($path, $thumbParams);
-		if (!$thumbUrl) {
-			return false;
-		}
+        $thumbUrl = null;
+
+        try {
+            $thumbUrl = $this->imageUrl($path, $thumbParams);
+            if (!$thumbUrl) {
+                return false;
+            }
+        } catch (Exception $e) {
+            debug($e->getMessage());
+            return false;
+        }
 
 		/*
 		if (isset($options['url'])) {
