@@ -3,3 +3,4 @@
 /.buildpath
 /.project
 /Test/test_app/tmp/uploadtmp/*
+/vendor/
