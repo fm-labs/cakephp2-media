@@ -22,14 +22,16 @@ class AttachableBehavior extends ModelBehavior {
 		#'append' => true, // If 'multiple' is TRUE, 'append' (if TRUE) appends files on edit, otherwise files get overwritten/deleted
 		'removeOnDelete' => true, //remove file if row gets deleted
 		'removeOnOverwrite' => true, //remove file if file has been replaced
-		#'minFileSize' => 0,
-		#'maxFileSize' => 2097152, //2MB
-		'allowEmpty' => true, //Allow field to be empty
-		#'allowOverwrite' => false,
-		#'allowedMimeType' => '*', //"*" for all or array('image/*,text/plain).
-		#'allowedFileExtension' => '*', //"*" for all or array('jpg','jpeg')
-		#'hashFilename' => false,
-		#'slug' => '_',
+		'allowEmpty' => true, //Allow field to be empty // @deprecated
+		// Upload settings
+		'minFilesize' => 0,
+		'maxFilesize' => 2097152, //2MB
+		'allowOverwrite' => false,
+		'allowedMimeType' => '*', //"*" for all or array('image/*,text/plain).
+		'allowedFileExtension' => '*', //"*" for all or array('jpg','jpeg')
+		'hashFilename' => false,
+		'uniqueFilename' => true,
+		'slug' => '_',
 	);
 
 /**
@@ -155,12 +157,12 @@ class AttachableBehavior extends ModelBehavior {
 						$uploadData = array($uploadData);
 					}
 
-					debug($uploadData);
+					//debug($uploadData);
 
 					foreach ($uploadData as $idx => $upload) {
 						try {
 							//no upload
-							if ($upload['error'] == UPLOAD_ERR_NO_FILE && $config['allowEmpty']) {
+							if ($upload['error'] == UPLOAD_ERR_NO_FILE) {
 								unset($uploadData[$idx]);
 								continue;
 							}
@@ -213,7 +215,17 @@ class AttachableBehavior extends ModelBehavior {
 		#debug($config);
 		#debug($upload);
 
-		$Uploader = new MediaUploader($upload);
+		$uploadConfig = array(
+			'overwrite'	=> $config['allowOverwrite'],
+			'hashFilename' => $config['hashFilename'],
+			'uniqueFilename' => $config['uniqueFilename'],
+			'minFilesize' => $config['minFilesize'],
+			'maxFilesize' => $config['maxFilesize'],
+			'mimeTypes' => $config['allowedMimeType'],
+			'fileExtensions' => $config['allowedFileExtension']
+		);
+
+		$Uploader = new MediaUploader($upload, $uploadConfig);
 		//$Uploader->setUploadDir($attachmentUploadDir);
 
 		return $Uploader->upload();
@@ -414,7 +426,7 @@ class AttachableBehavior extends ModelBehavior {
 				list($filename, $ext, $dotExt) = MediaUtil::splitBasename($basename);
 			}
 
-			$url = self::getUrl($model, $config, $basename);
+			$url = self::getUrl($model, $config, $basename, true);
 
 			$attachment = compact('basename', 'filename', 'path', 'url', 'ext', 'dotExt');
 			array_push($attachments, $attachment);
