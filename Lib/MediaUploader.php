@@ -240,7 +240,7 @@ class MediaUploader {
 
 		// filename override
 		if ($config['filename']) {
-			$filename = basename($config['filename']);
+			list($filename, $ext, $dotExt) = MediaUtil::splitBasename($config['filename']);
 		}
 
 		// hash filename
@@ -268,7 +268,7 @@ class MediaUploader {
 			} while (file_exists($target) == true);
 		}
 
-		debug("Uploading file to " . $target);
+		//debug("Move uploaded file from " . $upload['tmp_name'] . " to " . $target);
 
 		//move uploaded file to upload dir
 		//TODO StorageEngine

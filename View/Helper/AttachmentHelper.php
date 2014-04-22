@@ -8,6 +8,7 @@ App::uses('AppHelper', 'View/Helper');
  *
  * @property HtmlHelper $Html
  * @property FormHelper $Form
+ * @property ThumbHelper $Thumb
  */
 class AttachmentHelper extends AppHelper {
 

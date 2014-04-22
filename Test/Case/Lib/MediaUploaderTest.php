@@ -264,6 +264,23 @@ class MediaUploaderTest extends MediaPluginTestCase {
 		$this->assertTrue(isset($result[1]));
 	}
 
+	public function testUploadWithPredefinedFilename() {
+		$config = array(
+			'multiple' => false,
+			'overwrite' => false,
+			'uniqueFilename' => false,
+			'hashFilename' => false,
+			'filename' => 'test.file'
+		);
+		$Uploader = new TestMediaUploader($this->upload1, $config);
+		$result = $Uploader->upload();
+
+		$this->assertTrue(file_exists($result['path']));
+		$this->assertEqual($result['ext'], 'file');
+		$this->assertEqual($result['dotExt'], '.file');
+		$this->assertEqual($result['basename'], 'test.file');
+	}
+
 	public function tearDown() {
 		parent::tearDown();
 

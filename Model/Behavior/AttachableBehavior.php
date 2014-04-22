@@ -32,6 +32,7 @@ class AttachableBehavior extends ModelBehavior {
 		'hashFilename' => false,
 		'uniqueFilename' => true,
 		'slug' => '_',
+		'filename' => null, // custom filename
 	);
 
 /**
@@ -205,6 +206,7 @@ class AttachableBehavior extends ModelBehavior {
 
 /**
  * Process Upload
+ * Uploads file to temporary location
  *
  * @param Model $model
  * @param       $upload
@@ -216,13 +218,16 @@ class AttachableBehavior extends ModelBehavior {
 		#debug($upload);
 
 		$uploadConfig = array(
-			'overwrite'	=> $config['allowOverwrite'],
-			'hashFilename' => $config['hashFilename'],
-			'uniqueFilename' => $config['uniqueFilename'],
+			//'overwrite'	=> $config['allowOverwrite'],
+			//'hashFilename' => $config['hashFilename'],
+			//'uniqueFilename' => $config['uniqueFilename'],
+			'overwrite' => false,
+			'hashFilename' => true,
+			'uniqueFilename' => true,
 			'minFilesize' => $config['minFilesize'],
 			'maxFilesize' => $config['maxFilesize'],
 			'mimeTypes' => $config['allowedMimeType'],
-			'fileExtensions' => $config['allowedFileExtension']
+			'fileExtensions' => $config['allowedFileExtension'],
 		);
 
 		$Uploader = new MediaUploader($upload, $uploadConfig);
@@ -255,6 +260,20 @@ class AttachableBehavior extends ModelBehavior {
 		);
 	}
 
+	static public function replaceFileTokens(Model &$model, $basename, $fileinfo = array()) {
+		$modelAlias = Inflector::underscore($model->alias);
+		$modelId = ($model->id) ? $model->id : 0;
+		$filename = (isset($fileinfo['filename'])) ? $fileinfo['filename'] : '';
+		$ext = (isset($fileinfo['ext'])) ? $fileinfo['ext'] : '';
+		$dotExt = (isset($fileinfo['dotExt'])) ? $fileinfo['dotExt'] : '';
+
+		return preg_replace(
+			array('/\{MODEL\}/', '/\{MODELID\}/', '/\{UPLOADNAME\}/', '/\{EXT\}/', '/\{DOTEXT\}/'),
+			array($modelAlias, $modelId, $filename, $ext, $dotExt),
+			$basename
+		);
+	}
+
 	public function afterSave(Model $model, $created) {
 		$this->_storeUpload($model);
 	}
@@ -276,12 +295,26 @@ class AttachableBehavior extends ModelBehavior {
 				$attachments = array();
 				foreach ($uploads as $upload) {
 
-					// split basename
 					list($filename, $ext, $dotExt) = MediaUtil::splitBasename(trim($upload['name']));
 
-					// filename
+					// split basename
+					if (!$config['multiple'] && $config['filename']) {
+						$_filename = self::replaceFileTokens($model, $config['filename'], compact('filename', 'ext', 'dotExt'));
+						list($filename, $ext, $dotExt) = MediaUtil::splitBasename(basename($_filename));
+					}
+
+					// slug filename
 					$filename = Inflector::slug($filename, '_');
-					$filename = uniqid($filename . '_');
+
+					// hash filename
+					if ($config['hashFilename']) {
+						$filename = sha1($filename);
+					}
+
+					// unique filename
+					if ($config['uniqueFilename']) {
+						$filename = uniqid($filename . $config['slug'], false);
+					}
 
 					$basename = $filename . $dotExt;
 

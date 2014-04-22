@@ -23,6 +23,8 @@ class MediaThumb {
 
 	protected $_tmpDir;
 
+	protected $_target;
+
 	public function __construct($source = null, $params = array()) {
 		// set paths
 		$this->_baseDir = (Configure::read('Media.Thumb.baseDir'))
@@ -94,6 +96,16 @@ class MediaThumb {
 		return $this;
 	}
 
+	public function setBaseDir($baseDir) {
+		$this->_baseDir = $baseDir;
+		return $this;
+	}
+
+	public function setBaseUrl($baseUrl) {
+		$this->_baseUrl = $baseUrl;
+		return $this;
+	}
+
 /**
  * Source path setter
  *
@@ -123,6 +135,11 @@ class MediaThumb {
 		return $this;
 	}
 
+	public function setTarget($target) {
+		$this->_target = $target;
+		return $this;
+	}
+
 /**
  * Get path of rendered thumbnail
  *
@@ -146,7 +163,7 @@ class MediaThumb {
  *
  * @return string
  */
-	protected function _getTargetFilename() {
+	protected function _generateTargetFilename() {
 		$src = $this->_source;
 		$filename = Inflector::slug(basename($src));
 		$hash = md5(serialize(array($src, $this->_params)));
@@ -162,10 +179,10 @@ class MediaThumb {
  */
 	public function renderToFile() {
 		// check source
-		$source = $this->_source;
-		if (!$source) {
+		if (!$this->_source) {
 			throw new Exception(__('MediaThumb: No thumb source selected'));
 		}
+		$source = $this->_source;
 
 		// check thumb dir
 		$dir = $this->_baseDir;
@@ -176,7 +193,7 @@ class MediaThumb {
 		}
 
 		// check target
-		$target = $dir . $this->_getTargetFilename();
+		$target = $dir . $this->_generateTargetFilename();
 
 		// create thumb
 		if (!file_exists($target) || $this->_disableCache === true) {

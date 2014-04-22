@@ -159,6 +159,7 @@ class AttachableBehaviorTest extends MediaPluginTestCase {
 				'hashFilename' => false,
 				'uniqueFilename' => true,
 				'slug' => '_',
+				'filename' => null
 			)
 		);
 		$this->assertEqual($result, $expected);
@@ -310,6 +311,70 @@ class AttachableBehaviorTest extends MediaPluginTestCase {
 
 		$result = $this->Model->read(null, $this->Model->id);
 		debug($result);
+	}
+
+	public function testSingleWithCustomFilename() {
+		// setup
+		$this->Model->Behaviors->load('Media.Attachable', array());
+		$this->Model->configureAttachment(array(
+			'file' => array(
+				'baseDir' => $this->attachmentDir,
+				'multiple' => false,
+				'removeOnOverwrite' => false,
+				'filename' => '{MODEL}_{MODELID}{DOTEXT}',
+				'uniqueFilename' => false,
+			)
+		), true);
+
+		// save
+		$data = array(
+			$this->Model->alias => array(
+				'title' => 'My Upload with custom filename',
+				'file_upload' => $this->upload1
+			)
+		);
+
+		$this->Model->create();
+		$result = $this->Model->save($data);
+
+		$this->assertTrue(is_array($result));
+		$this->assertTrue(isset($result['Attachment']['file']['path']));
+		$this->assertTrue(file_exists($result['Attachment']['file']['path']));
+		$this->assertEquals(basename($result['Attachment']['file']['path']), "attachable_model_" . $this->Model->id . ".txt");
+	}
+
+
+	public function testSingleWithCustomFilenameAndSubfolders() {
+		// setup
+		$this->Model->Behaviors->load('Media.Attachable', array());
+		$this->Model->configureAttachment(array(
+			'file' => array(
+				'baseDir' => $this->attachmentDir,
+				'multiple' => false,
+				'removeOnOverwrite' => false,
+				'subDir' => '{MODEL}{DS}',
+				'filename' => '{MODELID}_{UPLOADNAME}{DOTEXT}',
+				'uniqueFilename' => false,
+			)
+		), true);
+
+		// save
+		$data = array(
+			$this->Model->alias => array(
+				'title' => 'My Upload with custom filename',
+				'file_upload' => $this->upload1
+			)
+		);
+
+		$this->Model->create();
+		$result = $this->Model->save($data);
+
+		$this->assertTrue(is_array($result));
+		$this->assertTrue(isset($result['Attachment']['file']['path']));
+		$this->assertTrue(file_exists($result['Attachment']['file']['path']));
+		$this->assertEquals(basename($result['Attachment']['file']['path']), $this->Model->id . "_Upload_File_1.txt");
+
+		//TODO: test if file is in subDir
 	}
 
 	public function testMultipleUploadSaveReadDelete() {
