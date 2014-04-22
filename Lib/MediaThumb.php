@@ -136,7 +136,7 @@ class MediaThumb {
 	}
 
 	public function setTarget($target) {
-		$this->_target = $target;
+		$this->_target = basename($target);
 		return $this;
 	}
 
@@ -177,7 +177,7 @@ class MediaThumb {
  *
  * @throws Exception
  */
-	public function renderToFile() {
+	public function renderToFile($overwrite = false) {
 		// check source
 		if (!$this->_source) {
 			throw new Exception(__('MediaThumb: No thumb source selected'));
@@ -193,10 +193,11 @@ class MediaThumb {
 		}
 
 		// check target
-		$target = $dir . $this->_generateTargetFilename();
+		$targetName = ($this->_target) ? $this->_target : $this->_generateTargetFilename();
+		$target = $dir . $targetName;
 
 		// create thumb
-		if (!file_exists($target) || $this->_disableCache === true) {
+		if (!file_exists($target) || $overwrite || $this->_disableCache === true) {
 			//TODO dependency injection
 			$engine = new phpthumb();
 			$engine->setSourceFilename($source);
