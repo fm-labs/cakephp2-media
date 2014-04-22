@@ -162,18 +162,23 @@ class AttachableBehavior extends ModelBehavior {
 
 					foreach ($uploadData as $idx => $upload) {
 						try {
-							//no upload
+							// no upload
 							if ($upload['error'] == UPLOAD_ERR_NO_FILE) {
 								unset($uploadData[$idx]);
 								continue;
 							}
 
-							//check upload and upload temporary
+							// check upload and upload temporary
 							$_upload = $this->_upload($model, $upload, $config);
+							if (isset($_upload['upload_err'])) {
+								throw new Exception($_upload['upload_err']);
+							}
+
+							// no upload errors
 							$_uploads[] = $_upload;
 
 						} catch(Exception $e) {
-							debug($e);
+							//debug($e);
 							$model->invalidate($field, $upload['name'] . ': ' . $e->getMessage());
 							$model->invalidate($config['uploadField'], $upload['name'] . ': ' . $e->getMessage());
 							continue;
@@ -291,6 +296,8 @@ class AttachableBehavior extends ModelBehavior {
 				if (!is_dir($attachmentUploadDir)) {
 					$Folder = new Folder($attachmentUploadDir, true, 0777);
 				}
+
+				debug($uploads);
 
 				$attachments = array();
 				foreach ($uploads as $upload) {
