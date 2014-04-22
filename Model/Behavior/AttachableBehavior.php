@@ -12,7 +12,7 @@ class AttachableBehavior extends ModelBehavior {
  *
  * @var array
  */
-	protected $_defaultConig = array(
+	protected $_defaultConfig = array(
 		'enabled' => true, // If TRUE attachments get auto attached afterFind
 		'uploadField' => null, // fieldname which holds file upload. Defaults to FIELDNAME_upload.
 		'baseDir' => MEDIA_UPLOAD_DIR,
@@ -85,7 +85,7 @@ class AttachableBehavior extends ModelBehavior {
 		}
 
 		if ($reset || !$this->_getConfig($model, $field)) {
-			$config = am($this->_defaultConig, array(
+			$config = am($this->_defaultConfig, array(
 				'uploadField' => $field . '_upload',
 			), $config);
 
