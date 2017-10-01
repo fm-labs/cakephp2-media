@@ -1,5 +1,5 @@
 <?php
-class MediaTools {
+class MediaUtil {
 	
 	/**
 	 * Validate mime type

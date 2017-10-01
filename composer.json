@@ -12,6 +12,9 @@
     "require": {
         "composer/installers": "~1.0"
     },
+    "require-dev": {
+        "phpunit/phpunit": "3.7.*"
+    },
     "extra": {
         "installer-name": "Media"
     }
